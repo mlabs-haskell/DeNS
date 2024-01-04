@@ -55,14 +55,19 @@ DeNS, by contrast, will be universal. Concretely, this implies that the records 
 
 This architecture allows us to specify more clearly the mechanics of the transition away from DNS as an authority for IP records: We will lease the IP class of domains to ourselves and maintain mirrors of DNS records until DeNS adoption reaches a level that we judge sufficient to facilitate a "hard fork" from DNS authority. At that point, we will let the lease expire and IP class domains in DeNS will be directly managed by domain owners via DeNS smart contracts.
 
-## Architecture (Technical)
+## Architecture - Cardano (Technical) (WIP)
+
+TODO/FIXME: Everything here assumes that domain ownership is eternal/indefinite. In practice that won't work, and we'll have to modify this design to accommodate a "lease" model instead of a "permanent control" model.
+
+### Protocol NFT
+
+All contract scripts will be parameterized by a `Protocol` NFT that uniquely identifies the protocol. (TODO: Figure out details later)
 
 ### Record Keys
 
 Morally, the DeNS protocol is a cross-chain distributed Key-Value store, where the key component is managed by a Cardano smart-contract and contains a pointer to an Arweave resource which in turn contains a set of records associated with the `(Name,Class)` pair in the Key:
 
 ``` haskell
-
 {-
   This data type contains all of the elements necessary to function as a key in our logical database.
 -}
@@ -70,12 +75,14 @@ data DeNSKey
   = DeNSKey {
       densClass :: Word16,
       densName  :: ByteString,
-      densPointer :: ByteString -- By convention, this should be an Arweave resource address
+      densPointer :: Maybe ByteString -- By convention, this should be an Arweave resource address. `Nothing` indicated a deleted record
   }
-
 ```
 
 ### Set Validator / ELEMENTID Minting Policy
+
+NOTE: As mentioned above, this should be parameterized by the `Protocol` NFT (TODO)
+
 The most important invariant that the protocol must maintain is the _uniqueness of names_ in the set of onchain keys. Unfortunately, we cannot adopt the naive approach of using an onchain List to represent this set. Because such a list could conceivably grow to include _tens of millions_ (or more!) entries, and because traversing a list that large would assuredly exceed Cardano ExUnit limits, we are forced to adopt a more sophisticated solution. First, we will require a data type to represent entries in our set:
 
 ``` haskell
@@ -83,26 +90,31 @@ data SetDatum
   = SetDatum {
       sdClass :: Word16, -- Each set represents a Name Universe and must be tagged w/ the class ID corresponding to that universe
       sdName :: ByteString, -- A human readable domain name
-      sdNext :: (Maybe (ByteString,Word32)) -- The succesor to sdName (if one exists in the set)
+      sdNext :: (Maybe (ByteString,Word16)) -- The succesor to sdName (if one exists in the set)
   }
 ```
 
 We will also need an NFT asset that uniquely identifies a member of this set. Let's call this asset **ElementID**.
 
-#### Set Validator
+#### Set Validator (WIP)
 
-The set validator locks UTxOs containing `SetDatum` entries and is used to represent the on-chain collection of unique keys. We initialize a new class `c` by locking a UTXO with `SetDatum c "" Nothing` at the validator (which can be assumed to exist for validation checks).
+The set validator locks UTxOs containing `SetDatum` entries and is used to represent the on-chain collection of unique keys. We initialize a new class `c` by locking a UTXO with `SetDatum c "" Nothing` at the validator (which can be assumed to exist for validation checks). For comparisons on the `sdName` ByteString, we assume that an `Ord` instance (or equivalent in Plutarch/Aiken) exists, and that the empty ByteString `""` is the absolute minimum (forall x. x /= "" -> x > "")
 
 Let
   - `(N,C)` designate a new Name/Class pair for which we would like to mint an **ElementID** NFT
   - `SD(c,n,nxt)`designate a SetDatum such that `sdClass = c, sdName = n, sdNext = nxt`
 
+**PARAMETERS**:
+  - The Protocol NFT
+
 **INPUTS:**
+
 ONE OF:
-  1. A UTxO `SD(C,X,Just (Y,C))` where X < N < Y
-  2. A UtxO `SD(C,X,Nothing)` where X < N
+  1. A UTxO (locked at this validator )`SD(C,X,Just (Y,C))` where X < N < Y
+  2. A UTxO (locked at this validator )`SD(C,X,Nothing)` where X < N
 **REFERENCE INPUTS:**
-  - If 1 was passed as an input: A UTxO `SD(C,Y,_)`
+  - If 1 was passed as an input: A UTxO (locked at this validator) `SD(C,Y,_)`
+
 **OUTPUTS:**
   - If 1 was passed:
     - A UTxO `SD(C,X,Just (N,C))` (paid to the Set Validator)
@@ -110,9 +122,102 @@ ONE OF:
   - If 2 was passed:
     - A UTxO `SD(C,X,Just (N,C))` (paid to the Set Validator)
     - A UTxO `SD(C,N,Nothing)`    (paid to the Set Validator)
-  - A UTxO with an `ELEMENTID` token that uniquely identifies the `(N,C)` pair which was inserted into the set
+  - A UTxO with an `ElementID` token that uniquely identifies the `(N,C)` pair which was inserted into the set
+
+**MINTS**:
+  - One `ElementID` NFT that represents the `(Name,Class)` pair being inserted into the set
+
+**REDEEMER**:
+
+``` haskell
+data SetInsert
+  = InsertAfter {class :: Word16, name :: ByteString}
+  | InsertBetween {class :: Word16, name :: ByteString, next :: (ByteString,Word16)}
+```
 
 **CHECKS:**
-  - TODO
+  - The inputs contain a UTxO with a datum conforming to either 1 or 2 above (but not both!)
+  - The outputs conform to the above schema
+  - NOTE: Most of the relevant checks are conducted inside the `ElementID` minting policy
 
+**DISCUSSION:** TODO
 
+Because each virtual set is initialized with a minimal element, inserting an arbitrary name `n` always amounts to either inserting `n` after some _known_ name `m` where `m < n`, or inserting `n` between `m` and `o` where `m < n < o`.
+
+#### ElementID Minting Policy (WIP)
+
+The `ElementID` minting policy mints an NFT which serves as an access control identifier in order to gate access to specific records in the virtual DeNS database.
+
+**PARAMETERS**:
+  - The Protocol NFT
+
+**REDEEMER**:
+(We reuse the Set validator redeemer)
+``` haskell
+data Insert
+  = InsertAfter {class :: Word16, name :: ByteString}
+  | InsertBetween {class :: Word16, name :: ByteString, next :: (ByteString,Word16)}
+```
+
+**CHECKS:**: (WIP, probably not exhaustive)
+  - The inputs contain a UTxO with a datum conforming to either 1 or 2 above. That is, EITHER:
+    - If `InsertAfter`:
+      - A UTxO locked at (i.e. paying to) the Set validator with a `SD(C,N,Nothing)` datum where `N < redeemer.name && C == redeemer.class`
+    - If `InsertBetween`: A UTxO locked at (i.e. paying to) the Set validator with a `SD(C,X,Just (Y,C))` where `X < redeemer.name < Y && C == c`
+  - If `InsertBetween`: Check for a reference input (locked at / paid to the Set validator) with a `SD(C,Y,_)` datum
+  - Exactly 1 minted NFT
+  - The TokenName of the minted NFT is `== blake2b_256 (show redeemer.class <> redeemer.name)`
+    - NOTE: Note sure about this, @bladyjoker should review
+
+### Records Validator
+
+The records validator serves as an access control list for the virtual DeNS database. When the offchain code reconstructs the database from Cardano keys and Arweave values, it treats the records locked at the Records validator as the source of authority. That is: Only records locked at the records validator are used to construct the database used in a DeNS resolver.
+
+**PARAMETERS**:
+  - The Protocol NFT
+  - The CurrencySymbol/ScriptHash of the ElementID minting policy
+
+**DATUM**:
+
+The the Records Validator datum functions as the key in our virtual database. To update or create a record, a DeNS user simply adjusts the reference for the class and name that they own. To delete a record, the user submits a transaction with an output datum where the `reference` field is `Nothing`.
+
+``` haskell
+data DeNSKey = DeNSKey {
+  class :: Word32,
+  name  :: ByteString,
+  reference :: Maybe ByteString // an Arweave address
+}
+```
+
+**REDEEMER**:
+
+The offchain code that constructs the DeNS database will always treat the _most recent_ record associated with a given name as authoritative, and consequently we do not need to distinguish between record creation and record deletion. (Unlike the Set validator, we do not need a simulated Map or Set).
+
+``` haskell
+data DeNSAction
+  = Upsert
+  | Delete
+```
+
+**INPUTS:**
+  - A UtXO containing a NFT where the AssetClass consists of a CurrencySymbol == the hash of the ElementID MintingPolicy and where the token name is (or should be) == the blake2b hash calculated from `blake2b_256 (show redeemer.class <> redeemer.name)`
+
+**OUTPUTS:**
+  - A UTxO, paid to the Records Validator, which contains the `DeNSKey` passed by the user
+
+**MINTS**: N/A
+
+**CHECKS:** (WIP / PROBABLY NOT COMPREHENSIVE)
+  - The NFT in the inputs contains a token that satisfies the constraints outlined above in the **INPUTS** section (todo: Elaborate)
+  - The output contains a single UtXO with an *inline* `DeNSKey` datum which is equal to the input passed in by the user
+  - This output UtXO is paid to the validator
+
+**DISCUSSION:** TODO
+
+## Architecture - Arweave (Technical) (WIP)
+
+TODO
+
+## Architecture - Offchain (Technical) (WIP)
+
+TODO
