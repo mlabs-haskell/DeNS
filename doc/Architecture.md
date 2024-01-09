@@ -185,7 +185,7 @@ The the Records Validator datum functions as the key in our virtual database. To
 data DeNSKey = DeNSKey {
   class :: Word32,
   name  :: ByteString,
-  reference :: Maybe ByteString // an Arweave address
+  reference :: Maybe ByteString -- an Arweave address
 }
 ```
 
