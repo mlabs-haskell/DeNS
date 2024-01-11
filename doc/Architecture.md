@@ -116,7 +116,7 @@ data SetDatum
 
 
 #### SetElemID Minting Policy
-The `SetValidator` locks UTxOs containing `SetDatum` entries and is used alongside with `SetElemID` to represent the on-chain collection of unique keys. We initialize the set by locking a UTXO with `SetDatum (DeNSKey "" 0) (DeNSKey sup (2^16 - 1)` at the validator (which can be assumed to exist for validation checks) when minting `Protocol` NFT (to ensure uniqueness of the linked list) where `sup` is the supremum (under lexicographical ordering) of all `ByteString`s that strictly greater than the largest DNS name (see [2.3.4. of RFC  1035](https://www.ietf.org/rfc/rfc1035.txt)).
+The `SetValidator` locks UTxOs containing `SetDatum` entries and is used alongside with `SetElemID` to represent the on-chain collection of unique keys. We initialize the set by locking a UTXO with `SetDatum (DeNSKey "" 0) (DeNSKey ub (2^16 - 1)` at the validator (which can be assumed to exist for validation checks) when minting `Protocol` NFT (to ensure uniqueness of the linked list) where `ub` is the minimal upper bound (under lexicographical ordering) of all `ByteString`s that are DNS names (see [2.3.4. of RFC  1035](https://www.ietf.org/rfc/rfc1035.txt)) which is itself not a DNS name.
 `SetElemID` will identify a subset of all `SetValidator`s on the blockchain to distinguish the `SetValidator`s relevant to the protocol as opposed to random `SetValidator` addresses adversaries may have paid to.
 
 `SetElemID` will mint in two cases. The first case is the trivial initialization case -- it mints only if all of the following are satisfied.
