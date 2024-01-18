@@ -9,6 +9,13 @@
         typos.enable = true;
         markdownlint.enable = true;
       };
+
+      settings = {
+        markdownlint.config = {
+          # Disable rule for lines longer than 80 characters
+          "MD013" = false;
+        };
+      };
     };
   };
 }
