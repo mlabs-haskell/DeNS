@@ -377,7 +377,7 @@ So, the following ASCII diagram depicts the complete situation.
                                          | DNS server |
                                           ------------ 
                                                 |
-                                                | Updates the DNS databse
+                                                | Updates the DNS database
                                                 | from changes in the set
                    Listens for events           |
  --------------                         ---------------          --------------
