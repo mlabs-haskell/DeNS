@@ -280,3 +280,115 @@ The offchain code that constructs the DeNS database will always treat the _most 
 TODO
 
 ## Architecture - Offchain (Technical) (WIP)
+The offchain infrastructure needs to provide the following services.
+
+1. _Efficient UTxO queries._ Of course, we must efficiently provide UTxOs for
+   the onchain code to build transactions. In particular, some of the special
+   needs of the onchain protocol includes:
+
+     - An efficient mapping from `CurrencySymbol`s/`TokenName`s to the UTxOs
+       which the token resides at.
+
+     - An efficient mapping from a `DeNSKey`, say `k`, to the UTxO in the set
+       with the largest `DeNSKey`, say `lb`, s.t. `lb < k`.
+
+2. _Provide DNS records to query._ This is straightforward -- we obviously need to a
+   method to provide DNS records compatible with existing DNS systems.
+
+### Efficient UTxO queries
+Due to the peculiar needs of the onchain protocol, we will most likely need to adapt an existing chain indexer.
+Off the shelf solutions like [Kupo](https://github.com/CardanoSolutions/kupo) (which is used internally by [CTL](https://github.com/Plutonomicon/cardano-transaction-lib?tab=readme-ov-file#additional-resourcestools)) unfortunately supports querying UTxOs via "patterns" which in particular do not satisfy the requirement of efficiently mapping `DeNSKey`s to a particular UTxO in the sense mentioned above.
+
+As such, we must maintain our own index to query UTxOs by e.g. maintaining an
+SQL database such as PostgreSQL (where note that most relational databases by construction can
+efficiently query achieve our desired `DeNSKey` query) which listens for
+"events" on the Cardano blockchain and updates its tables appropriately.
+
+Of course, we can write our own chain indexer, but it's probably better to build off existing work such as:
+
+- Adapting the more chain flexible indexers such as
+  [oura](https://github.com/txpipe/oura/#readme) which filters events on the
+  blockchain according to patterns and outputs the values to a "sink" which
+  updates our own database.
+  Note that we could also use
+  [marconi](https://github.com/input-output-hk/marconi), but it appears to be
+  under heavy development.
+
+- [Interacting with ogmios](https://ogmios.dev/) which provides a convenient
+  websockets to interact with the blockchain node, and we could update our
+  database based on the information obtained by the websockets.
+
+As an ASCII diagram, we envision this to be
+
+```
+                  
+                   Listens for events
+ --------------                         ---------------          --------------
+| Cardano node | --------------------- | Chain indexer | ------ | SQL database |
+ --------------                         ---------------          --------------
+            \                                 | 
+             \                                |
+               \                              | Query UTxOs
+      Submit txs \                            |
+                  --\                         | 
+                     \                   ------------ 
+                      \---------------- | Tx builder |        
+                                         ------------               
+```
+
+where the lines denote communication, and the square boxes denote programs.
+
+
+### Providing DNS records
+We will piggyback off of existing DNS systems.
+In particular, we will adapt the existing full-featured DNS system [BIND 9](https://www.isc.org/bind/) for our purposes.
+Note that BIND 9 is the first, oldest, and most commonly deployed DNS solution, so this has the immediate benefit that network engineers will already be familiar with its deployment to ease adoption of DeNS.
+
+
+BIND 9 is configured by a file often known as `named.conf`.
+Adding the initial set of DNS records to BIND 9 is straightforward -- one
+updates the `named.conf` to include a zone file (set of DNS records) with the
+associated DNS name. See the documentation for
+[details](https://bind9.readthedocs.io/en/latest/chapter3.html#primary-authoritative-name-server).
+Updates to the database can be done dynamically with [nsupdate](https://bind9.readthedocs.io/en/latest/manpages.html#std-iscman-nsupdate)
+    or by directly following the [dynamic updates in DNS protocol](https://datatracker.ietf.org/doc/html/rfc2136.html).
+
+One wrinkle with using a traditional DNS system for DeNS is that the blockchain
+    is the single authoritative source of ownership for all records as the onchain
+    smart contracts guarantee that every domain has a unique name or label.
+Moreover, all DNS records should be immediately wholly accessible (TODO: don't
+    know how to word this?) via the blockchain (indirectly by Arweave); so the
+    DNS server should never need to recursively resolve queries by contacting
+    other name servers.
+Conveniently, this setting can be disabled with the
+    [recursion](https://bind9.readthedocs.io/en/latest/reference.html#namedconf-statement-recursion)
+    option.
+
+Finally, the only question that remains is how updates from the blockchain
+    should propagate to the DNS system.
+We propose to piggyback back on top of the chain indexer from the previous section
+    where we listen for the event of set changes, and on the occurrence of such event,
+    we update the DNS records.
+
+So, the following ASCII diagram depicts the complete situation.
+
+```
+                                          ------------ 
+                                         | DNS server |
+                                          ------------ 
+                                                |
+                                                | Updates the DNS database
+                                                | from changes in the set
+                   Listens for events           |
+ --------------                         ---------------          --------------
+| Cardano node | --------------------- | Chain indexer | ------ | SQL database |
+ --------------                         ---------------          --------------
+            \                                 | 
+             \                                |
+               \                              | Query UTxOs
+      Submit txs \                            |
+                  --\                         | 
+                     \                   ------------ 
+                      \---------------- | Tx builder |        
+                                         ------------               
+```
