@@ -280,5 +280,3 @@ The offchain code that constructs the DeNS database will always treat the _most 
 TODO
 
 ## Architecture - Offchain (Technical) (WIP)
-
-TODO
