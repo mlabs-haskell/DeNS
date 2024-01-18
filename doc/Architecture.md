@@ -2,14 +2,15 @@
 
 ## Requirements (Conceptual)
 
-The DeNS protocol must support a small list of essential features to deliver on the promise of a decentralized, transparent, censorship-resistant, and privacy-conscious successor to the DNS protocol. These features are:
+The DeNS protocol must support a small list of essential features to deliver on the promise of a decentralized, transparent, censorship-resistant, and privacy-conscious successor to the DNS protocol.
+These features are:
 
-  - Records must be stored in an immutable, permanent, and public database.
-  - Users must have the ability (at least in principle) to resolve queries _locally_ - that is, it ought to be possible for a user to reconstruct the DeNS database solely from public information, and use that database to resolve queries without sharing those queries (or the identity of the user) with any third party
-  - Users must be provided with direct control over their records, such that they can update those records without the assent or intervention of any third party.
-  - Users must have the ability to transfer ownership of their records without the assent or intervention of any third party.
-  - It must be possible to reconstruct a database, suitable for use as the primary database mapping domain names to resources in a DNS resolver, from these public records
-  - A viable and orderly transition path from traditional DNS must exist, such that existing users of DNS can gradually migrate to the DeNS protocol
+- Records must be stored in an immutable, permanent, and public database.
+- Users must have the ability (at least in principle) to resolve queries _locally_ - that is, it ought to be possible for a user to reconstruct the DeNS database solely from public information, and use that database to resolve queries without sharing those queries (or the identity of the user) with any third party
+- Users must be provided with direct control over their records, such that they can update those records without the assent or intervention of any third party.
+- Users must have the ability to transfer ownership of their records without the assent or intervention of any third party.
+- It must be possible to reconstruct a database, suitable for use as the primary database mapping domain names to resources in a DNS resolver, from these public records
+- A viable and orderly transition path from traditional DNS must exist, such that existing users of DNS can gradually migrate to the DeNS protocol
 
 The last feature requires further elaboration and discussion. A 'transition path', for the purposes of this document, can be understood in two ways: First, from the perspective of end-users of the system, a DeNS transition path requires that they be able to interact with DeNS to resolve traditional DNS queries while benefiting from the advantages of decentralization, transparency, etc. Second, from the perspective of (DNS) domain owners and operators, a transition path requires that DeNS (temporarily) delegates authority over existing DNS records to the authoritative sources of those records in the existing DNS system.
 
@@ -49,9 +50,9 @@ Similarly, at the highest level there are no "bare names" in DeNS. A DeNS name e
 
 Records in DeNS, then, are just ordinary DNS records. However, in order to maximize the number of additional protocols that DeNS support, and to reduce the burden of supporting obsolete protocols, we will consider all existing DNS record classes other than 1 (IP) to be deprecated. We will not consider ourselves obliged to support these protocols, and we reserve the right to reassign their class identifier at our discretion.
 
-The considerations raised in this section also constrain the logical structure of the DeNS root domain. In particular, the DeNS root domain must be _universal_ in a sense in which the DNS root domain is not. To elaborate: What we ordinarily refer to as the DNS root domain - the set of zone files served by DNS root servers - is really *a* DNS root domain. Namely, it is the root domain for the IP class. There are [other](https://chaosnet.net/chaos-dns) root domains for non-IP classes, and (e.g.) the Chaosnet root domain and the IP root domain are utterly distinct from one another. In this sense, the existing DNS root domain is not universal.
+The considerations raised in this section also constrain the logical structure of the DeNS root domain. In particular, the DeNS root domain must be _universal_ in a sense in which the DNS root domain is not. To elaborate: What we ordinarily refer to as the DNS root domain - the set of zone files served by DNS root servers - is really _a_ DNS root domain. Namely, it is the root domain for the IP class. There are [other](https://chaosnet.net/chaos-dns) root domains for non-IP classes, and (e.g.) the Chaosnet root domain and the IP root domain are utterly distinct from one another. In this sense, the existing DNS root domain is not universal.
 
-DeNS, by contrast, will be universal. Concretely, this implies that the records which constitute the DeNS top-level root domain will contain resources which are associated with a *class*, and not, as with DNS, a top-level domain. In this way, we can support a wide variety of different protocols, including protocols that serve as their own autonomous top-level domain.
+DeNS, by contrast, will be universal. Concretely, this implies that the records which constitute the DeNS top-level root domain will contain resources which are associated with a _class_, and not, as with DNS, a top-level domain. In this way, we can support a wide variety of different protocols, including protocols that serve as their own autonomous top-level domain.
 
 This architecture allows us to specify more clearly the mechanics of the transition away from DNS as an authority for IP records: We will lease the IP class of domains to ourselves and maintain mirrors of DNS records until DeNS adoption reaches a level that we judge sufficient to facilitate a "hard fork" from DNS authority. At that point, we will let the lease expire and IP class domains in DeNS will be directly managed by domain owners via DeNS smart contracts.
 
@@ -114,8 +115,8 @@ data SetDatum
   }
 ```
 
-
 #### SetElemID Minting Policy
+
 The `SetValidator` locks UTxOs containing `SetDatum` entries and is used alongside with `SetElemID` to represent the on-chain collection of unique keys. We initialize the set by locking a UTXO with `SetDatum (DeNSKey "" 0) (DeNSKey ub (2^16 - 1)` at the validator (which can be assumed to exist for validation checks) when minting `Protocol` NFT (to ensure uniqueness of the linked list) where `ub` is the minimal upper bound (under lexicographical ordering) of all `ByteString`s that are DNS names (see [2.3.4. of RFC  1035](https://www.ietf.org/rfc/rfc1035.txt)) which is itself not a DNS name.
 `SetElemID` will identify a subset of all `SetValidator`s on the blockchain to distinguish the `SetValidator`s relevant to the protocol as opposed to random `SetValidator` addresses adversaries may have paid to.
 
@@ -162,11 +163,12 @@ data SetInsert = SetInsert
 
 - The transaction corresponds to the above schema exactly.
 
-**DISCUSSION:** 
+**DISCUSSION:**
 
 - Because the set is initialized with a lower bound and upper bound, inserting an arbitrary name `n` always amounts to inserting `n` after some _known_ name `m` where `m < n` and before some known name `o` s.t. `n < o`.
 
 **EXTENSIONS:**
+
 - Since the `SetElemID` token name isn't used, it should be the empty string to save bytes.
 - It is possible to introduce a hierarchical ownership of names (e.g. `DeNSKey 1 "google.com."` may be purchased only if the owner of `DeNSKey 1 "com."` approves such a sale). We only describe the inductive case, and leave the base case up to implementations where the owner of the empty domain (for each class) would be coded directly in the smart contract.  First, we will assume that a function `parse :: ByteString -> [ByteString]` exists which maps names like `"google.com"` to `["google", "com"]` i.e., `parse` decomposes a `name` into its labels, and if `parse n1` is a suffix of `parse n2`, then we say that `n2` is a subdomain of `n1` (see [2.3.1](https://www.ietf.org/rfc/rfc1035.txt)). We will also assume there exists a function `unparse :: [ByteString] -> ByteString` that is the inverse of `parse`. The key idea is that a subdomain must verify that the domain immediately "above" has approved purchasing the subdomain's name.
 
@@ -213,6 +215,7 @@ data SetInsert = SetInsert
 - One may consider to not allow `DeNSKey`s with empty strings to be inserted.
 
 #### SetValidator validator
+
 `SetValidator` is the validator address which holds the elements in the logical database. It simply validates only if `SetElemID` mints i.e., it forwards all verifications to `SetElemID`.
 
 **DISCUSSION:**
@@ -226,7 +229,7 @@ The `ElementID` minting policy is an NFT which serves as an access control ident
 
 - `SetElemID` mints in the same transaction
 
-**DISCUSSION:** 
+**DISCUSSION:**
 
 This forwards all verifications to `SetElemID` whose minting is unique w.r.t to the element inserted in the set, and ensures that this `ElementID`'s token name contains sufficient information to identify it with the inserted element.
 
@@ -251,7 +254,6 @@ data DeNSKey = DeNSKey
     , owner :: PubKeyHash
 }
 ```
-
 
 The offchain code that constructs the DeNS database will always treat the _most recent_ record associated with a given name as authoritative, and consequently we do not need to distinguish between record creation and record deletion. (Unlike the `SetValidator`, we do not need a simulated Map or Set).
 
@@ -280,6 +282,7 @@ The offchain code that constructs the DeNS database will always treat the _most 
 TODO
 
 ## Architecture - Offchain (Technical) (WIP)
+
 The offchain infrastructure needs to provide the following services.
 
 1. _Efficient UTxO queries._ Of course, we must efficiently provide UTxOs for
@@ -296,31 +299,22 @@ The offchain infrastructure needs to provide the following services.
    method to provide DNS records compatible with existing DNS systems.
 
 ### Efficient UTxO queries
+
 Due to the peculiar needs of the onchain protocol, we will most likely need to adapt an existing chain indexer.
 Off the shelf solutions like [Kupo](https://github.com/CardanoSolutions/kupo) (which is used internally by [CTL](https://github.com/Plutonomicon/cardano-transaction-lib?tab=readme-ov-file#additional-resourcestools)) unfortunately supports querying UTxOs via "patterns" which in particular do not satisfy the requirement of efficiently mapping `DeNSKey`s to a particular UTxO in the sense mentioned above.
 
-As such, we must maintain our own index to query UTxOs by e.g. maintaining an
-SQL database such as PostgreSQL (where note that most relational databases by construction can
-efficiently query achieve our desired `DeNSKey` query) which listens for
-"events" on the Cardano blockchain and updates its tables appropriately.
+As such, we must maintain our own index to query UTxOs by e.g. maintaining an SQL database such as PostgreSQL (where note that most relational databases by construction can efficiently query achieve our desired `DeNSKey` query) which listens for "events" on the Cardano blockchain and updates its tables appropriately.
 
 Of course, we can write our own chain indexer, but it's probably better to build off existing work such as:
 
-- Adapting the more chain flexible indexers such as
-  [oura](https://github.com/txpipe/oura/#readme) which filters events on the
-  blockchain according to patterns and outputs the values to a "sink" which
-  updates our own database.
-  Note that we could also use
-  [marconi](https://github.com/input-output-hk/marconi), but it appears to be
-  under heavy development.
+- Adapting the more chain flexible indexers such as [oura](https://github.com/txpipe/oura/#readme) which filters events on the blockchain according to patterns and outputs the values to a "sink" which updates our own database.
+  Note that we could also use [marconi](https://github.com/input-output-hk/marconi), but it appears to be under heavy development.
 
-- [Interacting with ogmios](https://ogmios.dev/) which provides a convenient
-  websockets to interact with the blockchain node, and we could update our
-  database based on the information obtained by the websockets.
+- [Interacting with ogmios](https://ogmios.dev/) which provides a convenient websockets to interact with the blockchain node, and we could update our database based on the information obtained by the websockets.
 
 As an ASCII diagram, we envision this to be
 
-```
+```text
                   
                    Listens for events
  --------------                         ---------------          --------------
@@ -338,41 +332,26 @@ As an ASCII diagram, we envision this to be
 
 where the lines denote communication, and the square boxes denote programs.
 
-
 ### Providing DNS records
+
 We will piggyback off of existing DNS systems.
 In particular, we will adapt the existing full-featured DNS system [BIND 9](https://www.isc.org/bind/) for our purposes.
 Note that BIND 9 is the first, oldest, and most commonly deployed DNS solution, so this has the immediate benefit that network engineers will already be familiar with its deployment to ease adoption of DeNS.
 
-
 BIND 9 is configured by a file often known as `named.conf`.
-Adding the initial set of DNS records to BIND 9 is straightforward -- one
-updates the `named.conf` to include a zone file (set of DNS records) with the
-associated DNS name. See the documentation for
-[details](https://bind9.readthedocs.io/en/latest/chapter3.html#primary-authoritative-name-server).
-Updates to the database can be done dynamically with [nsupdate](https://bind9.readthedocs.io/en/latest/manpages.html#std-iscman-nsupdate)
-    or by directly following the [dynamic updates in DNS protocol](https://datatracker.ietf.org/doc/html/rfc2136.html).
+Adding the initial set of DNS records to BIND 9 is straightforward -- one updates the `named.conf` to include a zone file (set of DNS records) with the associated DNS name. See the documentation for [details](https://bind9.readthedocs.io/en/latest/chapter3.html#primary-authoritative-name-server).
+Updates to the database can be done dynamically with [nsupdate](https://bind9.readthedocs.io/en/latest/manpages.html#std-iscman-nsupdate) or by directly following the [dynamic updates in DNS protocol](https://datatracker.ietf.org/doc/html/rfc2136.html).
 
-One wrinkle with using a traditional DNS system for DeNS is that the blockchain
-    is the single authoritative source of ownership for all records as the onchain
-    smart contracts guarantee that every domain has a unique name or label.
-Moreover, all DNS records should be immediately wholly accessible (TODO: don't
-    know how to word this?) via the blockchain (indirectly by Arweave); so the
-    DNS server should never need to recursively resolve queries by contacting
-    other name servers.
-Conveniently, this setting can be disabled with the
-    [recursion](https://bind9.readthedocs.io/en/latest/reference.html#namedconf-statement-recursion)
-    option.
+One wrinkle with using a traditional DNS system for DeNS is that the blockchain is the single authoritative source of ownership for all records as the onchain smart contracts guarantee that every domain has a unique name or label.
+Moreover, all DNS records should be immediately wholly accessible (TODO: don't know how to word this?) via the blockchain (indirectly by Arweave); so the DNS server should never need to recursively resolve queries by contacting other name servers.
+Conveniently, this setting can be disabled with the [recursion](https://bind9.readthedocs.io/en/latest/reference.html#namedconf-statement-recursion) option.
 
-Finally, the only question that remains is how updates from the blockchain
-    should propagate to the DNS system.
-We propose to piggyback back on top of the chain indexer from the previous section
-    where we listen for the event of set changes, and on the occurrence of such event,
-    we update the DNS records.
+Finally, the only question that remains is how updates from the blockchain should propagate to the DNS system.
+We propose to piggyback back on top of the chain indexer from the previous section where we listen for the event of set changes, and on the occurrence of such event, we update the DNS records.
 
 So, the following ASCII diagram depicts the complete situation.
 
-```
+```text
                                           ------------ 
                                          | DNS server |
                                           ------------ 
