@@ -277,7 +277,194 @@ The offchain code that constructs the DeNS database will always treat the _most 
 
 ## Architecture - Arweave (Technical) (WIP)
 
-TODO
+There are two different paths : 
+
+- We build our own indexer (gateways include indexing), with or without
+    a gateway.
+- We rely on a gateway entirely (they include indexing) and tags to query data.
+
+### Using our own Indexer 
+ 
+In principle this allows for full local resolution. The problem with it is
+that there are 110 TBs of data already in Arweave, 
+we can't expect a user to download all that.
+
+Arweave V2 allows the separation of the `Transaction` from the `Data`
+posted on-chain, this means that the real amount of data needed by 
+an indexer is lower.
+
+This can be done by two approach :
+
+- We modify a `miner` that would refuse to store all data not related to
+    the protocol.
+- We query the mining nodes directly, and then we keep only the data we 
+    want.
+
+In both cases we need to distinguish the data from the protocol from external
+data, this may be done by the use of tags in transactions.
+
+This is how a small block looks : 
+
+```
+{
+  "nonce": "O3IQWXYmxLN_b0w7QyT2GTruaVIGsl-Ybhc6Pl2V20U",
+  "previous_block": "VRVYubqppWUVAeCWlzHR-38dQoWcFAKbGculkVZThfj-hNMX4QVZjqkC6-PkiNGE",
+  "timestamp": 1567052949,
+  "last_retarget": 1567052114,
+  "diff": "115792088374597902074750511579343425068641803109251942518159264612597601665024",
+  "height": 269512,
+  "hash": "____47liyh_OZdYUP4EzBoLl7JOPge9VsWPQ3b5kiU8",
+  "indep_hash": "5H-hJycMS_PnPOpobXu2CNobRlgqmw4yEMQSc5LeBfS7We63l8HjS-Ek3QaxK8ug",
+  "txs": [
+    "tqDWYT-qdoCeSWGpV2Ig48lpswOxccbBpyxf0GQjs2U",
+    "y0bIjxLaXu1gEjpRlyPUh0Uz0c5XrhIOs6z4lerXo8w"
+  ],
+  "wallet_list": "6haahtRP5WVchxPbqtLCqDsFWidhebYJpU5PVB4zQhE",
+  "reward_addr": "aE1AjkBoXBfF-PRP2dzRrbYY8cY2OYzeH551nSPRU5M",
+  "tags": [],
+  "reward_pool": 0,
+  "weave_size": 21080508475,
+  "block_size": 991723,
+  "cumulative_diff": "616416144",
+  "hash_list_merkle": "1QVbbLwZHpNMJd8ZghRb13HZfrRu-aIIfzY29r64_yBJAcYv-Kfblv_c2pfKbQBP"
+}
+```
+
+And a transaction V2 not storing the data in the transaction looks like:
+
+```
+{
+  "format": 2,
+  "id": "BNttzDav3jHVnNiV7nYbQv-GY0HQ-4XXsdkE5K9ylHQ",
+  "last_tx": "jUcuEDZQy2fC6T3fHnGfYsw0D0Zl4NfuaXfwBOLiQtA",
+  "owner": "posmE...psEok",
+  "tags": [],
+  "target": "",
+  "quantity": "0",
+  "data_root": "PGh0b...RtbD4",
+  "data": "",
+  "data_size": "1234235",
+  "reward": "124145681682",
+  "signature": "HZRG_...jRGB-M"
+}
+```
+
+
+To download the data we need to use the `Download Chunks` endpoint.
+The node serving data or the gateway would notice that although we are 
+receiving all the transactions, we are only requesting the chunks of 
+data with the particular tags we use to recognize the protocol.
+
+
+### Advantages
+
+- We don't care about fragmentation of the information. If we keep
+    up to date the onchain information we can solve queries 
+    locally without anyone knowing that we did it
+
+### Disadvantages
+
+- For the `be a mining node` case, we need at least 4TB of storage.
+    Linux is the only Os supported. And finally it require a 50 MB/s 
+    stable connection.
+
+- For the `use a gateway`, they already index data and the api for them 
+    attempts to hide the block structure. We can still request the blocks 
+    but, we may need to actively request them constantly. Also, they paginate
+    the results, so we may lose blocks if we are not fast enough.
+
+- Eventually a transaction may represent a single record (or a single set 
+    of records for a particular domain). This means that we would 
+    duplicate the work made in the Cardano indexer but for Arweave.
+
+We can write a simple indexer that would not store the information locally and 
+then the resolution of queries would be totally exposed. We can do this only to 
+reduce time of development, but in such a case we need to discard the 
+mining approach and only use a gateway.
+
+
+## Use a Gateway
+
+In this approach we never handle the blocks of Arweave and fully rely on the 
+tags systems and the api offered by the gateway to retrieve data.
+
+In this case, fragmentation would lead to a easy guessing of what we are 
+doing to the gateway operators. They would reconstruct without much effort 
+the domain we are querying. 
+
+To prevent fragmentation, we may do bulk updates of records.
+
+We begin with big files stored on-chain using a bundler:
+
+```
+File for zone 1 -> TxId1
+File for zone 2 -> TxId2
+File for zone 3 -> TxId3
+...
+```
+
+Then if we need to update the set of record for a domain `D` at file zone `N`,
+then we have multiple options:
+
+- Copy the entire zone file `N`, with the modification on the records for `D`.
+    this means that for `.com` we would need to updload/downoad 4GB of data 
+    every time, of course this is a bad idea!
+- Upload a single file containing the `D` records with the update and use
+    it in cardano as is. This promotes fragmentation!
+- We split the zone files in smaller chunks of a fixed size `Z`, then we 
+    upload the updated chunk. We always choose the same domains to be 
+    part of the same chunk, otherwise the gateway can guess easily 
+    what domain we are solving.
+
+For the exposed reasons, the split of zone files in smaller files after the
+update, is a better option than the other two, but it still has some failures.
+
+What happens when two domains `D1` and `D2` whose records are in the same chunk, 
+want to post updates? In such a case both of them would post an entire copy
+of the chunk. So, who of the two is the right chunk? in principle it doesn't 
+matter as the only one aware of the modified copy is the one posting it, 
+from it's point of view it would be the right one (as it contains the 
+right records for the particular domain). The cardano query would hide
+the fact that we have multiple async copies of the chunk and in the end 
+we not only duplicate lots of data, but our domain would be uniquely 
+identifiable again!
+
+To avoid this problems we need `D1` and `D2` to be aware of the actions of the
+other in some way. We propose to use Caradano for this.
+
+When we split the zone files in initial chunks, we assign a number or an id to 
+them, `id(chunk)`. For insertion of new domains we can create new chunks.
+
+For a domain `D` the associated `DeNSValue(D)` is the `id(chunk)` of the `chunk`
+that was assigned to `D`. 
+
+We keep on cardano 
+
+First of all the previously introduced `DensValue` for a domain `D` would be the
+number of the particular chunk of data in which their records are stored. 
+
+Then we another location to store 
+
+
+Particularly the `Pointer` that we hold in Cardano, will be a transaction
+id for the particualr tr
+
+
+
+A down side of this is that then we would depend of the service.
+
+
+
+It seems that the maximum amount of data we can upload paying the minimum amount possible is:
+```
+                          256000
+https://arweave.net/price/218999
+212017846
+```
+
+
+A side effect of immutability is that we need to post updates to the 
+
 
 ## Architecture - Offchain (Technical) (WIP)
 The offchain infrastructure needs to provide the following services.

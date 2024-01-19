@@ -1,2 +1,6 @@
 .pre-commit-config.yaml
+# So we can use https://github.com/joeyespo/grip
+token.txt
+__pycache__/
+.env
 
