@@ -312,7 +312,7 @@ ZoneNET.txt
 ZoneSome.txt
 ```
 
-Every zone file will be split on smaller chunks of size `ORIGINAL_CHUNCK_SIZE` (To be defined).
+Every zone file will be split on smaller chunks of size `ORIGINAL_CHUNK_SIZE` (To be defined).
 Then using the services of a bundler we will upload the chunks in bulk. 
 
 Arweave has a limit of transactions per block but, they allow the use of
