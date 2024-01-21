@@ -414,7 +414,7 @@ Conveniently, this setting can be disabled with the [recursion](https://bind9.re
 Finally, the only question that remains is how updates from the blockchain should propagate to the DNS system.
 We propose to piggyback back on top of the chain indexer from the previous section where we listen for the event of set changes, and on the occurrence of such event, we update the DNS records.
 
-```
+```mermaid
 flowchart 
     Cardano[Cardano node]-- Listens for events ---CardanoIndexer[Chain indexer] ;
     CardanoIndexer---SQL[(SQL database)];
