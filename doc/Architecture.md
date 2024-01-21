@@ -65,7 +65,7 @@ TODO/FIXME: Everything here assumes that domain ownership is eternal/indefinite.
 All contract scripts will be parameterized by a `Protocol` NFT that uniquely identifies a UTxO which as datum contains the configuration (trusted knowledge of Plutus scripts) of the protocol. More precisely, the `Protocol` NFT must be paid to an unspendable validator, say `ProtocolValidator`, which has the following as datum.
 
 ```haskell
-data Protocol = Protocol 
+data Protocol = Protocol
   { elementIdMintingPolicy :: ScriptHash
   , setElemMintingPolicy :: ScriptHash
   , setValidator :: ScriptHash
@@ -88,7 +88,7 @@ Morally, the DeNS protocol is a cross-chain distributed Key-Value store, where t
   This data type contains all of the elements necessary to function as a key in our logical database.
 -}
 data DeNSKey
-  = DeNSKey 
+  = DeNSKey
     { densName  :: ByteString
         -- ^ A human readable domain name
     , densClass :: Word16
@@ -107,10 +107,10 @@ The most important invariant that the protocol must maintain is the _uniqueness 
 
 ```haskell
 data SetDatum
-  = SetDatum 
+  = SetDatum
     { key :: DeNSKey
         -- ^ This entry's key
-    , next :: DeNSKey 
+    , next :: DeNSKey
         -- ^ The successor to key
   }
 ```
@@ -154,7 +154,7 @@ Let
 **REDEEMER**:
 
 ```haskell
-data SetInsert = SetInsert 
+data SetInsert = SetInsert
     { densKey :: DeNSKey
     }
 ```
@@ -176,7 +176,7 @@ data SetInsert = SetInsert
 
   ```diff
   data SetDatum
-    = SetDatum 
+    = SetDatum
       { key :: DeNSKey
       , next :: DeNSKey
   +   , ownerApproval :: CurrencySymbol
@@ -185,7 +185,7 @@ data SetInsert = SetInsert
   ```
 
   ```haskell
-  data SetInsert = SetInsert 
+  data SetInsert = SetInsert
       { densKey :: DeNSKey
   +   , ownerApproval :: CurrencySymbol
       }
@@ -246,10 +246,10 @@ The records validator serves as an access control list for the virtual DeNS data
 The Records Validator datum functions as the key in our virtual database. To update or create a record, a DeNS user simply adjusts the reference for the class and name that they own. To delete a record, the user submits a transaction with an output datum where the `reference` field is `Nothing`.
 
 ```haskell
-data DeNSKey = DeNSKey 
+data DeNSKey = DeNSKey
     { class :: Word32
     , name  :: ByteString
-    , reference :: Maybe ByteString 
+    , reference :: Maybe ByteString
         -- ^ an Arweave address
     , owner :: PubKeyHash
 }
@@ -293,9 +293,9 @@ Ar = 1e12 wilson
 ```
 
 At today the price of an Ar is around `9.5` usd, this means that the minimum cost of a transaction is : `0.002014169537` usd.
-And the maximum size of a transaction with such a price is above 250 KB. 
+And the maximum size of a transaction with such a price is above 250 KB.
 
-Additionally some gateways allows the upload of certain amount of bytes for free. 
+Additionally some gateways allows the upload of certain amount of bytes for free.
 
 Those are the reason we choose to store every set of records in a particular zone file as a single transaction.
 
@@ -313,38 +313,38 @@ ZoneSome.txt
 ```
 
 Every zone file will be split on smaller chunks of size `ORIGINAL_CHUNK_SIZE` (To be defined).
-Then using the services of a bundler we will upload the chunks in bulk. 
+Then using the services of a bundler we will upload the chunks in bulk.
 
 Arweave has a limit of transactions per block but, they allow the use of
 `bundle` transactions that allows the inclusion of up to `2^256` transactions
 in every bundle.
 Although the cost of upload can increase (to be investigated), this
-allows to a query by only downloading a single chunk instead of waiting for the download of 
-an entire zone file. Additionally, we believe that the increase cost won't be more than 
+allows to a query by only downloading a single chunk instead of waiting for the download of
+an entire zone file. Additionally, we believe that the increase cost won't be more than
 $100 usd and we expect it to be much less (to be investigated).
 
 The process of bundling will assign a unique transaction Id to the uploaded chunk
-This mean that at this point the reference inside a `DeNSValue` is 
+This mean that at this point the reference inside a `DeNSValue` is
 the assigned id of the chunk.
 
-This means that when someone tries to solve the ip of a domain, they 
+This means that when someone tries to solve the ip of a domain, they
 need to find the right domain inside the original chunk.
 
 ### Update of a set of records and upload of new records
 
 After the initial upload, every owner of a domain is responsibly of the
 update of they own records. With the use of a bundler, we can recommend
-them to upload a single set of records in a single transaction. But 
+them to upload a single set of records in a single transaction. But
 they may choose to not to bundle and just upload a single transaction
 mixing records for other domains that they own. In such cases
 the local dns would only update the local records corresponding to
-the domain that is being updated in cardano. This shouldn't prevent 
-the user to refer in further updates of other domains to use 
+the domain that is being updated in cardano. This shouldn't prevent
+the user to refer in further updates of other domains to use
 the same transaction id for multiple domains.
 
 
-This model means that the initial actor/mantainer of the network 
-would be able to do updates in bulk with low cost and to 
+This model means that the initial actor/mantainer of the network
+would be able to do updates in bulk with low cost and to
 discharge the update responsibility on a new owner in the future
 with ease.
 
@@ -415,7 +415,7 @@ Finally, the only question that remains is how updates from the blockchain shoul
 We propose to piggyback back on top of the chain indexer from the previous section where we listen for the event of set changes, and on the occurrence of such event, we update the DNS records.
 
 ```mermaid
-flowchart 
+flowchart
     Cardano[Cardano node]-- Listens for events ---CardanoIndexer[Chain indexer] ;
     CardanoIndexer---SQL[(SQL database)];
     CardanoIndexer-- Query UTxOs ---TXBuilder[Tx builder];
