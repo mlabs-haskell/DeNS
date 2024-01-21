@@ -281,14 +281,14 @@ The offchain code that constructs the DeNS database will always treat the _most 
 
 It seems that the maximum amount of data we can upload paying the minimum amount possible is:
 
-```
+```bash
 https://arweave.net/price/256000
 212017846
 ```
 
 This price is given in Wilson, where a Wilson is related to Ar (the arweave currency) as:
 
-```
+```python
 Ar = 1e12 wilson
 ```
 
@@ -303,7 +303,7 @@ Those are the reason we choose to store every set of records in a particular zon
 
 Initially we have a setup like this:
 
-```
+```bash
 ZoneCOM.txt
 ZoneNET.txt
 .
