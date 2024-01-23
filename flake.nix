@@ -20,6 +20,12 @@
 
           # Onchain
           ./onchain/build.nix
+
+          # Offchain
+          ./offchain/build.nix
+
+          # Settings
+          ./settings.nix
         ];
       };
 }
