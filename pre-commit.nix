@@ -8,6 +8,8 @@
         deadnix.enable = true;
         typos.enable = true;
         markdownlint.enable = true;
+        denofmt.enable = true;
+        denolint.enable = true;
       };
 
       settings = {
