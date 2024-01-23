@@ -1,0 +1,8 @@
+{
+  "files": [],
+  "include": [],
+  "references": [
+    { "path": "./ChainIndexer" },
+    { "path": "./Tests" }
+  ]
+}
