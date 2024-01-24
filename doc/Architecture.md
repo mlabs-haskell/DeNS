@@ -342,18 +342,10 @@ the domain that is being updated in cardano. This shouldn't prevent
 the user to refer in further updates of other domains to use
 the same transaction id for multiple domains.
 
-
 This model means that the initial actor/mantainer of the network
 would be able to do updates in bulk with low cost and to
 discharge the update responsibility on a new owner in the future
 with ease.
-
-
-
-
-
-
-
 
 ## Architecture - Offchain (Technical) (WIP)
 
@@ -385,7 +377,6 @@ Of course, we can write our own chain indexer, but it's probably better to build
   Note that we could also use [marconi](https://github.com/input-output-hk/marconi), but it appears to be under heavy development.
 
 - [Interacting with ogmios](https://ogmios.dev/) which provides a convenient websockets to interact with the blockchain node, and we could update our database based on the information obtained by the websockets.
-
 
 ```mermaid
 flowchart
