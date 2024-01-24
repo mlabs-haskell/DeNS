@@ -335,18 +335,28 @@ where the lines denote communication, and the square boxes denote programs.
 ### Providing DNS records
 
 We will piggyback off of existing DNS systems.
-In particular, we will adapt the existing full-featured DNS system [BIND 9](https://www.isc.org/bind/) for our purposes.
-Note that BIND 9 is the first, oldest, and most commonly deployed DNS solution, so this has the immediate benefit that network engineers will already be familiar with its deployment to ease adoption of DeNS.
+This has the benefit of allowing ease of integration to existing DNS systems.
+We considered the following two existing DNS systems.
 
-BIND 9 is configured by a file often known as `named.conf`.
-Adding the initial set of DNS records to BIND 9 is straightforward -- one updates the `named.conf` to include a zone file (set of DNS records) with the associated DNS name. See the documentation for [details](https://bind9.readthedocs.io/en/latest/chapter3.html#primary-authoritative-name-server).
-Updates to the database can be done dynamically with [nsupdate](https://bind9.readthedocs.io/en/latest/manpages.html#std-iscman-nsupdate) or by directly following the [dynamic updates in DNS protocol](https://datatracker.ietf.org/doc/html/rfc2136.html).
+- [BIND 9](https://www.isc.org/bind/) is the first, oldest, and most commonly deployed solution.
+  This has the immediate benefit that network engineers will already be familiar with its deployment to ease adoption of DeNS.
+  This is an all-in-one solution which combines both the recursive resolver, and the authoritative server.
+  Unfortunately, in DeNS, since the blockchain is the single source of truth of ownership for the RRs, there is no need to use the recursive resolver part.
+  It is possible to disable the recursive resolver in BIND 9, but we opted with the more modular PowerDNS solution described below.
 
-One wrinkle with using a traditional DNS system for DeNS is that the blockchain is the single authoritative source of ownership for all records as the onchain smart contracts guarantee that every domain has a unique name or label.
-Moreover, all DNS records should be immediately wholly accessible (TODO: don't know how to word this?) via the blockchain (indirectly by Arweave); so the DNS server should never need to recursively resolve queries by contacting other name servers.
-Conveniently, this setting can be disabled with the [recursion](https://bind9.readthedocs.io/en/latest/reference.html#namedconf-statement-recursion) option.
+- [PowerDNS](https://doc.powerdns.com/) consists of two parts: the authoritative server, and the recursor.
+  The authoritative server answers questions about the domains it knows about (from its database), and importantly will not go out on the net to resolve queries about other domains.
+  On the other hand, the recursor has no knowledge of domains itself, but will always consult other authoritative servers to answer questions given to it.
+  Indeed, DeNS would like to integrate with only the authoritative server part of PowerDNS (ignoring the recursor), where DeNS will fill up the authoritative server's database with its own DNS records.
 
-Finally, the only question that remains is how updates from the blockchain should propagate to the DNS system.
+Of the two existing solutions, we believe that PowerDNS's modularity of splitting the authoritative server and the recursor into separate entities makes it a better fit to integrate into DeNS since DeNS only needs the authoritative server functionality.
+
+PowerDNS requires some [basic setup](https://doc.powerdns.com/authoritative/guides/basic-database.html) in order to talk to a backend database.
+In particular, it supports a PostgreSQL database backend.
+Its operation falls under the [generic SQL backend](https://doc.powerdns.com/authoritative/backends/generic-sql.html) category for which users can interact with it via the application `pdnsutil` or the [REST-API](https://doc.powerdns.com/authoritative/http-api/index.html).
+We will interact with the authoritative server via the REST-API which in particular has endpoints to manipulate zones to add RRsets -- details are in the documentation [here](https://doc.powerdns.com/authoritative/http-api/zone.html).
+
+Finally, the only question that remains is how updates from the blockchain should propagate to the authoritative server.
 We propose to piggyback back on top of the chain indexer from the previous section where we listen for the event of set changes, and on the occurrence of such event, we update the DNS records.
 
 So, the following ASCII diagram depicts the complete situation.
