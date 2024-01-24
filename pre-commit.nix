@@ -4,10 +4,23 @@
     devShells.pre-commit = config.pre-commit.devShell;
     pre-commit.settings = {
       hooks = {
+        # Nix hooks
         nixpkgs-fmt.enable = true;
         deadnix.enable = true;
-        typos.enable = true;
+        statix.enable = true;
+
+        # Haskell hooks
+        cabal-fmt.enable = true;
+        fourmolu.enable = true;
+        hlint.enable = true;
+
+        # Shell hooks
+        shellcheck.enable = true;
+
+        # Markdown hooks
         markdownlint.enable = true;
+
+        # TS/JS hooks
         denofmt = {
           enable = true;
           # Note(jaredponn): We follow the default files this formats, except
@@ -16,6 +29,10 @@
           files = ''^.*\.(js|ts|jsx|tsx|json|jsonc)$'';
         };
         denolint.enable = true;
+
+        # Spelling hooks
+        typos.enable = true;
+
       };
 
       settings = {
