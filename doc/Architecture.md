@@ -246,8 +246,8 @@ The records validator serves as an access control list for the virtual DeNS data
 The Records Validator datum functions as the key in our virtual database. To update or create a record, a DeNS user simply adjusts the reference for the class and name that they own. To delete a record, the user submits a transaction with an output datum where the `reference` field is `Nothing`.
 
 ```haskell
-data DeNSKey = DeNSKey 
-    { class :: Word32
+data RecordDatum = RecordDatum 
+    { class :: Word16
     , name  :: ByteString
     , reference :: Maybe ByteString 
         -- ^ an Arweave address
@@ -263,7 +263,7 @@ The offchain code that constructs the DeNS database will always treat the _most 
 
 **OUTPUTS:**
 
-- A UTxO, paid to the Records Validator, which contains the `DeNSKey` passed by the user
+- A UTxO, paid to the Records Validator, which contains the `RecordDatum` passed by the user
 
 **MINTS**: N/A
 
@@ -274,7 +274,7 @@ The offchain code that constructs the DeNS database will always treat the _most 
 **DISCUSSION:** Since the `owner` owns the token, this validator gives them "free reign" to update it as they please. In practise, to not confuse offchain code and devalue one's own Records (by e.g. giving it to someone else for free), one would most likely want to check the following conditions as well
 
 - The NFT in the inputs contains a token that satisfies the constraints outlined above in the section
-- The output contains a single UTxO with an _inline_ `DeNSKey` datum which is equal to the input passed in by the user
+- The output contains a single UTxO with an _inline_ `RecordDatum` datum which is equal to the input passed in by the user
 - This output UTxO is paid to the validator
 
 ## Architecture - Arweave (Technical) (WIP)
