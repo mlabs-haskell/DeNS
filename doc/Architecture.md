@@ -286,22 +286,22 @@ https://arweave.net/price/256000
 212017846
 ```
 
-This price is given in Wilson, where a Wilson is related to Ar (the arweave currency) as:
+This price is given in Wilson, where a Wilson is related to Ar (the Arweave currency) as:
 
 ```python
 Ar = 1e12 wilson
 ```
 
-At today the price of an Ar is around `9.5` usd, this means that the minimum cost of a transaction is : `0.002014169537` usd.
+At today the price of an Ar is around `9.5` USD, this means that the minimum cost of a transaction is : `0.002014169537` USD.
 And the maximum size of a transaction with such a price is above 250 KB.
 
 Additionally some gateways allows the upload of certain amount of bytes for free.
 
-Those are the reason we choose to store every set of records in a particular zone file as a single transaction.
+Those are the reasons we choose to store every set of records in a particular zone file as a single transaction.
 
 ### Initial Upload
 
-Initially we have a setup like this:
+Initially, we will assume we have the following zone files.
 
 ```bash
 ZoneCOM.txt
@@ -312,37 +312,37 @@ ZoneNET.txt
 ZoneSome.txt
 ```
 
-Every zone file will be split on smaller chunks of size `ORIGINAL_CHUNK_SIZE` (To be defined).
+Every zone file will be split into smaller chunks of size `ORIGINAL_CHUNK_SIZE` (to be defined).
 Then using the services of a bundler we will upload the chunks in bulk.
 
-Arweave has a limit of transactions per block but, they allow the use of
+Arweave has a limit of transactions per block, but they allow the use of
 `bundle` transactions that allows the inclusion of up to `2^256` transactions
 in every bundle.
 Although the cost of upload can increase (to be investigated), this
-allows to a query by only downloading a single chunk instead of waiting for the download of
-an entire zone file. Additionally, we believe that the increase cost won't be more than
-$100 usd and we expect it to be much less (to be investigated).
+allows the resolution of a query by only downloading a single chunk instead of waiting
+for the download of an entire zone file.
+Additionally, we believe that the increase cost won't be more than
+$100 USD, and we expect it to be much less (to be investigated).
 
 The process of bundling will assign a unique transaction Id to the uploaded chunk
-This mean that at this point the reference inside a `DeNSValue` is
-the assigned id of the chunk.
+This means that at this point the reference inside a `DeNSValue` is
+the assigned Id of the chunk.
 
 This means that when someone tries to solve the ip of a domain, they
 need to find the right domain inside the original chunk.
 
 ### Update of a set of records and upload of new records
 
-After the initial upload, every owner of a domain is responsibly of the
-update of they own records. With the use of a bundler, we can recommend
+After the initial upload, every owner of a domain is responsible for the
+update of their own records. With the use of a bundler, we can recommend
 them to upload a single set of records in a single transaction. But
-they may choose to not to bundle and just upload a single transaction
+they may choose not to bundle and just upload a single transaction
 mixing records for other domains that they own. In such cases
 the local dns would only update the local records corresponding to
-the domain that is being updated in cardano. This shouldn't prevent
-the user to refer in further updates of other domains to use
-the same transaction id for multiple domains.
+the domain that is being updated in Cardano. This means that different domains
+registered in Cardano, can point to the same chunk of records.
 
-This model means that the initial actor/mantainer of the network
+This model means that the initial actor/maintainer of the network
 would be able to do updates in bulk with low cost and to
 discharge the update responsibility on a new owner in the future
 with ease.
@@ -385,8 +385,6 @@ flowchart
     CardanoIndexer-- Query UTxOs ---TXBuilder[Tx builder];
     Cardano-- Submit Txs ---TXBuilder;
 ```
-
-where the lines denote communication, and the square boxes denote programs.
 
 ### Providing DNS records
 
