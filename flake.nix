@@ -8,6 +8,9 @@
 
     # flake-lang.nix: Tools for creating project flakes
     flake-lang.url = "github:mlabs-haskell/flake-lang.nix";
+
+    # LambdaBuffers: Toolkit for generating types and their semantics
+    lambda-buffers.url = "github:mlabs-haskell/lambda-buffers";
   };
 
   outputs = inputs@{ flake-parts, ... }:
