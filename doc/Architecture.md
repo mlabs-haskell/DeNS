@@ -277,25 +277,43 @@ The offchain code that constructs the DeNS database will always treat the _most 
 - The output contains a single UTxO with an _inline_ `DeNSKey` datum which is equal to the input passed in by the user
 - This output UTxO is paid to the validator
 
-## Architecture - Arweave (Technical) (WIP)
+## Architecture—Arweave (Technical) (WIP)
 
-It seems that the maximum amount of data we can upload paying the minimum amount possible is:
+### Why not Cardano?
+
+The current size of a file containing the totality of domains in internet is
+estimated in 10 GB.
+
+Cardano maximum size for a transaction is 16 KB.
+
+This means that we have to perform 655_360 transactions in the optimistic case.
+The time and cost of this amount of transactions is prohibitive, specifically for
+initialization. We need a secondary way to store data.
+
+### Why Arweave?
+
+It seems that the maximum amount of data we can upload paying the minimum amount possible
+in Arweave is:
 
 ```bash
 https://arweave.net/price/256000
 212017846
 ```
 
-This price is given in Wilson, where a Wilson is related to Ar (the Arweave currency) as:
+Here the `256000` are the bytes for upload and `212017846` is the response in Wilson.
+
+A Wilson is related to AR (the Arweave currency) as:
 
 ```python
-Ar = 1e12 wilson
+AR = 1e12 Wilson
 ```
 
-At today the price of an Ar is around `9.5` USD, this means that the minimum cost of a transaction is : `0.002014169537` USD.
-And the maximum size of a transaction with such a price is above 250 KB.
+At today the price of an AR is around `9.5` USD, this means that the minimum
+cost of a transaction is : `0.002014169537` USD. And the maximum size of a
+transaction with such a price is above 250 KB.
 
-Additionally some gateways allows the upload of certain amount of bytes for free.
+Additionally, some gateways allow the upload of certain amount of bytes for free.
+For example, Irys allow us to upload 200 KB for free in Node2.
 
 Those are the reasons we choose to store every set of records in a particular zone file as a single transaction.
 
@@ -312,8 +330,11 @@ ZoneNET.txt
 ZoneSome.txt
 ```
 
-Every zone file will be split into smaller chunks of size `ORIGINAL_CHUNK_SIZE` (to be defined).
-Then using the services of a bundler we will upload the chunks in bulk.
+We will transform them, striping redundant data and complementing with other files
+(to avoid breaking the TOS). Eventually we will reach a new state in which we will have
+small chunks of data of size `ORIGINAL_CHUNK_SIZE` (to be defined).
+
+Then using the services of a bundler we will upload the chunks in bulk to Arweave.
 
 Arweave has a limit of transactions per block, but they allow the use of
 `bundle` transactions that allows the inclusion of up to `2^256` transactions
@@ -346,6 +367,46 @@ This model means that the initial actor/maintainer of the network
 would be able to do updates in bulk with low cost and to
 discharge the update responsibility on a new owner in the future
 with ease.
+
+### Domain Solving
+
+We have two approaches here.
+
+The first one is:
+
+- Ask the Indexer to immediately retrieve the associated Cardano
+    transaction and then the Arweave transaction data.
+
+The second one:
+
+- Wait for the Indexer to update the Cardano and Arweave sides.
+
+To improve the last one, we can improve the priority of the
+information related to the domain requested.
+
+In both cases the idea is to let the Cardano Indexer guide the
+acquisition of data in the Arweave side.
+
+The full process will be:
+
+- User request domain `D` to be solved.
+
+- Cardano indexer looks for the registry of `D`.
+
+- We look for the records for `D` in the DB.
+
+- We compare the address in Cardano with the one in the
+    DB if we find `D` in the DB. If is the same we
+    return it. Otherwise, we begin the next step.
+
+- We check if we already have the chunk of data stored (we
+    could have a cache of chunks). If we haven't, we
+    retrieve it from Arweave.
+
+- We look for the IP of `D` in the chunk, then :
+  - Return the response
+  - Update the records on the DB for `D`
+  - Update the cache (if any) of chunks
 
 ## Architecture - Offchain (Technical) (WIP)
 
