@@ -1,0 +1,72 @@
+-- LambdaBuffers frontend file for the protocol.
+-- - The protocol specification: https://github.com/mlabs-haskell/DeNS/blob/main/doc/Architecture.md
+module DeNS
+
+-- See: https://github.com/mlabs-haskell/lambda-buffers/blob/main/libs/lbf-prelude/Prelude.lbf
+import Prelude (Eq, Json, Integer, Maybe)
+-- See: https://github.com/mlabs-haskell/lambda-buffers/blob/main/libs/lbf-plutus/Plutus/V1.lbf
+import Plutus.V1
+-- See: https://github.com/mlabs-haskell/lambda-buffers/blob/main/libs/lbf-plutus/Plutus/V2.lbf
+import Plutus.V2
+
+record Protocol = 
+    { elementIdMintingPolicy : ScriptHash
+    , setElemMintingPolicy : ScriptHash
+    , setValidator : ScriptHash
+    , recordsValidator : ScriptHash
+    }
+
+derive Eq Protocol
+derive Json Protocol
+derive PlutusData Protocol
+
+-- TODO(jaredponn): we could just make this:
+--  ```
+--  record DeNSKey = { name : Bytes }
+--  ```
+--  and always reserve the last two bytes (which must exist) to be the class
+record DeNSKey = 
+    { densName : Bytes
+    , densClass : Integer
+    }
+
+derive Eq DeNSKey
+derive Json DeNSKey
+derive PlutusData DeNSKey
+
+record DeNSValue = { densPointer : Maybe Bytes }
+
+derive Eq DeNSValue
+derive Json DeNSValue
+derive PlutusData DeNSValue
+
+record SetDatum = 
+    { key : DeNSKey
+    , next: DeNSKey 
+    , ownerApproval: CurrencySymbol
+    }
+
+derive Eq SetDatum
+derive Json SetDatum
+derive PlutusData SetDatum
+
+-- Note(jaredponn) probably in the future we'll need to allow doing more than
+-- just insertions (e.g leasing will require a bit more), so we make this a
+-- sumtype
+sum SetInsert 
+    = Insert DeNSKey
+
+derive Eq SetInsert
+derive Json SetInsert
+derive PlutusData SetInsert
+
+record RecordDatum =
+    { recordClass : Integer
+    , recordName : Bytes
+    , recordReference : DeNSValue
+    , recordOwner : PubKeyHash
+    }
+
+derive Eq RecordDatum
+derive Json RecordDatum
+derive PlutusData RecordDatum
