@@ -2,6 +2,6 @@
   "extends": "../tsconfig-base",
   "include": ["**/*"],
   "references": [
-    { "path": "../TxBuilder" }
+    { "path": "../DensQuery" }
   ]
 }

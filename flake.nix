@@ -18,14 +18,17 @@
       {
         systems = [ "x86_64-linux" "x86_64-darwin" ];
         imports = [
+          # Code quality
           ./hercules-ci.nix
           ./pre-commit.nix
 
-          # Onchain
-          ./onchain/build.nix
+          # DeNS project
+          ./dens-apps/build.nix
+          ./dens-query/build.nix
+          ./dens-apps/build.nix
+          ./dens-testsuites/build.nix
+          ./dens-transactions/build.nix
 
-          # Offchain
-          ./offchain/build.nix
 
           # Settings
           ./settings.nix

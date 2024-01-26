@@ -1,6 +1,7 @@
 # Ignore extra dependencies provided by nix
-extra-dependencies
+.extra-dependencies
 node_modules
+data
 
 # Logs
 logs

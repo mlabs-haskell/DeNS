@@ -4,7 +4,7 @@
     perSystem = { system, config, ... }:
       let
         tsFlake = inputs.flake-lang.lib.${system}.typescriptFlake {
-          name = "chain-indexer";
+          name = "dens-query";
           src = ./.;
           inherit (config.settings)
             devShellTools
@@ -12,20 +12,22 @@
         };
       in
       {
+
         packages = {
-          inherit (tsFlake.packages)
-            chain-indexer-typescript
-            chain-indexer-typescript-tgz;
+          # Executable
+          dens-query-cli = tsFlake.packages.dens-query-typescript-exe;
+          # Tarball to use in other projects
+          dens-query-tgz = tsFlake.packages.dens-query-typescript-tgz;
         };
 
         # When developing, in this directory, run
         # ```bash
-        # nix develop .#chain-indexer-typescript
+        # nix develop .#dens-query-typescript
         # ```
         # and it'll give you some goodies (`node_modules/` for dependencies +
-        # `./extra-dependencies`).
+        # `./.extra-dependencies`).
         devShells = {
-          inherit (tsFlake.devShells) chain-indexer-typescript;
+          inherit (tsFlake.devShells) dens-query-typescript;
         };
 
         inherit (tsFlake) checks;

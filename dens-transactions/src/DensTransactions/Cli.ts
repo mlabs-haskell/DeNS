@@ -1,4 +1,7 @@
+import * as DensTransactions from "./DensTransactions.js";
 import { Emulator, Lucid } from "lucid-cardano";
+
+DensTransactions.hello();
 
 const myAddress =
   "addr_test1vrnkfmgn6qt92lwvlwvq8mzmhe4u37pnetkfumjl9e0gj8sfm98q6";

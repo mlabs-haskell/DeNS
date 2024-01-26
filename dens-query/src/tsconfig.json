@@ -2,7 +2,7 @@
   "files": [],
   "include": [],
   "references": [
-    { "path": "./ChainIndexer" },
+    { "path": "./DensQuery" },
     { "path": "./Tests" }
   ]
 }

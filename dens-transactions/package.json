@@ -1,22 +1,24 @@
 {
-  "name": "dens-tx-builder",
+  "name": "dens-transactions",
   "version": "1.0.0",
-  "description": "DeNS Transaction Builder",
+  "description": "DeNS transactions",
   "type": "module",
   "exports": {
     "./package.json": "./package.json"
   },
+  "bin": {
+    "dens-transactions-cli": "./bin/dens-transactions-cli.js"
+  },
   "scripts": {
-    "cli": "node ./dist/TxBuilder/TxBuilder.js",
-
-    "build": "npx tsc -b src/TxBuilder",
+    "build": "npx tsc -b src/DensTransactions",
     "test": "npx tsc -b src/Tests && node --test",
     "docs": "npx typedoc"
   },
   "author": "DeNS Team",
   "license": "ISC",
   "files": [
-    "./dist/TxBuilder/**/*"
+    "./dist/DensTransactions/**/*",
+    "./.extra-dependencies/**/*"
   ],
   "devDependencies": {
     "@types/node": "^20.8.10",

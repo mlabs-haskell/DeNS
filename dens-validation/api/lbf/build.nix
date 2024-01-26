@@ -5,7 +5,7 @@
       lbf-dens-args = {
         name = "lbf-dens";
         src = ./.;
-        files = [ "DeNS.lbf" ];
+        files = [ "Dens.lbf" ];
       };
 
     in

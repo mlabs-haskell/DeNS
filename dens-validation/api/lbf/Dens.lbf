@@ -1,6 +1,6 @@
 -- LambdaBuffers frontend file for the protocol.
 -- - The protocol specification: https://github.com/mlabs-haskell/DeNS/blob/main/doc/Architecture.md
-module DeNS
+module Dens
 
 -- See: https://github.com/mlabs-haskell/lambda-buffers/blob/main/libs/lbf-prelude/Prelude.lbf
 import Prelude (Eq, Json, Integer, Maybe)
@@ -22,27 +22,27 @@ derive PlutusData Protocol
 
 -- TODO(jaredponn): we could just make this:
 --  ```
---  record DeNSKey = { name : Bytes }
+--  record DensKey = { name : Bytes }
 --  ```
 --  and always reserve the last two bytes (which must exist) to be the class
-record DeNSKey = 
+record DensKey = 
     { densName : Bytes
     , densClass : Integer
     }
 
-derive Eq DeNSKey
-derive Json DeNSKey
-derive PlutusData DeNSKey
+derive Eq DensKey
+derive Json DensKey
+derive PlutusData DensKey
 
-record DeNSValue = { densPointer : Maybe Bytes }
+record DensValue = { densPointer : Maybe Bytes }
 
-derive Eq DeNSValue
-derive Json DeNSValue
-derive PlutusData DeNSValue
+derive Eq DensValue
+derive Json DensValue
+derive PlutusData DensValue
 
 record SetDatum = 
-    { key : DeNSKey
-    , next: DeNSKey 
+    { key : DensKey
+    , next: DensKey 
     , ownerApproval: CurrencySymbol
     }
 
@@ -54,7 +54,7 @@ derive PlutusData SetDatum
 -- just insertions (e.g leasing will require a bit more), so we make this a
 -- sumtype
 sum SetInsert 
-    = Insert DeNSKey
+    = Insert DensKey
 
 derive Eq SetInsert
 derive Json SetInsert
@@ -63,7 +63,7 @@ derive PlutusData SetInsert
 record RecordDatum =
     { recordClass : Integer
     , recordName : Bytes
-    , recordReference : DeNSValue
+    , recordReference : DensValue
     , recordOwner : PubKeyHash
     }
 
