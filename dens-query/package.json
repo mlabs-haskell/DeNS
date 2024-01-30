@@ -14,7 +14,7 @@
     "test": "npx tsc -b src/Tests && node --test",
     "docs": "npx typedoc",
     "test-net": "npx arlocal --dbPath ':memory:'",
-    "run": "npm run build;node dist/ChainIndexer/ChainIndexer.js"
+    "run": "npm run build;node dist/DensQuery/ChainIndexer.js"
   },
   "author": "DeNS Team",
   "license": "ISC",
