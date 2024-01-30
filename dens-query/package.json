@@ -12,7 +12,9 @@
   "scripts": {
     "build": "npx tsc -b src/DensQuery",
     "test": "npx tsc -b src/Tests && node --test",
-    "docs": "npx typedoc"
+    "docs": "npx typedoc",
+    "test-net": "npx arlocal --dbPath ':memory:'",
+    "run": "npm run build;node dist/ChainIndexer/ChainIndexer.js"
   },
   "author": "DeNS Team",
   "license": "ISC",
@@ -25,5 +27,12 @@
     "fast-check": "^3.14.0",
     "typedoc": "^0.25.4",
     "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@irys/arweave": "^0.0.2",
+    "@irys/query": "^0.0.4",
+    "@irys/sdk": "^0.1.4",
+    "arbundles": "^0.11.0",
+    "ethereumjs-wallet": "^1.0.2"
   }
 }
