@@ -277,23 +277,23 @@ The offchain code that constructs the DeNS database will always treat the _most 
 - The output contains a single UTxO with an _inline_ `RecordDatum` datum which is equal to the input passed in by the user
 - This output UTxO is paid to the validator
 
-## Architecture—Arweave (Technical) (WIP)
+## Architecture—Arweave (Technical) 
 
 ### Why not Cardano?
 
-The current size of a file containing the totality of domains in internet is
-estimated in 10 GB.
+The total size of all DNS records in existence is estimated to be roughtly 10 GB. While we intend to decentralize control over IP class records after reaching a level of adoption where such a "hard fork" from traditional DNS authority would be viable, Cardano's current fees make it economically impractical to maintain a mirror of traditional DNS records, which we deem necessary to facilitate a transition path away from DNS. Even if we intend to mirror only a subset of traditional DNS records, both the upfront cost of uploading the initial record and the cost of keeping that set in sync with traditional DNS records is simply too high to be viable. 
 
-Cardano maximum size for a transaction is 16 KB.
+To contextualize this: The maximum transaction size on Cardano is 16KB. In order to mirror 10GB of records, we would require _at least_ 655360 individual transactions (likely many more). Even if we assume that each of these transactions required only the minimum fee of ~0.15ADA (roughly $0.50 at present), the startup and maintenance costs of the protocol would run into the hundreds of thousands - possibly millions! - in USD. (Of course, these transactions will surely exceed the minimum fee because of their size). Plainly, this is not acceptable. 
 
-This means that we have to perform 655_360 transactions in the optimistic case.
-The time and cost of this amount of transactions is prohibitive, specifically for
-initialization. We need a secondary way to store data.
+In addition to the immediate practical considerations (cost & number of transactions), we believe it is generally preferable to implement a record storage solution that is agnostic (to the extent possible) with respect to the size or structure of those records. Although the immediate goal of our work is a system that is capable of handling traditional DNS records, we intend DeNS to be forward looking and extensible. Moreover, there may be use-cases even with respect to IP class records that necessitate central management of a number of domains (e.g. it is reasonable to think that the `.gov` or `.mil` domain space ought to be centrally controlled, as the organization(s) that operate such domains are intrinsically hierarchial and centralized). 
 
 ### Why Arweave?
 
-It seems that the maximum amount of data we can upload paying the minimum amount possible
-in Arweave is:
+_Arweave_, a decentralized, distributed, and permanent storage solution for immutable documents, offers much lower costs (and, consequently, a much greater degree of flexibility with regard to the structure/format/size of records). Additionally, Arweave is used at present in industry, having been adopted by Meta (and others) for long term storage of data, which indicates its reliability. 
+
+While the _exact_ costs are difficult to determine (since they are determined, in part, to the price of the Arweave token), a cursory glance at the Arweave fee structure reveals that it is much more suitable for bulk data storage when compared with Cardano: 
+
+Arweave offers a price query API to estimate the cost (denominated in their token) for storing a given amount of bytes:
 
 ```bash
 https://arweave.net/price/256000
@@ -308,18 +308,15 @@ A Wilson is related to AR (the Arweave currency) as:
 AR = 1e12 Wilson
 ```
 
-At today the price of an AR is around `9.5` USD, this means that the minimum
-cost of a transaction is : `0.002014169537` USD. And the maximum size of a
-transaction with such a price is above 250 KB.
+At today the price of an AR is around `9.5` USD, this means that the minimum cost of a transaction is : `0.002014169537` USD. And the maximum size of a transaction with such a price is above 250 KB.
 
-Additionally, some gateways allow the upload of certain amount of bytes for free.
-For example, Irys allow us to upload 200 KB for free in Node2.
+Additionally, some gateways allow the upload of certain amount of bytes for free. For example, Irys allow us to upload 200 KB for free in Node2.
 
-Those are the reasons we choose to store every set of records in a particular zone file as a single transaction.
-
+Even in the extreme case where we aim to mirror _all_ DNS records, and even if those records change very frequently - say, every record changes at least once each month - the yearly operating costs of the protocol would still be exponentially lower than on Cardano. (We note that, based on cursory investigations & analysis of ICANN zone fields, DNS records do not change nearly that frequently in practice.) _At most_, hosting & maintaining the DNS record mirror would incur a cost in the hundreds-_to_-thousands USD/year, versus hundreds-_of_-thousands on Cardano. 
+ 
 ### Initial Upload
 
-Initially, we will assume we have the following zone files.
+Initially, we will assume we have the following "zone" files. We note here that these zone files differ slightly from traditional DNS zone files in that they will not contain records, particularly NS records, which do not make sense in a DeNS context. (There are, strictly speaking, no name _servers_ in DeNS - the Cardano contracts perform the role of _establishing authority_ while the Arweave "database" contains the records and makes them available to the public.)
 
 ```bash
 ZoneCOM.txt
@@ -396,7 +393,7 @@ The full process will be:
 - We look for the records for `D` in the DB.
 
 - We compare the address in Cardano with the one in the
-    DB if we find `D` in the DB. If is the same we
+     DB if we find `D` in the DB. If is the same we
     return it. Otherwise, we begin the next step.
 
 - We check if we already have the chunk of data stored (we
@@ -408,7 +405,7 @@ The full process will be:
   - Update the records on the DB for `D`
   - Update the cache (if any) of chunks
 
-## Architecture - Offchain (Technical) (WIP)
+## Architecture - Offchain (Technical) 
 
 The offchain infrastructure needs to provide the following services.
 
