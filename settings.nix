@@ -6,6 +6,8 @@
 #   - `perSystem.settings.devShellHook`: shell script to invoke in all devShells (e.g.
 #   to ensure that pre-commit hooks are installed properly)
 #
+#   - `perSystem.haskell.index-state`, `perSystem.haskell.compiler-nix-name`:
+#   for haskell.nix
 { flake-parts-lib, lib, ... }:
 {
 
@@ -27,21 +29,35 @@
                   Shell script to be invoked in all devshells.
                 '';
               };
+
+              haskell.index-state = lib.mkOption {
+                type = lib.types.str;
+                description = "Hackage index state to use when making a haskell.nix build environment";
+              };
+              haskell.compiler-nix-name = lib.mkOption {
+                type = lib.types.str;
+                description = "GHC Haskell compiler to use when building haskell.nix projects";
+              };
             };
           };
 
           config = {
-            settings.devShellTools =
-              [
-                # Note(jaredponn): Include other useful developer devShellTools
-                # that should be available for _all_ dev shells here
-              ];
+            settings = {
+              haskell.index-state = "2024-01-16T11:00:00Z";
+              haskell.compiler-nix-name = "ghc963";
 
-            settings.devShellHook =
-              ''
-                # Install the pre-commit hook
-                ${config.pre-commit.installationScript}
-              '';
+              devShellTools =
+                [
+                  # Note(jaredponn): Include other useful developer devShellTools
+                  # that should be available for _all_ dev shells here
+                ];
+
+              devShellHook =
+                ''
+                  # Install the pre-commit hook
+                  ${config.pre-commit.installationScript}
+                '';
+            };
           };
         }
       );

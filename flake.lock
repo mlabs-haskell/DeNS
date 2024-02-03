@@ -24254,6 +24254,10 @@
         "hci-effects": "hci-effects_2",
         "lambda-buffers": "lambda-buffers",
         "nixpkgs": "nixpkgs_174",
+        "plutarch": [
+          "flake-lang",
+          "plutarch"
+        ],
         "pre-commit-hooks-nix": "pre-commit-hooks-nix_5"
       }
     },
