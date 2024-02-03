@@ -2,7 +2,7 @@
   "files": [],
   "include": [],
   "references": [
-    { "path": "./TxBuilder" },
+    { "path": "./DensTransactions" },
     { "path": "./Tests" }
   ]
 }

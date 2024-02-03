@@ -6880,11 +6880,11 @@
         "rust-overlay": "rust-overlay_6"
       },
       "locked": {
-        "lastModified": 1706043385,
-        "narHash": "sha256-+ysFaf5ByOs4xVykDdD6O7W1futFPt6JQOGvwyqBhoM=",
+        "lastModified": 1706411792,
+        "narHash": "sha256-hGBRH+0Iu2HeMBS4wIv/ZWdU4sZI22A0gASCdbTdBa8=",
         "owner": "mlabs-haskell",
         "repo": "flake-lang.nix",
-        "rev": "15321e87774bbdc94a5cd095342b24135b84d7f2",
+        "rev": "9edc519bc0295abd4304795934eb3569607bf7f8",
         "type": "github"
       },
       "original": {

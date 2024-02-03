@@ -1,20 +1,24 @@
 {
-  "name": "dens-chain-indexer",
+  "name": "dens-query",
   "version": "1.0.0",
   "description": "DeNS Chain Indexer",
   "type": "module",
+  "bin": {
+    "dens-query-cli": "./bin/dens-query-cli.js"
+  },
   "exports": {
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "npx tsc -b src/ChainIndexer",
+    "build": "npx tsc -b src/DensQuery",
     "test": "npx tsc -b src/Tests && node --test",
     "docs": "npx typedoc"
   },
   "author": "DeNS Team",
   "license": "ISC",
   "files": [
-    "./dist/TxBuilder/**/*"
+    "./dist/DensQuery/**/*",
+    "./.extra-dependencies/**/*"
   ],
   "devDependencies": {
     "@types/node": "^20.8.10",
