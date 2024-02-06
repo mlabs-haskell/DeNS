@@ -1,25 +1,40 @@
-{ ... }:
+{ inputs, ... }:
 {
   imports = [ ./api/lbf/build.nix ];
 
-  perSystem = { config, ... }:
+  perSystem = { config, system, ... }:
+    let
+      hsFlake = inputs.flake-lang.lib.${system}.haskellPlutusFlake {
+        src = ./.;
+        name = "dens-validation";
+
+        inherit (config.settings.haskell) index-state compiler-nix-name;
+
+        dependencies =
+          [
+            # Plutarch
+            "${inputs.plutarch}"
+
+            # LambdaBuffers Plutarch support
+            "${inputs.lambda-buffers.packages.${system}.lbf-prelude-plutarch}"
+            "${inputs.lambda-buffers.packages.${system}.lbf-plutus-plutarch}"
+            "${inputs.lambda-buffers.packages.${system}.lbr-plutarch-src}"
+
+            # Api
+            "${config.packages.lbf-dens-plutarch}"
+          ];
+
+        inherit (config.settings) devShellTools;
+        inherit (config.settings) devShellHook;
+      };
+    in
     {
       packages = {
-        remove-me-later-this-is-just-an-example-to-show-how-to-access-the-compiled-lbf-dens-schema =
-          config.packages.lbf-dens-plutarch;
+        dens-validation-cli = hsFlake.packages."dens-validation:exe:dens-validation-cli";
       };
 
       devShells = {
-        # When writing the devShells, remember to run 
-        # ```
-        # config.devShellHook
-        # ```
-        # in the `shellHook`; and include 
-        # ```
-        # config.devShellTools
-        # ```
-        # in the `buildInputs`.
+        dens-validation = hsFlake.devShell;
       };
-
     };
 }

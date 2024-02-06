@@ -11,6 +11,9 @@
 
     # LambdaBuffers: Toolkit for generating types and their semantics
     lambda-buffers.url = "github:mlabs-haskell/lambda-buffers";
+
+    # Plutarch
+    plutarch.follows = "flake-lang/plutarch";
   };
 
   outputs = inputs@{ flake-parts, ... }:
@@ -28,7 +31,7 @@
           ./dens-apps/build.nix
           ./dens-testsuites/build.nix
           ./dens-transactions/build.nix
-
+          ./dens-validation/build.nix
 
           # Settings
           ./settings.nix
