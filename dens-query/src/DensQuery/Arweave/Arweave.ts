@@ -1,10 +1,9 @@
-import Query from "@irys/query";
-
 import {
   Connection,
   IrysNetwork,
   makeEthPaymentInfo,
-  nothing,
+  isLeft,
+  transactionsByIds,
 } from "./Connection.js";
 
 type ETHStringKey = { address: string; key: string };
@@ -19,13 +18,17 @@ async function makeIrys() {
     ethStringKey.key,
     "https://rpc.sepolia.org",
   );
-  if (paymentInfo === nothing) {
-    throw "wrong payment info";
+  if (isLeft(paymentInfo)) {
+    throw paymentInfo.left;
   }
-  const connection = new Connection(IrysNetwork.DevNet, paymentInfo);
+  const connection = new Connection(IrysNetwork.DevNet, paymentInfo.right);
   const irys = connection.connection;
   const balance = await irys.getLoadedBalance();
   console.log(balance);
+  console.log(connection.connection.url)
+
+  const results = await transactionsByIds(connection, ["-Z5NQYXNFpr9DEbBkkyjle2JtbOBnOfN7PgL0kQlLqc"])
+  console.log(results)
   //let tx = irys.createTransaction("Hello world!");
   //await tx.sign();
   //console.log(tx);
@@ -33,11 +36,11 @@ async function makeIrys() {
   //let receipt = await irys.uploader.uploadTransaction(tx);
   //console.log(receipt);
 
-  const myQuery = new Query({ url: "https://devnet.irys.xyz/graphql" });
-  const results = await myQuery
-    .search("irys:transactions")
-    .ids(["-Z5NQYXNFpr9DEbBkkyjle2JtbOBnOfN7PgL0kQlLqc"]);
-  console.log(results);
+  //const myQuery = new Query({ url: "https://devnet.irys.xyz/graphql" });
+  //const results = await myQuery
+  //  .search("irys:transactions")
+  //  .ids(["-Z5NQYXNFpr9DEbBkkyjle2JtbOBnOfN7PgL0kQlLqc"]);
+  //console.log(results);
 }
 
 export function main() {
