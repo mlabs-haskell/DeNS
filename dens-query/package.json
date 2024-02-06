@@ -13,7 +13,6 @@
     "build": "npx tsc -b src/DensQuery",
     "test": "npx tsc -b src/Tests && node --test",
     "docs": "npx typedoc",
-    "test-net": "npx arlocal --dbPath ':memory:'",
     "run": "npm run build;node dist/DensQuery/ChainIndexer.js"
   },
   "author": "DeNS Team",
