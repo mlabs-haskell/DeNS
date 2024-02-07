@@ -10,7 +10,10 @@
     flake-lang.url = "github:mlabs-haskell/flake-lang.nix";
 
     # LambdaBuffers: Toolkit for generating types and their semantics
-    lambda-buffers.url = "github:mlabs-haskell/lambda-buffers";
+    lambda-buffers = {
+      url = "github:mlabs-haskell/lambda-buffers?ref=jared/copy-instead-of-symlink-for-haskell-nix";
+      inputs.flake-lang.follows = "flake-lang";
+    };
 
     # Plutarch
     plutarch.follows = "flake-lang/plutarch";
