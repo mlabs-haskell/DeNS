@@ -37,7 +37,7 @@
           # This allows ssh in the vm via port 6969
           # with something like
           # ```
-          # ssh -p 6969 alice@127.0.0.1
+          # ssh -p 6969 dens@127.0.0.1
           # ```
           from = "host";
           guest.port = 22;
@@ -47,9 +47,9 @@
   };
 
   ######################
-  # Create a user named `alice` w/o a password
+  # Create a user named `dens` w/o a password
   ######################
-  users.users.alice = {
+  users.users.dens = {
     isNormalUser = true;
     extraGroups = [ "wheel" ]; # Enable `sudo` for the user.
     packages = with pkgs; [
@@ -79,7 +79,7 @@
       postgresql = {
         enable = true;
         port = 5432;
-        ensureDatabases = [ "alice" ];
+        ensureDatabases = [ "dens" ];
         settings = {
           # Listen on all addresses
           listen_addresses = lib.mkForce "*";
@@ -87,7 +87,8 @@
         ensureUsers =
           [
             {
-              name = "alice";
+              name = "dens";
+              ensureDBOwnership = true;
               ensureClauses = {
                 login = true;
                 createdb = true;
