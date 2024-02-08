@@ -87,6 +87,7 @@ executable dens-validation-cli
   build-depends:
     , base             >=4.16
     , dens-validation
+    , plutarch-extra
 
   hs-source-dirs: app
   main-is:        Main.hs
