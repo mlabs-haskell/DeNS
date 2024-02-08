@@ -11,16 +11,15 @@
     hci-effects.url = "github:hercules-ci/hercules-ci-effects";
 
     # flake-lang.nix: Tools for creating project flakes
-    flake-lang.url = "github:mlabs-haskell/flake-lang.nix";
+    flake-lang.follows = "lambda-buffers/flake-lang";
 
     # LambdaBuffers: Toolkit for generating types and their semantics
     lambda-buffers = {
       url = "github:mlabs-haskell/lambda-buffers?ref=jared/copy-instead-of-symlink-for-haskell-nix";
-      inputs.flake-lang.follows = "flake-lang";
     };
 
     # Plutarch
-    plutarch.follows = "flake-lang/plutarch";
+    plutarch.follows = "lambda-buffers/plutarch";
 
     # ogmios: Websockets for interacting with the cardano-node
     ogmios.url = "github:mlabs-haskell/ogmios-nixos";
