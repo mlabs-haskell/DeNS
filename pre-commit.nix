@@ -45,6 +45,9 @@
           # since it doesn't like technical terms)
           exclude = "*.md";
         };
+
+        hlint.hintFile = ./.hlint.yaml;
+
       };
     };
   };
