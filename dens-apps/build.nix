@@ -1,5 +1,8 @@
-# TODO(jaredponn): this will be for gluecode for everything in the end.
+# Glue code for putting the system together
 _:
 {
-  imports = [ ];
+  imports = [
+    ./ogmios/build.nix
+    ./cardano-node/build.nix
+  ];
 }

@@ -1,7 +1,11 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+
+    # Module system for flakes
     flake-parts.url = "github:hercules-ci/flake-parts";
+
+    # Code quality things
     pre-commit-hooks-nix.url = "github:cachix/pre-commit-hooks.nix";
     pre-commit-hooks-nix.inputs.nixpkgs.follows = "nixpkgs";
     hci-effects.url = "github:hercules-ci/hercules-ci-effects";
@@ -17,6 +21,13 @@
 
     # Plutarch
     plutarch.follows = "flake-lang/plutarch";
+
+    # ogmios: Websockets for interacting with the cardano-node
+    ogmios.url = "github:mlabs-haskell/ogmios-nixos";
+
+    # cardano-node:
+    cardano-node.url = "github:input-output-hk/cardano-node/8.7.3";
+
   };
 
   outputs = inputs@{ flake-parts, ... }:
