@@ -31,6 +31,19 @@
       # ```
       # and to run it, run the executable in the resulting `./result/bin/`
       # symlink.
+      # How to's:
+      # - How do I SSH in?
+      #   ```
+      #   ssh -p 6969 alice@127.0.0.1
+      #   ```
+      # - How do I connect to postgres via PSQL?
+      #   ```
+      #   psql -h 127.0.0.1 -p 6969 -U alice
+      #   ```
+      # - How do I see ogmios' dashboard? In the browser, type:
+      #   ```
+      #   127.0.0.1:1337
+      #   ```
       packages.test-vm = preview-rts-vm.config.system.build.vm;
     };
 }

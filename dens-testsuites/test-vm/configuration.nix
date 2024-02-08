@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 {
   boot.loader = {
     systemd-boot.enable = true;
@@ -78,9 +78,33 @@
       # Enable postgres
       postgresql = {
         enable = true;
-        enableTCPIP = true;
         port = 5432;
+        ensureDatabases = [ "alice" ];
+        settings = {
+          # Listen on all addresses
+          listen_addresses = lib.mkForce "*";
+        };
+        ensureUsers =
+          [
+            {
+              name = "alice";
+              ensureClauses = {
+                login = true;
+                createdb = true;
+              };
+            }
+          ];
+        # # https://www.postgresql.org/docs/current/auth-pg-hba-conf.html
+        authentication = pkgs.lib.mkOverride 10
+          ''
+            # Allow anyone (yes anyone!) to connect to the database
+            # TYPE  DATABASE        USER            ADDRESS                 METHOD
+            local   all             all                                     trust
+            host    all             all             0.0.0.0/0               trust
+            host    all             all             ::0/0                   trust
+          '';
       };
+
 
       # Enable the cardano node
       cardano-node = {
