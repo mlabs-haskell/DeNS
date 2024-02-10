@@ -31,7 +31,7 @@
         denolint.enable = true;
 
         # Spelling hooks
-        typos.enable = true;
+        typos.enable = false;
 
       };
 

@@ -93,7 +93,12 @@ executable dens-validation-cli
 
 library
   import:           common-language
-  exposed-modules:  MyLib
+  exposed-modules:
+    ElemID
+    Protocol
+    Records
+    SetElem
+    Utils
 
   -- Modules included in this library but not exported.
   -- other-modules:
