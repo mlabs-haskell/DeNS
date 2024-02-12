@@ -38,7 +38,7 @@
       #   ```
       # - How do I connect to postgres via PSQL?
       #   ```
-      #   psql -h 127.0.0.1 -p 6969 -U dens
+      #   psql -h 127.0.0.1 -p 5432 -U dens
       #   ```
       # - How do I see ogmios' dashboard? In the browser, type:
       #   ```
