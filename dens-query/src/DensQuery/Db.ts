@@ -94,24 +94,22 @@ export class DensDb {
     );
   }
 
-  // /**
-  //  * {@link strictInfimumDensSetRow} finds the greatest lower bound of the
-  //  * given row which is *strictly* smaller than the provided row of the
-  //  * elements already in the set.
-  //  */
+  /**
+   * {@link strictInfimumDensSetRow} finds the greatest lower bound of the
+   * given row which is *strictly* smaller than the provided row of the
+   * elements already in the set.
+   */
   async strictInfimumDensSetRow(
     name: Uint8Array,
   ): Promise<DensSetRow | undefined> {
-    // TODO(jaredponn) return the element if it exists
     const res: QueryResult = await this.query(
       {
         text:
           `SELECT name, slot, currency_symbol, token_name, tx_out_ref_id, tx_out_ref_idx
-             FROM dens_set
-             WHERE name < $1
-             ORDER BY name DESC
-             LIMIT 1
-             `,
+           FROM dens_set
+           WHERE name < $1
+           ORDER BY name DESC
+           LIMIT 1`,
         values: [name],
       },
     );
