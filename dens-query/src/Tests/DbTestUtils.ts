@@ -1,8 +1,7 @@
 // Some utility functions for testing the database.
-import { ChildProcess, spawn } from "node:child_process";
+import { spawn } from "node:child_process";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
-import process from "node:process";
 import { join } from "node:path";
 import { setTimeout } from "timers/promises";
 
@@ -22,13 +21,13 @@ import * as Db from "../DensQuery/Db.js";
  * Here's what's going on:
  * 1. Go in a temporary directory
  * 2. Run `initdb -D .` to create a postgres db cluster (see [1])
- * 3. Run `pg_ctl -D . -l logfile.txt -o '-k . -p 5432 --listen-addresses="" ' start` to
- *    actually start a new pg db (see [2] and [3])
- * 4. Run `pg_ctl -D . stop` to kill the database
+ * 3. Run `postgres -D . -k . -p 5432 -c listen-addresses=` to actually start a
+ *    new pg db (see [2], [3], [4])
  * References:
  *  [1]: https://www.postgresql.org/docs/current/app-initdb.html
  *  [2]: https://www.postgresql.org/docs/current/app-pg-ctl.html
- *  [3]: https://www.postgresql.org/docs/current/runtime-config-connection.html
+ *  [3]: https://www.postgresql.org/docs/current/app-postgres.html
+ *  [4]: https://www.postgresql.org/docs/current/runtime-config-connection.html
  */
 export async function withPgTest(
   assertion: (host: string, port: number) => Promise<unknown>,
@@ -42,49 +41,14 @@ export async function withPgTest(
 
   const port = 5432;
 
-  // `pg_ctl_stop` is the process to kill postgres
-  let pg_ctl_stop: null | ChildProcess = null;
-
-  /**
-   * {@link spawnPgCtlStop} does 4.
-   */
-  async function spawnPgCtlStop() {
-    if (pg_ctl_stop !== null) {
-      return;
-    }
-
-    pg_ctl_stop = spawn("pg_ctl", [`-D`, `.`, `stop`], { cwd: pgCwd });
-
-    pg_ctl_stop!.stderr!.on(`data`, (err) => {
-      console.error(err.toString());
-    });
-
-    await new Promise((resolve, reject) => {
-      pg_ctl_stop!.on(`close`, (code) => {
-        if (code === 0) {
-          resolve(code);
-        } else {
-          reject(new Error(`pg_ctl stop failed with exit code ${code}`));
-        }
-      });
-    });
-
-    return;
-  }
-
-  async function sigIntSpawnPgCtlStopListener() {
-    await spawnPgCtlStop();
-    process.exit(1);
-  }
+  const postgresAbortController = new AbortController();
 
   try {
     // 2.
     {
-      const initdb = spawn("initdb", [`-D`, `.`], { cwd: pgCwd });
-
-      // log stderr
-      initdb.stderr.on(`data`, (err) => {
-        console.error(err.toString());
+      const initdb = spawn("initdb", [`-D`, `.`], {
+        cwd: pgCwd,
+        stdio: ["ignore", "ignore", "inherit"],
       });
 
       await new Promise((resolve, reject) => {
@@ -98,45 +62,31 @@ export async function withPgTest(
       });
     }
 
-    // NOTE(jaredponn): we'd like to unconditionally cleanup the db instance we
-    // just opened up EVEN if we close form a signal -- hence the following.
-    // In particular, we do the cleanup when giving SIGINT (and unfortunately
-    // ignore the other signals!)
-    //
-    // Also, why are we setting this up _before_ we actually initialize the db?
-    // This is because of some atomicity of sending signals e.g. if we put this
-    // after, there's nothing really stopping the signal being sent AFTER the
-    // db is initialized but BEFORE the signal handler is registered. Note that
-    // this permits "freeing" before allocating, but `pg_ctl` is smart enough
-    // to not mess up too horribly if this is the case.
-    //
-    // TODO(jaredponn): actually I think this is completely broken and doesn't
-    // work, and nodejs completely ignores these handlers when given SIGINT
-    // (contrary to the documentation)? This needs more investigation..
-    //
-    // Also, this "unconditional cleanup" task isn't that easy to do in NodeJS
-    // in general -- see the discussion here:
-    // https://github.com/orgs/nodejs/discussions/29480
-
-    process.on("SIGINT", sigIntSpawnPgCtlStopListener);
-
     // 3.
-    {
-      // TODO(jaredponn): we don't include the logfile here.. maybe we
-      // should -- it would be helpful for debugging.
-      const pg_ctl_start = spawn("pg_ctl", [
-        `-D`,
-        `.`,
-        `-o`,
-        `-k . -p ${port} --listen-addresses=`,
-        `-l logfile.txt`,
-        `start`,
-      ], { cwd: pgCwd });
+    const postgres = spawn("postgres", [
+      `-D`,
+      `.`,
+      `-k`,
+      `.`,
+      `-p`,
+      `${port}`,
+      `-c`,
+      `listen-addresses=`,
+    ], {
+      cwd: pgCwd,
+      stdio: ["ignore", "ignore", "inherit"],
+      signal: postgresAbortController.signal,
+      killSignal: "SIGTERM", // See [3] for how postgres handles this
+    });
 
-      pg_ctl_start.stderr.on(`data`, (err) => {
-        console.error(err.toString());
-      });
-    }
+    // Ignore if we abort postgres with our `postgresAbortController`
+    postgres.on("error", (err) => {
+      if (err.name === "AbortError") {
+        return;
+      } else {
+        throw err;
+      }
+    });
 
     try {
       // Wait until postgres is ready (do a little backoff)
@@ -172,21 +122,30 @@ export async function withPgTest(
 
         ++i;
         console.error(
-          `pg_isready found pg_ctl to not be ready trying again after ${RETRY_TIME_MULTIPLIER}ms`,
+          `pg_isready found postgres to not be ready trying again after ${RETRY_TIME_MULTIPLIER}ms`,
         );
       }
 
       if (i >= MAX_RETRIES) {
-        throw new Error(`pg_isready never found pg_ctl to be ready`);
+        throw new Error(`pg_isready never found postgres to be ready`);
       }
-
       // RUN THE TEST HERE
       await assertion(pgCwd, port);
     } finally {
-      // 3. always kill postgres
-      await spawnPgCtlStop();
+      // always kill postgres
+      postgresAbortController.abort();
 
-      process.off("SIGINT", sigIntSpawnPgCtlStopListener);
+      await new Promise((resolve, reject) => {
+        postgres.on("close", (code, signal) => {
+          if (signal === "SIGTERM") {
+            return resolve(true);
+          } else if (code === 0) {
+            return resolve(true);
+          } else {
+            reject(code);
+          }
+        });
+      });
     }
   } catch (err) {
     console.error(
@@ -232,11 +191,7 @@ export async function pgCreateUserAndDb(
       `-d`,
       `-r`,
       user,
-    ]);
-
-    createuser.stderr.on(`data`, (err) => {
-      console.error(err.toString());
-    });
+    ], { stdio: ["ignore", "ignore", "inherit"] });
 
     // await new Promise createuser.on
     await new Promise((resolve, reject) => {
@@ -260,11 +215,7 @@ export async function pgCreateUserAndDb(
       `-O`,
       user,
       database,
-    ]);
-
-    createdb.stderr.on(`data`, (err) => {
-      console.error(err.toString());
-    });
+    ], { stdio: ["ignore", "ignore", "inherit"] });
 
     await new Promise((resolve, reject) => {
       createdb.on("close", (code) => {
