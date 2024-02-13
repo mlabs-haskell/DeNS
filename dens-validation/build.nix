@@ -35,6 +35,7 @@
 
       devShells = {
         dens-validation = hsFlake.devShell;
+        default = hsFlake.devShell;
       };
     };
 }
