@@ -116,11 +116,12 @@ mkSetValidator ::
     Term
         s
         ( PCurrencySymbol
+            :--> PUnit
             :--> SetInsert
             :--> PScriptContext
             :--> PUnit
         )
-mkSetValidator = phoistAcyclic $ plam $ \protocolCS setInsert cxt -> P.do
+mkSetValidator = phoistAcyclic $ plam $ \protocolCS _ setInsert cxt -> P.do
     -- We only need to check whether the setElem token is minted, all the real validation logic is in that MP
     txInfo <- plet $ pfield @"txInfo" # cxt
 

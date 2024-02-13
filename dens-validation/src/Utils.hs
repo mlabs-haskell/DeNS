@@ -202,6 +202,11 @@ matchAddrCS = plam $ \addr cs txout -> P.do
     hasNFT <- plet $ (pvalueOf # outFields.value # cs # emptyTN) #== 1
     addrsMatch #&& hasNFT
 
+txOutValue :: ClosedTerm (PTxOut :--> PValue 'Sorted 'Positive)
+txOutValue = phoistAcyclic $ plam $ \txOut -> P.do
+    PTxOut outRec <- pmatch txOut
+    pfield @"value" # outRec
+
 hasCS :: ClosedTerm (PCurrencySymbol :--> PTxOut :--> PBool)
 hasCS = phoistAcyclic $ plam $ \cs out -> P.do
     PTxOut outRec <- pmatch out
@@ -229,6 +234,12 @@ valLacksCS :: ClosedTerm (PCurrencySymbol :--> PValue 'Sorted 'Positive :--> PBo
 valLacksCS = phoistAcyclic $ plam $ \cs val -> P.do
     PValue valInner <- pmatch val
     (plookup # cs # valInner) #== pcon PNothing
+
+paysTo :: ClosedTerm (PAddress :--> PTxOut :--> PBool)
+paysTo = phoistAcyclic $ plam $ \addr out -> P.do
+    PTxOut outRec <- pmatch out
+    outAddr <- plet . pfromData $ pfield @"address" # outRec
+    outAddr #== addr
 
 findUnique ::
     (PListLike l, PElemConstraint l a) =>
