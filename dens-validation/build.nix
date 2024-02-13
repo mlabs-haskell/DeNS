@@ -20,6 +20,9 @@
             "${inputs.lambda-buffers.packages.${system}.lbf-plutus-plutarch}"
             "${inputs.lambda-buffers.packages.${system}.lbr-plutarch-src}"
 
+            # PSM
+            "${inputs.psm}"
+
             # Api
             "${config.packages.lbf-dens-plutarch}"
           ];

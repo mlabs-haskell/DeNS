@@ -15,6 +15,11 @@
       inputs.flake-lang.follows = "flake-lang";
     };
 
+    psm = {
+      url = "github:mlabs-haskell/plutus-simple-model";
+      flake = true;
+    };
+
     # Plutarch
     plutarch.follows = "flake-lang/plutarch";
   };
