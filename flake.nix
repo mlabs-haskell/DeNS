@@ -24,8 +24,8 @@
     };
 
     # Plutarch
-    # plutarch.follows = "lambda-buffers/plutarch";
-    plutarch.url = "github:plutonomicon/plutarch-plutus?ref=f535a6894a25e6d46d16958273769bffa8880090";
+    plutarch.follows = "lambda-buffers/plutarch";
+    # plutarch.url = "github:plutonomicon/plutarch-plutus?ref=f535a6894a25e6d46d16958273769bffa8880090";
   };
 
   outputs = inputs@{ flake-parts, ... }:
