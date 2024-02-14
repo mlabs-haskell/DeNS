@@ -45,7 +45,9 @@
             settings = {
               # haskell.index-state = "2024-01-16T11:00:00Z";
               haskell.compiler-nix-name = "ghc925";
-              haskell.index-state = "2022-10-24T02:00:50Z";
+              # haskell.index-state = "2022-10-24T02:00:50Z";
+              haskell.index-state = "2023-10-24T02:00:50Z";
+
               # haskell.compiler-nix-name = "ghc8107";
               # haskell.index-state = "2022-05-18T00:00:00Z";
 
