@@ -107,7 +107,7 @@ library
   -- other-extensions:
 
   build-depends:
-    , base                  >=4.16
+    , base
     , lbf-dens
     , lbf-plutus-plutarch
     , lbf-prelude-plutarch
