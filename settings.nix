@@ -43,7 +43,7 @@
 
           config = {
             settings = {
-              haskell.index-state = "2024-02-04T00:00:00Z";
+              haskell.index-state = "2024-01-16T11:00:00Z";
               haskell.compiler-nix-name = "ghc963";
 
               devShellTools =
