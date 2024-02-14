@@ -7,16 +7,14 @@
     hci-effects.url = "github:hercules-ci/hercules-ci-effects";
 
     # flake-lang.nix: Tools for creating project flakes
-    flake-lang.url = "github:mlabs-haskell/flake-lang.nix";
+    # flake-lang.url = "github:mlabs-haskell/flake-lang.nix";
+    flake-lang.follows = "lambda-buffers/flake-lang";
 
-    # flake-lang.inputs.haskell-nix.follows = "haskell-nix";
-    # haskell-nix.url = "github:input-output-hk/haskell.nix?rev=11f6d7ae562f4f13e5965a1684fce714a498ede8";
 
     # LambdaBuffers: Toolkit for generating types and their semantics
     lambda-buffers = {
       url = "github:mlabs-haskell/lambda-buffers";
-      # url = "/home/jared/Documents/Work/lambda-buffers";
-      inputs.flake-lang.follows = "flake-lang";
+      # inputs.flake-lang.follows = "flake-lang";
     };
 
     psm = {
@@ -26,7 +24,7 @@
     };
 
     # Plutarch
-    plutarch.follows = "flake-lang/plutarch";
+    plutarch.follows = "lambda-buffers/plutarch";
   };
 
   outputs = inputs@{ flake-parts, ... }:
