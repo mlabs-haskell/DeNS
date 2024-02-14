@@ -8,9 +8,7 @@
         src = ./.;
         name = "dens-validation";
 
-        # inherit (config.settings.haskell) index-state compiler-nix-name;
-        compiler-nix-name = "ghc8107";
-        index-state = "2022-05-18T00:00:00Z";
+        inherit (config.settings.haskell) index-state compiler-nix-name;
 
         dependencies =
           [
