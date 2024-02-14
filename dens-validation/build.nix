@@ -22,7 +22,6 @@
             "${inputs.lambda-buffers.packages.${system}.lbr-plutarch-src}"
 
             # PSM
-            # "${inputs.psm}"
             "${inputs.psm}/psm"
             "${inputs.psm}/cardano-simple"
 
