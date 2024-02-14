@@ -9,15 +9,20 @@
     # flake-lang.nix: Tools for creating project flakes
     flake-lang.url = "github:mlabs-haskell/flake-lang.nix";
 
+    # flake-lang.inputs.haskell-nix.follows = "haskell-nix";
+    # haskell-nix.url = "github:input-output-hk/haskell.nix?rev=11f6d7ae562f4f13e5965a1684fce714a498ede8";
+
     # LambdaBuffers: Toolkit for generating types and their semantics
     lambda-buffers = {
-      url = "github:mlabs-haskell/lambda-buffers?ref=jared/copy-instead-of-symlink-for-haskell-nix";
+      url = "github:mlabs-haskell/lambda-buffers";
+      # url = "/home/jared/Documents/Work/lambda-buffers";
       inputs.flake-lang.follows = "flake-lang";
     };
 
     psm = {
+      # url = "github:mlabs-haskell/plutus-simple-model?ref=indigo/update-plutus-apps";
       url = "github:mlabs-haskell/plutus-simple-model";
-      flake = true;
+      flake = false;
     };
 
     # Plutarch

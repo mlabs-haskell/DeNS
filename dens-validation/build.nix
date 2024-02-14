@@ -8,12 +8,15 @@
         src = ./.;
         name = "dens-validation";
 
-        inherit (config.settings.haskell) index-state compiler-nix-name;
+        # inherit (config.settings.haskell) index-state compiler-nix-name;
+        compiler-nix-name = "ghc8107";
+        index-state = "2022-05-18T00:00:00Z";
 
         dependencies =
           [
             # Plutarch
             "${inputs.plutarch}"
+            "${inputs.plutarch}/plutarch-extra"
 
             # LambdaBuffers Plutarch support
             "${inputs.lambda-buffers.packages.${system}.lbf-prelude-plutarch}"
@@ -21,7 +24,9 @@
             "${inputs.lambda-buffers.packages.${system}.lbr-plutarch-src}"
 
             # PSM
+            # "${inputs.psm}"
             "${inputs.psm}/psm"
+            "${inputs.psm}/cardano-simple"
 
             # Api
             "${config.packages.lbf-dens-plutarch}"
