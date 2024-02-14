@@ -85,7 +85,7 @@ common common-language
 executable dens-validation-cli
   import:         common-language
   build-depends:
-    , base             >=4.16
+    , base
     , dens-validation
 
   hs-source-dirs: app
@@ -126,5 +126,5 @@ test-suite dens-validation-test
   hs-source-dirs:   test
   main-is:          Main.hs
   build-depends:
-    , base             >=4.16
+    , base
     , dens-validation
