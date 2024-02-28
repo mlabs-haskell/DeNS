@@ -1,43 +1,34 @@
-// import * as ws from 'ws'
+import {
+  Config,
+  DbConfig,
+  OgmiosConfig,
+} from "lbf-dens-db/LambdaBuffers/Dens/Config.mjs";
+import * as Prelude from "prelude";
+import * as PlaV1 from "plutus-ledger-api/V1.js";
 
-export interface DensConfig {
-  /**
-   * Ogmios connection options (note that this server is *client* to ogmios)
-   */
-  ogmios: { host: string; port: number };
+// Rexport LB things
+export { Config, DbConfig, OgmiosConfig };
 
-  /**
-   * Database configuration options
-   * TODO(jaredponn): document me
-   */
+export const config: Config = {
+  ogmios: { host: "127.0.0.1", port: 1337n },
   db: {
-    connectionOptions: {
-      host: string;
-      port: number;
-      user: string;
-      database: string;
-      password: string | undefined;
-    };
-    /**
-     * Path to the file containing SQL to initialize the database
-     */
-    initSqlFile: string;
-  };
-}
-
-// TODO(jaredponn): allow input from environment variables.
-export const config: DensConfig = {
-  ogmios: { host: "127.0.0.1", port: 1337 },
-  db: {
-    connectionOptions: {
-      host: `127.0.0.1`,
-      port: 5432,
-      user: `dens`,
-      database: `dens`,
-      password: undefined,
-    },
-    initSqlFile: "./api/postgres/dens.sql",
+    host: `127.0.0.1`,
+    port: 5432n,
+    user: `dens`,
+    password: ``,
+    database: `dens`,
   },
+  initSqlFile: "./api/postgres/dens.sql",
+  protocolNft: [
+    Prelude.fromJust(PlaV1.currencySymbolFromBytes(Uint8Array.from([]))),
+    Prelude.fromJust(PlaV1.tokenNameFromBytes(Uint8Array.from([]))),
+  ],
 };
+
+export async function initConfig(): Promise<void> {
+  // TODO(jaredponn): fill me in
+  await Promise.resolve(3);
+  return;
+}
 
 export default config;

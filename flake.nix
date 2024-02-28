@@ -15,7 +15,7 @@
 
     # LambdaBuffers: Toolkit for generating types and their semantics
     lambda-buffers = {
-      url = "github:mlabs-haskell/lambda-buffers?ref=jared/copy-instead-of-symlink-for-haskell-nix";
+      url = "github:mlabs-haskell/lambda-buffers";
     };
 
     # Plutarch

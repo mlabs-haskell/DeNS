@@ -4,7 +4,7 @@ import "./ChainSync.js";
 import { db } from "./Db.js";
 
 // Initialize the database
-await db.init();
+await db.densInit();
 
 // await db.insertDensSetRow(
 //   Buffer.from([0]),

@@ -1,0 +1,64 @@
+-- Dens.Db contains all the types relating to the database
+--  References:
+--  [1]: https://ogmios.dev/api/v5.6/#operation-publish-/?Local-Chain-Sync
+module Dens.Db
+
+import Prelude (Eq, Json, Integer)
+import Plutus.V1
+import Plutus.V2
+
+-- | A `Point` is a block with its associated slot number. This is needed in
+-- each row (indeed, this is a foreign key) s.t. one can rollback when the
+-- chain forks.
+--
+-- Note this copies [1]'s for the nomenclature.
+record Point = 
+    { blockId: Bytes
+        -- ^ The block hash used to identify the block which contains this
+        -- transaction output
+        -- This is needed for rollbacks and resyncing with the chain as points
+        -- in the chain are identified by
+    , slot : Integer 
+        -- ^ Slot number for the block for the block which contains this
+        -- transaction output
+        -- This is needed to remove rollbacks properly.
+    }
+derive Eq Point
+derive Json Point
+
+-- Representation of the onchain set validator for the database
+record DensSetUtxo = 
+    { name: Bytes
+    , pointer: AssetClass
+        -- ^ The `AssetClass` which identifies the validator which contains the
+        -- (a pointer to) the RRs
+    , txOutRef: TxOutRef
+        -- ^ The transaction output of this transaction.
+    }
+derive Eq DensSetUtxo
+derive Json DensSetUtxo
+
+-- Representation of the onchain validator address which holds pointers
+record DensRrsUtxo = 
+    { name: Bytes
+    , rrs: Bytes
+    , txOutRef: TxOutRef
+    }
+derive Eq DensRrsUtxo
+derive Json DensRrsUtxo
+
+-- Borrow the Protocol type from `./dens-validation/api/*`
+opaque Protocol
+
+instance Eq Protocol
+instance Json Protocol
+instance PlutusData Protocol
+
+-- Representation of the onchain validator which holds the read only
+-- configuration of the entire protocol
+record DensProtocolUtxo = 
+    { txOutRef: TxOutRef
+    , protocol : Protocol
+    }
+derive Eq DensProtocolUtxo
+derive Json DensProtocolUtxo
