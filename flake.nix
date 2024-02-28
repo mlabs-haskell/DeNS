@@ -28,14 +28,8 @@
     cardano-node.url = "github:input-output-hk/cardano-node/8.7.3";
 
     # TypeScript libraries
-    # prelude-typescript.follows = "lambda-buffers/prelude-typescript";
-    # plutus-ledger-api-typescript.follows = "lambda-buffers/plutus-ledger-api-typescript";
-    plutus-ledger-api-typescript = {
-      url = "github:mlabs-haskell/plutus-ledger-api-typescript";
-      inputs.flake-lang.follows = "flake-lang";
-    };
-    prelude-typescript.follows = "plutus-ledger-api-typescript/prelude-typescript";
-
+    prelude-typescript.follows = "lambda-buffers/prelude-typescript";
+    plutus-ledger-api-typescript.follows = "lambda-buffers/plutus-ledger-api-typescript";
   };
 
   outputs = inputs@{ flake-parts, ... }:
