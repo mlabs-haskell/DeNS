@@ -39,7 +39,7 @@ it("Database basic tests", async () => {
     await DbTestUtils.pgCreateUserAndDb(host, port, user, database);
 
     /*
-     * Set the global readonly configuration for this test
+     * Create the database
      */
     const db: Db.DensDb = new Db.DensDb({
       host,
@@ -54,14 +54,24 @@ it("Database basic tests", async () => {
      */
     try {
       await it(`Database initialization`, async () => {
-        await db.densInit();
+        await db.densInit(`./api/postgres/dens.sql`);
       });
 
       await db.densWithDbClient(async (client) => {
         const freshPoint = Samples.fcGenerate(Samples.fcPoint());
-
         await it(`Adding a point (block)`, async () => {
           await client.insertPoint(freshPoint);
+        });
+
+        await it(`Adding and deleting a UTxO `, async () => {
+          const myUtxo = Samples.fcGenerate(Samples.fcTxOutRef());
+          await client.insertTxOutRef(
+            freshPoint,
+            myUtxo,
+          );
+          await client.deleteTxOutRef(
+            myUtxo,
+          );
         });
 
         const protocolUtxo = Samples.fcGenerate(Samples.fcTxOutRef());
@@ -76,6 +86,15 @@ it("Database basic tests", async () => {
         await it(`Inserting the Protocol NFT UTxO`, async () => {
           await client.insertProtocol(
             { txOutRef: protocolUtxo, protocol },
+          );
+        });
+
+        await it(`Select the Protocol NFT UTxO`, async () => {
+          const selectedProtocol = await client.selectProtocol();
+          assert.deepStrictEqual(
+            selectedProtocol,
+            protocol,
+            `Selected protocol doesn't match the inserted protocol`,
           );
         });
 
@@ -211,6 +230,29 @@ it("Database basic tests", async () => {
             res2.sort(),
             [taylorSwiftRrs1.rrs, taylorSwiftRrs2.rrs].sort(),
           );
+        });
+
+        await it(`Adding another point (block)`, async () => {
+          await client.insertPoint(Samples.fcGenerate(Samples.fcPoint()));
+        });
+
+        await it(`Deleting all points strictly after the first block`, async () => {
+          await client.deletePointsStrictlyAfter(freshPoint);
+        });
+
+        await it(`Select strict infimum for ${taylorSwiftDotComSetElem.name}`, async () => {
+          const res = await client.selectStrictInfimumDensSetUtxo(
+            taylorSwiftDotComSetElem.name,
+          );
+          assert.deepStrictEqual(
+            res?.name,
+            googleDotComSetElem.name,
+            `Expected google.com element`,
+          );
+        });
+
+        await it(`Deleting all points`, async () => {
+          await client.deleteAllPoints();
         });
       });
     } finally {

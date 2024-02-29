@@ -1,6 +1,9 @@
+/**
+ * Functionality for interacting with the database
+ */
 import pg from "pg";
 import type { QueryConfig, QueryResult } from "pg";
-import { config } from "./Config.js";
+import { DbConfig } from "lbf-dens-db/LambdaBuffers/Dens/Config.mjs";
 import { logger } from "./Logger.js";
 import * as fs from "node:fs/promises";
 import {
@@ -28,10 +31,8 @@ export { DensProtocolUtxo, DensRrsUtxo, DensSetUtxo, Point, Protocol };
  */
 export class DensDb {
   #pool: pg.Pool;
-  constructor(connectionOptions?: typeof config.db) {
-    const cOpts = connectionOptions === undefined
-      ? config.db
-      : connectionOptions;
+  constructor(connectionOptions: DbConfig) {
+    const cOpts = connectionOptions;
     this.#pool = new pg.Pool(
       {
         host: cOpts.host,
@@ -61,14 +62,14 @@ export class DensDb {
    * {@link densInit} initializes the tables on the DB.
    * See `./dens-query/api/postgres/dens.sql` for details
    */
-  async densInit(): Promise<void> {
-    const initSql: string = await fs.readFile(config.initSqlFile, {
+  async densInit(initSqlFile: string): Promise<void> {
+    const initSql: string = await fs.readFile(initSqlFile, {
       encoding: "utf8",
       flag: "r",
     });
 
     logger.info(
-      `Executing ${config.initSqlFile} to initialize the database...`,
+      `Executing ${initSqlFile} to initialize the database...`,
     );
 
     await this.query(initSql);
@@ -268,12 +269,17 @@ class DensDbClient {
     );
   }
 
+  /**
+   * Given all `assetClassesAtTheUtxo` at the UTxO, finds all `name`s which
+   * have an asset class in `assetClassesAtTheUtxo`, and adds the `name` +
+   * provided `rrs` + `txOutRef` to the table.
+   *
+   * Note that this ignores the `name` in {@link DensRrsUtxo}
+   */
   async insertDensRrsUtxo(
     assetClassesAtTheUtxo: PlaV1.AssetClass[],
-    { name, rrs, txOutRef }: DensRrsUtxo,
+    { rrs, txOutRef }: DensRrsUtxo,
   ): Promise<void> {
-    // name is unused
-    name;
     const transposedAssetClassesAtTheUtxo: [CurrencySymbol[], TokenName[]] =
       transposeAssetClasses(assetClassesAtTheUtxo);
 
@@ -365,7 +371,7 @@ class DensDbClient {
     await this.query(
       {
         text: `DELETE FROM blocks
-           WHERE $1 < slot`,
+           WHERE $1 < block_slot`,
         values: [slot],
       },
     );
@@ -383,6 +389,10 @@ class DensDbClient {
   }
 }
 
+/**
+ * {@link transposeAssetClasses} will transpose (matrix transpose) an array of
+ * {@link PlaV1.AssetClass}es
+ */
 export function transposeAssetClasses(
   assetClasses: PlaV1.AssetClass[],
 ): [PlaV1.CurrencySymbol[], PlaV1.TokenName[]] {
@@ -396,8 +406,3 @@ export function transposeAssetClasses(
 
   return [cs, tns];
 }
-
-/**
- * Database connection
- */
-export const db: DensDb = new DensDb();
