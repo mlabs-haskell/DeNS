@@ -1,6 +1,9 @@
+# SYNOPSIS.
+#   dens-query 
+#
 # DESCRIPTION.
-# `dens-query` is a server which connects to a Cardano node (via Ogmios), and
-# populates a PostgreSQL database with UTxOs relevant to the DeNS protocol.
+#   `dens-query` is a server which connects to a Cardano node (via Ogmios), and
+#   populates a PostgreSQL database with UTxOs relevant to the DeNS protocol.
 #
 # ENVIRONMENT.
 #   - DENS_QUERY_CONFIG must be set to a file path containing a JSON
@@ -9,6 +12,8 @@
 # LIMITATIONS:
 #   - This always syncs from the beginning of time (easy to fix)
 #   - There is no API to query the database
+#   - This leaks memory everywhere with cardano-serialization-lib. This needs
+#     to be manually recompiled s.t. memory is garbage collected
 { inputs, lib, ... }:
 {
   imports =
@@ -51,7 +56,7 @@
                   ${super.postFixup or ""}
 
                   wrapProgram $out/bin/dens-query-cli \
-                      --set-default cat meow
+                      --set DENS_QUERY_INIT_SQL_FILE ${lib.escapeShellArg ./api/postgres/dens.sql}
                 '';
             });
           # Tarball to use in other projects
