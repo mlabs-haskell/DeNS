@@ -1,6 +1,32 @@
 -- References
 -- [1]: https://ogmios.dev/api/
 
+-- OVERVIEW.
+-- The structure of this schema maintains has:
+--      - M:1 relationship for `tx_out_refs` to `blocks`
+--      - 0:1 relationship for DeNS specific tables ( `dens_set_utxos`,
+--        `dens_rrs_utxos`, etc) to `tx_out_refs`
+-- 
+-- Note that the foreign keys to implement these relationships for the `blocks`
+-- and `tx_out_refs` have `ON DELETE CASCADE`.
+--
+-- This structure makes it easy to process a new block which contains a
+-- sequence of transactions by:
+--
+--      - Removing all `tx_out_refs` consumed in the transactions (which would
+--        remove the corresponding values from the DeNS specific tables by the
+--        ON DELETE CASCADE foreign key constraint)
+--
+--      - Adding `tx_out_refs` which are outputs of the sequence of
+--        transactions in the block which contain relevant information to the
+--        DeNS specific tables
+-- 
+-- Moreover, it's easy to handle rollbacks by simply deleting all the blocks
+-- after the block we should roll back to, and again, the foreign keys with the
+-- ON DELETE CASCADE constraint will automatically update the rest of the
+-- database.
+--      
+
 -- Highly simplified view of the blockchain which only contains the block_id
 -- (hash of the block), and its slot.
 -- This is needed to allow efficient rollbacks.

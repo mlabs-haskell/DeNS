@@ -1,14 +1,16 @@
-/*
- * NOTE(jaredponn): Mostly taken from: {@ link
- * https://github.com/CardanoSolutions/ogmios-ts-client-starter-kit/tree/main/src}
+/**
+ * Functionality for syncing with the chain via ogmios.
+ *
+ * @private
+ * Mostly taken from: {@link https://github.com/CardanoSolutions/ogmios-ts-client-starter-kit/tree/main/src }
  */
 import { createInteractionContext } from "@cardano-ogmios/client";
 import type * as OgmiosClient from "@cardano-ogmios/client";
 import * as OgmiosSchema from "@cardano-ogmios/schema";
 import { createChainSynchronizationClient } from "@cardano-ogmios/client";
 
-import { config } from "./Config.js";
 import { logger } from "./Logger.js";
+import { OgmiosConfig } from "lbf-dens-db/LambdaBuffers/Dens/Config.mjs";
 import * as Db from "./Db.js";
 import * as PlaV1 from "plutus-ledger-api/V1.js";
 import * as PlaPd from "plutus-ledger-api/PlutusData.js";
@@ -18,120 +20,16 @@ import * as LbfDens from "lbf-dens/LambdaBuffers/Dens.mjs";
 
 import * as CardanoCore from "@cardano-sdk/core";
 
-export function createContext(
-  host: string,
-  port: number,
-): Promise<OgmiosClient.InteractionContext> {
-  return createInteractionContext(
-    (err) => logger.error(`Ogmios connection error: ${err}`),
-    () => logger.info("Ogmios connection closed"),
-    { connection: { host: host, port: port } },
-  );
-}
-
-export function ogmiosTransactionOutputReferenceToPlaTxOutRef(
-  txOutRef: Readonly<OgmiosSchema.TransactionOutputReference>,
-): PlaV1.TxOutRef {
-  return {
-    txOutRefId: Prelude.fromJust(
-      PlaV1.txIdFromBytes(
-        Uint8Array.from(Buffer.from(txOutRef.transaction.id, "hex")),
-      ),
-    ),
-    txOutRefIdx: BigInt(txOutRef.index),
-  };
-}
-
-export function ogmiosPointToPlaPoint(
-  ogmiosPoint: OgmiosSchema.Point,
-): Db.Point {
-  const slot: number = ogmiosPoint.slot;
-  const blockId: string = ogmiosPoint.id; // Ogmios returns this as hex encoded
-
-  const point: Db.Point = {
-    blockId: Uint8Array.from(Buffer.from(blockId, "hex")),
-    slot: BigInt(slot),
-  };
-  return point;
-}
-
-export function hexPlutusDataToPlaPlutusData(
-  hexString: string,
-): PlaPd.PlutusData {
-  const corePlutusData: CardanoCore.Cardano.PlutusData = CardanoCore
-    .Serialization.PlutusData.fromCbor(hexString).toCore();
-
-  function corePlutusDataToPlaPlutusData(
-    c: CardanoCore.Cardano.PlutusData,
-  ): PlaPd.PlutusData {
-    if (typeof c === "bigint") {
-      return { name: "Integer", fields: c };
-    } else if (c instanceof Uint8Array) {
-      return { name: "Bytes", fields: c };
-    } else if (c.items !== undefined) {
-      return {
-        name: "List",
-        fields: c.items.map(corePlutusDataToPlaPlutusData),
-      };
-    } else if (c.data !== undefined) {
-      const fields: [PlaPd.PlutusData, PlaPd.PlutusData][] = [];
-      for (const [k, v] of c.data) {
-        fields.push([
-          corePlutusDataToPlaPlutusData(k),
-          corePlutusDataToPlaPlutusData(v),
-        ]);
-      }
-      return { name: "Map", fields };
-    } else if (c.fields !== undefined) {
-      return {
-        name: "Constr",
-        fields: [c.constructor, c.fields.map(corePlutusDataToPlaPlutusData)],
-      };
-    } else {
-      throw new Error(`Bad plutus data ${c}`);
-    }
-  }
-
-  return corePlutusDataToPlaPlutusData(corePlutusData);
-}
-
-export function ogmiosValueFlattenPositiveAmounts(
-  ogmiosValue: Readonly<OgmiosSchema.Value>,
-): PlaV1.AssetClass[] {
-  // Rename the ada / lovelace currency symbol / token name to what it
-  // actually should be
-
-  const flattened: PlaV1.AssetClass[] = [];
-
-  if (ogmiosValue.ada.lovelace > 0n) {
-    flattened.push([PlaV1.adaSymbol, PlaV1.adaToken]);
-  }
-
-  for (const [cur, tnsamounts] of Object.entries(ogmiosValue)) {
-    if (cur === "ada") {
-      continue;
-    }
-
-    const actualCur = Prelude.fromJust(
-      PlaV1.currencySymbolFromBytes(Uint8Array.from(Buffer.from(cur, "hex"))),
-    );
-
-    for (const [tn, amount] of Object.entries(tnsamounts)) {
-      if (amount > 0n) {
-        flattened.push([
-          actualCur,
-          Prelude.fromJust(
-            PlaV1.tokenNameFromBytes(Uint8Array.from(Buffer.from(tn, "hex"))),
-          ),
-        ]);
-      }
-    }
-  }
-
-  return flattened;
-}
-
+/**
+ * {@link rollForwardDb} rolls the database forwards via
+ *
+ *  - removing the UTxOs consumed by transactions in the provided block
+ *
+ *  - adding UTxOS relevant to the DeNS protocol from the transaction outputs
+ *  in the provided block.
+ */
 export async function rollForwardDb(
+  protocolNft: PlaV1.AssetClass,
   db: Db.DensDb,
   { block }: { block: OgmiosSchema.Block },
 ): Promise<void> {
@@ -159,7 +57,7 @@ export async function rollForwardDb(
 
         // 1.
         for (const txIn of tx.inputs) {
-          client.deleteTxOutRef(
+          await client.deleteTxOutRef(
             ogmiosTransactionOutputReferenceToPlaTxOutRef(txIn),
           );
         }
@@ -195,8 +93,8 @@ export async function rollForwardDb(
 
             return txOut.value[protCurrencySymbol]![protTokenName]! > 0n;
           })(
-            Buffer.from(config.protocolNft[0].buffer).toString("hex"),
-            Buffer.from(config.protocolNft[1].buffer).toString("hex"),
+            Buffer.from(protocolNft[0].buffer).toString("hex"),
+            Buffer.from(protocolNft[1].buffer).toString("hex"),
           );
 
           if (isProtocolUtxo) {
@@ -282,6 +180,13 @@ export async function rollForwardDb(
   }
 }
 
+/**
+ * {@link rollBackwardDb} rolls the database backwards to the provided point i.e.,
+ *
+ *  - if the point is the origin, then we delete the entire database
+ *
+ *  - otherwise, we delete all blocks strictly after the provided point
+ */
 export async function rollBackwardDb(
   db: Db.DensDb,
   { point }: { point: OgmiosSchema.Point | OgmiosSchema.Origin },
@@ -295,12 +200,18 @@ export async function rollBackwardDb(
   });
 }
 
-export async function runChainSync() {
+/**
+ * {@link runChainSync} is the main function which synchronises with the chain.
+ */
+export async function runChainSync(
+  protocolNft: PlaV1.AssetClass,
+  ogmiosConfig: OgmiosConfig,
+  db: Db.DensDb,
+) {
   const context = await createContext(
-    config.ogmios.host,
-    Number(config.ogmios.port),
+    ogmiosConfig.host,
+    Number(ogmiosConfig.port),
   );
-  const db = Db.db;
   const client = await createChainSynchronizationClient(context, {
     rollForward: async (
       { block }: {
@@ -309,7 +220,7 @@ export async function runChainSync() {
       },
       nextBlock: () => void,
     ) => {
-      await rollForwardDb(db, { block });
+      await rollForwardDb(protocolNft, db, { block });
       nextBlock();
     },
     rollBackward: async (
@@ -329,4 +240,132 @@ export async function runChainSync() {
   // Right now, it'll always resync from the beginning of time even if it's
   // cached perfectly fine.
   await client.resume();
+}
+
+/**
+ * @internal
+ */
+function createContext(
+  host: string,
+  port: number,
+): Promise<OgmiosClient.InteractionContext> {
+  return createInteractionContext(
+    (err) => logger.error(`Ogmios connection error: ${err}`),
+    () => logger.info("Ogmios connection closed"),
+    { connection: { host: host, port: port } },
+  );
+}
+
+/**
+ * @internal
+ */
+function ogmiosTransactionOutputReferenceToPlaTxOutRef(
+  txOutRef: Readonly<OgmiosSchema.TransactionOutputReference>,
+): PlaV1.TxOutRef {
+  return {
+    txOutRefId: Prelude.fromJust(
+      PlaV1.txIdFromBytes(
+        Uint8Array.from(Buffer.from(txOutRef.transaction.id, "hex")),
+      ),
+    ),
+    txOutRefIdx: BigInt(txOutRef.index),
+  };
+}
+
+/**
+ * @internal
+ */
+function ogmiosPointToPlaPoint(
+  ogmiosPoint: OgmiosSchema.Point,
+): Db.Point {
+  const slot: number = ogmiosPoint.slot;
+  const blockId: string = ogmiosPoint.id; // Ogmios returns this as hex encoded
+
+  const point: Db.Point = {
+    blockId: Uint8Array.from(Buffer.from(blockId, "hex")),
+    slot: BigInt(slot),
+  };
+  return point;
+}
+
+/**
+ * @internal
+ */
+function hexPlutusDataToPlaPlutusData(
+  hexString: string,
+): PlaPd.PlutusData {
+  const corePlutusData: CardanoCore.Cardano.PlutusData = CardanoCore
+    .Serialization.PlutusData.fromCbor(hexString).toCore();
+
+  function corePlutusDataToPlaPlutusData(
+    c: CardanoCore.Cardano.PlutusData,
+  ): PlaPd.PlutusData {
+    if (typeof c === "bigint") {
+      return { name: "Integer", fields: c };
+    } else if (c instanceof Uint8Array) {
+      return { name: "Bytes", fields: c };
+    } else if (c.items !== undefined) {
+      return {
+        name: "List",
+        fields: c.items.map(corePlutusDataToPlaPlutusData),
+      };
+    } else if (c.data !== undefined) {
+      const fields: [PlaPd.PlutusData, PlaPd.PlutusData][] = [];
+      for (const [k, v] of c.data) {
+        fields.push([
+          corePlutusDataToPlaPlutusData(k),
+          corePlutusDataToPlaPlutusData(v),
+        ]);
+      }
+      return { name: "Map", fields };
+    } else if (c.fields !== undefined) {
+      return {
+        name: "Constr",
+        fields: [c.constructor, c.fields.map(corePlutusDataToPlaPlutusData)],
+      };
+    } else {
+      throw new Error(`Bad plutus data ${c}`);
+    }
+  }
+
+  return corePlutusDataToPlaPlutusData(corePlutusData);
+}
+
+/**
+ * @internal
+ */
+function ogmiosValueFlattenPositiveAmounts(
+  ogmiosValue: Readonly<OgmiosSchema.Value>,
+): PlaV1.AssetClass[] {
+  // Rename the ada / lovelace currency symbol / token name to what it
+  // actually should be
+
+  const flattened: PlaV1.AssetClass[] = [];
+
+  if (ogmiosValue.ada.lovelace > 0n) {
+    flattened.push([PlaV1.adaSymbol, PlaV1.adaToken]);
+  }
+
+  for (const [cur, tnsamounts] of Object.entries(ogmiosValue)) {
+    if (cur === "ada") {
+      continue;
+    }
+
+    const actualCur = Prelude.fromJust(
+      PlaV1.currencySymbolFromBytes(Uint8Array.from(Buffer.from(cur, "hex"))),
+    );
+
+    for (const [tn, amount] of Object.entries(tnsamounts)) {
+      if (amount > 0n) {
+        flattened.push([
+          actualCur,
+          Prelude.fromJust(
+            PlaV1.tokenNameFromBytes(Uint8Array.from(Buffer.from(tn, "hex"))),
+          ),
+        ]);
+      }
+    }
+  }
+
+  return flattened;
 }
