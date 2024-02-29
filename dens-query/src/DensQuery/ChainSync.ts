@@ -18,7 +18,7 @@ import * as Prelude from "prelude";
 import * as LbrPlutusV1 from "lbr-plutus/V1.js";
 import * as LbfDens from "lbf-dens/LambdaBuffers/Dens.mjs";
 
-import * as CardanoCore from "@cardano-sdk/core";
+import * as csl from "@emurgo/cardano-serialization-lib-nodejs";
 
 /**
  * {@link rollForwardDb} rolls the database forwards via
@@ -291,44 +291,73 @@ function ogmiosPointToPlaPoint(
 /**
  * @internal
  */
-function hexPlutusDataToPlaPlutusData(
-  hexString: string,
+export function hexPlutusDataToPlaPlutusData(str: string) {
+  const cslPd = csl.PlutusData.from_hex(str);
+  return cslPlutusDataToPlaPlutusData(cslPd);
+}
+/**
+ * @internal
+ */
+export function cslPlutusDataToPlaPlutusData(
+  plutusData: csl.PlutusData,
 ): PlaPd.PlutusData {
-  const corePlutusData: CardanoCore.Cardano.PlutusData = CardanoCore
-    .Serialization.PlutusData.fromCbor(hexString).toCore();
+  const constr = plutusData.as_constr_plutus_data();
+  const map = plutusData.as_map();
+  const list = plutusData.as_list();
+  const integer = plutusData.as_integer();
+  const bytes = plutusData.as_bytes();
 
-  function corePlutusDataToPlaPlutusData(
-    c: CardanoCore.Cardano.PlutusData,
-  ): PlaPd.PlutusData {
-    if (typeof c === "bigint") {
-      return { name: "Integer", fields: c };
-    } else if (c instanceof Uint8Array) {
-      return { name: "Bytes", fields: c };
-    } else if (c.items !== undefined) {
-      return {
-        name: "List",
-        fields: c.items.map(corePlutusDataToPlaPlutusData),
-      };
-    } else if (c.data !== undefined) {
-      const fields: [PlaPd.PlutusData, PlaPd.PlutusData][] = [];
-      for (const [k, v] of c.data) {
-        fields.push([
-          corePlutusDataToPlaPlutusData(k),
-          corePlutusDataToPlaPlutusData(v),
-        ]);
-      }
-      return { name: "Map", fields };
-    } else if (c.fields !== undefined) {
-      return {
-        name: "Constr",
-        fields: [c.constructor, c.fields.map(corePlutusDataToPlaPlutusData)],
-      };
-    } else {
-      throw new Error(`Bad plutus data ${c}`);
-    }
+  if (constr !== undefined) {
+    const alternative = constr.alternative();
+    const data = constr.data();
+
+    return {
+      name: "Constr",
+      fields: [BigInt(alternative.to_str()), cslPlutusListToPlaPdList(data)],
+    };
   }
 
-  return corePlutusDataToPlaPlutusData(corePlutusData);
+  if (map !== undefined) {
+    const keys = map.keys();
+    const result: [PlaPd.PlutusData, PlaPd.PlutusData][] = [];
+
+    for (let i = 0; i < keys.len(); ++i) {
+      const k = keys.get(i);
+      result.push([
+        cslPlutusDataToPlaPlutusData(k),
+        cslPlutusDataToPlaPlutusData(map.get(k)!),
+      ]);
+    }
+
+    return { name: `Map`, fields: result };
+  }
+
+  if (list !== undefined) {
+    return { name: `List`, fields: cslPlutusListToPlaPdList(list) };
+  }
+
+  if (integer !== undefined) {
+    return { name: `Integer`, fields: BigInt(integer.to_str()) };
+  }
+
+  if (bytes !== undefined) {
+    return { name: `Bytes`, fields: bytes };
+  }
+
+  throw new Error(
+    "Internal error when converting cardano-serialization-lib PlutusData to plutus-ledger-api PlutusData",
+  );
+}
+
+/**
+ * @internal
+ */
+function cslPlutusListToPlaPdList(list: csl.PlutusList): PlaPd.PlutusData[] {
+  const result = [];
+  for (let i = 0; i < list.len(); ++i) {
+    result.push(cslPlutusDataToPlaPlutusData(list.get(i)));
+  }
+  return result;
 }
 
 /**

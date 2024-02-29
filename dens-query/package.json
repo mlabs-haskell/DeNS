@@ -31,7 +31,7 @@
   "dependencies": {
     "@cardano-ogmios/client": "^6.0.3",
     "@cardano-ogmios/schema": "^6.0.3",
-    "@cardano-sdk/core": "^0.28.3",
+    "@emurgo/cardano-serialization-lib-nodejs": "^11.5.0",
     "lbf-dens": "file:.extra-dependencies/lbf-dens-1.0.0.tgz",
     "lbf-dens-db": "file:.extra-dependencies/lbf-dens-db-1.0.0.tgz",
     "lbf-plutus": "file:.extra-dependencies/lbf-plutus-1.0.0.tgz",

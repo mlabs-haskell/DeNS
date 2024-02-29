@@ -14,14 +14,9 @@ import Plutus.V2
 -- Note this copies [1]'s for the nomenclature.
 record Point = 
     { blockId: Bytes
-        -- ^ The block hash used to identify the block which contains this
-        -- transaction output
-        -- This is needed for rollbacks and resyncing with the chain as points
-        -- in the chain are identified by
+        -- ^ The block hash used to identify the block.
     , slot : Integer 
-        -- ^ Slot number for the block for the block which contains this
-        -- transaction output
-        -- This is needed to remove rollbacks properly.
+        -- ^ Slot number for the block
     }
 derive Eq Point
 derive Json Point
