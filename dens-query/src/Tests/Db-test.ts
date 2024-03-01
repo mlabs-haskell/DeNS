@@ -1,6 +1,5 @@
 // This file includes tests which go back and forth from the backing db
 // postgres to dens-query
-// import { describe, it } from "node:test";
 import { it } from "node:test";
 import * as assert from "node:assert/strict";
 import * as DbTestUtils from "./DbTestUtils.js";
@@ -8,16 +7,6 @@ import * as Samples from "./Samples.js";
 import * as Prelude from "prelude";
 import * as Db from "../DensQuery/Db.js";
 import * as PlaV1 from "plutus-ledger-api/V1.js";
-
-import * as fc from "fast-check";
-
-// Set some default global settings for fast-check
-// Remarks:
-//  - We keep the tests low (because spinning up a DB is expensive)
-//
-//  - We immediately end on failure because it'll take too long for fast-check
-//    to shrink and find a small counter example.
-fc.configureGlobal({ numRuns: 5, endOnFailure: true });
 
 // NOTE(jaredponn): Why aren't we doing top level `describe`s?
 //

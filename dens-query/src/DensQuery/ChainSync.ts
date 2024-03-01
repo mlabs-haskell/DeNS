@@ -17,7 +17,6 @@ import * as PlaPd from "plutus-ledger-api/PlutusData.js";
 import * as Prelude from "prelude";
 import * as LbrPlutusV1 from "lbr-plutus/V1.js";
 import * as LbfDens from "lbf-dens/LambdaBuffers/Dens.mjs";
-
 import * as csl from "@emurgo/cardano-serialization-lib-nodejs";
 
 /**
@@ -208,6 +207,11 @@ export async function runChainSync(
   ogmiosConfig: OgmiosConfig,
   db: Db.DensDb,
 ) {
+  // Avoids errors when serializing BigInt
+  // deno-lint-ignore no-explicit-any
+  const replacer = (_key: any, value: any) =>
+    typeof value === "bigint" ? value.toString() : value;
+
   const context = await createContext(
     ogmiosConfig.host,
     Number(ogmiosConfig.port),
@@ -220,7 +224,15 @@ export async function runChainSync(
       },
       nextBlock: () => void,
     ) => {
-      await rollForwardDb(protocolNft, db, { block });
+      try {
+        await rollForwardDb(protocolNft, db, { block });
+      } catch (e) {
+        logger.warn(
+          `Roll forward failed for the following block with error ${e}:\n${
+            JSON.stringify(block, replacer)
+          }`,
+        );
+      }
       nextBlock();
     },
     rollBackward: async (
@@ -230,7 +242,15 @@ export async function runChainSync(
       },
       nextBlock: () => void,
     ) => {
-      await rollBackwardDb(db, { point });
+      try {
+        await rollBackwardDb(db, { point });
+      } catch (e) {
+        logger.warn(
+          `Roll backward failed for the following block with error ${e}:\n${
+            JSON.stringify(point, replacer)
+          }`,
+        );
+      }
       nextBlock();
     },
   });
@@ -293,7 +313,9 @@ function ogmiosPointToPlaPoint(
  */
 export function hexPlutusDataToPlaPlutusData(str: string) {
   const cslPd = csl.PlutusData.from_hex(str);
-  return cslPlutusDataToPlaPlutusData(cslPd);
+  const result = cslPlutusDataToPlaPlutusData(cslPd);
+  cslPd.free();
+  return result;
 }
 /**
  * @internal
@@ -310,11 +332,16 @@ export function cslPlutusDataToPlaPlutusData(
   if (constr !== undefined) {
     const alternative = constr.alternative();
     const data = constr.data();
-
-    return {
+    const result: PlaPd.PlutusData = {
       name: "Constr",
       fields: [BigInt(alternative.to_str()), cslPlutusListToPlaPdList(data)],
     };
+
+    data.free();
+    alternative.free();
+    constr.free();
+
+    return result;
   }
 
   if (map !== undefined) {
@@ -323,25 +350,43 @@ export function cslPlutusDataToPlaPlutusData(
 
     for (let i = 0; i < keys.len(); ++i) {
       const k = keys.get(i);
+      const v = map.get(k)!;
       result.push([
         cslPlutusDataToPlaPlutusData(k),
-        cslPlutusDataToPlaPlutusData(map.get(k)!),
+        cslPlutusDataToPlaPlutusData(v),
       ]);
+
+      k.free();
+      v.free();
     }
+
+    keys.free();
+    map.free();
 
     return { name: `Map`, fields: result };
   }
 
   if (list !== undefined) {
-    return { name: `List`, fields: cslPlutusListToPlaPdList(list) };
+    const result: PlaPd.PlutusData = {
+      name: `List`,
+      fields: cslPlutusListToPlaPdList(list),
+    };
+    list.free();
+    return result;
   }
 
   if (integer !== undefined) {
-    return { name: `Integer`, fields: BigInt(integer.to_str()) };
+    const result: PlaPd.PlutusData = {
+      name: `Integer`,
+      fields: BigInt(integer.to_str()),
+    };
+    integer.free();
+    return result;
   }
 
   if (bytes !== undefined) {
-    return { name: `Bytes`, fields: bytes };
+    const result: PlaPd.PlutusData = { name: `Bytes`, fields: bytes };
+    return result;
   }
 
   throw new Error(
@@ -355,7 +400,9 @@ export function cslPlutusDataToPlaPlutusData(
 function cslPlutusListToPlaPdList(list: csl.PlutusList): PlaPd.PlutusData[] {
   const result = [];
   for (let i = 0; i < list.len(); ++i) {
-    result.push(cslPlutusDataToPlaPlutusData(list.get(i)));
+    const v = list.get(i);
+    result.push(cslPlutusDataToPlaPlutusData(v));
+    v.free();
   }
   return result;
 }
@@ -363,7 +410,68 @@ function cslPlutusListToPlaPdList(list: csl.PlutusList): PlaPd.PlutusData[] {
 /**
  * @internal
  */
-function ogmiosValueFlattenPositiveAmounts(
+function plaPdListToCslPlutusList(list: PlaPd.PlutusData[]): csl.PlutusList {
+  const result = csl.PlutusList.new();
+
+  for (const elem of list) {
+    const v = plaPlutusDataToCslPlutusData(elem);
+    result.add(v);
+    v.free();
+  }
+
+  return result;
+}
+
+/**
+ * @internal
+ */
+export function plaPlutusDataToCslPlutusData(
+  plutusData: PlaPd.PlutusData,
+): csl.PlutusData {
+  switch (plutusData.name) {
+    case "Integer": {
+      const v = csl.BigInt.from_str(plutusData.fields.toString());
+      const result = csl.PlutusData.new_integer(v);
+      v.free();
+      return result;
+    }
+    case "Bytes":
+      return csl.PlutusData.new_bytes(plutusData.fields);
+    case "List": {
+      const v = plaPdListToCslPlutusList(plutusData.fields);
+      const result = csl.PlutusData.new_list(v);
+      v.free();
+      return result;
+    }
+    case "Constr": {
+      const alt = csl.BigNum.from_str(plutusData.fields[0].toString());
+      const args = plaPdListToCslPlutusList(plutusData.fields[1]);
+      const constr = csl.ConstrPlutusData.new(alt, args);
+      const result = csl.PlutusData.new_constr_plutus_data(constr);
+      alt.free();
+      args.free();
+      constr.free();
+      return result;
+    }
+    case "Map": {
+      const plutusMap = csl.PlutusMap.new();
+      for (const elem of plutusData.fields) {
+        const k = plaPlutusDataToCslPlutusData(elem[0]);
+        const v = plaPlutusDataToCslPlutusData(elem[1]);
+        plutusMap.insert(k, v);
+        k.free();
+        v.free();
+      }
+      const result = csl.PlutusData.new_map(plutusMap);
+      plutusMap.free();
+      return result;
+    }
+  }
+}
+/**
+ * @internal
+ */
+export function ogmiosValueFlattenPositiveAmounts(
   ogmiosValue: Readonly<OgmiosSchema.Value>,
 ): PlaV1.AssetClass[] {
   // Rename the ada / lovelace currency symbol / token name to what it

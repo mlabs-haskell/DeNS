@@ -89,17 +89,8 @@ export async function withPgTest(
         const pg_isready = spawn(
           "pg_isready",
           [`-h`, pgCwd, `-d`, `postgres`],
-          { cwd: pgCwd },
+          { cwd: pgCwd, stdio: ["ignore", 2, "inherit"] },
         );
-
-        pg_isready.stdout.on(`data`, (buf) => {
-          console.error(`pg_isready: ${buf.toString()}`);
-        });
-
-        pg_isready.stderr.on(`data`, (buf) => {
-          console.error(`pg_isready: ${buf.toString()}`);
-        });
-
         const good = await new Promise((resolve, _reject) => {
           pg_isready.on(`close`, (code) => {
             if (code === 0) {
@@ -119,7 +110,9 @@ export async function withPgTest(
       }
 
       if (i >= MAX_RETRIES) {
-        throw new Error(`pg_isready never found postgres to be ready`);
+        throw new Error(
+          `pg_isready with host ${pgCwd} never found postgres to be ready`,
+        );
       }
       // RUN THE TEST HERE
       await assertion(pgCwd, port);
