@@ -12,8 +12,6 @@
 # LIMITATIONS:
 #   - This always syncs from the beginning of time (easy to fix)
 #   - There is no API to query the database
-#   - This leaks memory everywhere with cardano-serialization-lib. This needs
-#     to be manually recompiled s.t. memory is garbage collected
 { inputs, lib, ... }:
 {
   imports =
@@ -27,11 +25,9 @@
           name = "dens-query";
           src = ./.;
           inherit (config.settings)
+            devShellTools
             devShellHook;
 
-          # TODO(jaredponn): update  `flake-lang` later so we don't have this
-          # awkwardness
-          devShellTools = config.settings.devShellTools ++ [ pkgs.postgresql ];
           testTools = [ pkgs.postgresql ];
 
           npmExtraDependencies =
