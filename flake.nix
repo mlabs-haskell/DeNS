@@ -15,7 +15,7 @@
 
     # LambdaBuffers: Toolkit for generating types and their semantics
     lambda-buffers = {
-      url = "github:mlabs-haskell/lambda-buffers?ref=jared/copy-instead-of-symlink-for-haskell-nix";
+      url = "github:mlabs-haskell/lambda-buffers";
     };
 
     # Plutarch
@@ -27,6 +27,9 @@
     # cardano-node:
     cardano-node.url = "github:input-output-hk/cardano-node/8.7.3";
 
+    # TypeScript libraries
+    prelude-typescript.follows = "lambda-buffers/prelude-typescript";
+    plutus-ledger-api-typescript.follows = "lambda-buffers/plutus-ledger-api-typescript";
   };
 
   outputs = inputs@{ flake-parts, ... }:
