@@ -192,9 +192,9 @@ export async function rollBackwardDb(
 ): Promise<void> {
   await db.densWithDbClient(async (client) => {
     if (point === "origin") {
-      await client.deleteAllPoints;
+      await client.rollBackToOrigin();
     } else {
-      await client.deletePointsStrictlyAfter(ogmiosPointToPlaPoint(point));
+      await client.rollBackTo(ogmiosPointToPlaPoint(point));
     }
   });
 }
@@ -255,11 +255,10 @@ export async function runChainSync(
     },
   });
 
-  // TODO(jaredponn): put the most recent points as an argument to `resume`.
-  // Need to add rank query to prelude-typescript for testing.
-  // Right now, it'll always resync from the beginning of time even if it's
-  // cached perfectly fine.
-  await client.resume();
+  await db.densWithDbClient(async (_client) => {
+    // TODO(jaredponn): put the most recent points as an argument to `resume`...
+    await client.resume();
+  });
 }
 
 /**

@@ -32,8 +32,8 @@
 
           npmExtraDependencies =
             [
-              inputs.prelude-typescript.packages.${system}.tgz
-              inputs.plutus-ledger-api-typescript.packages.${system}.tgz
+              inputs.prelude-typescript.packages.${system}.lib
+              inputs.plutus-ledger-api-typescript.packages.${system}.lib
 
               config.packages.lbf-dens-db-typescript
               config.packages.lbf-dens-typescript

@@ -55,7 +55,6 @@ it("Database basic tests", async () => {
         await it(`Adding and deleting a UTxO `, async () => {
           const myUtxo = Samples.fcGenerate(Samples.fcTxOutRef());
           await client.insertTxOutRef(
-            freshPoint,
             myUtxo,
           );
           await client.deleteTxOutRef(
@@ -64,9 +63,8 @@ it("Database basic tests", async () => {
         });
 
         const protocolUtxo = Samples.fcGenerate(Samples.fcTxOutRef());
-        await it(`Adding a UTxO `, async () => {
+        await it(`Adding a UTxO for the Protocol`, async () => {
           await client.insertTxOutRef(
-            freshPoint,
             protocolUtxo,
           );
         });
@@ -94,7 +92,6 @@ it("Database basic tests", async () => {
         };
         await it(`Inserting the empty DeNS set UTxO ${emptySetElem.name}`, async () => {
           await client.insertTxOutRef(
-            freshPoint,
             emptySetElem.txOutRef,
           );
 
@@ -116,7 +113,6 @@ it("Database basic tests", async () => {
         };
         await it(`Inserting the taylorswift.com DeNS set UTxO ${taylorSwiftDotComSetElem.name}`, async () => {
           await client.insertTxOutRef(
-            freshPoint,
             taylorSwiftDotComSetElem.txOutRef,
           );
 
@@ -142,6 +138,34 @@ it("Database basic tests", async () => {
           );
         });
 
+        {
+          const tempPoint = Samples.fcGenerate(Samples.fcPoint());
+          tempPoint.slot = freshPoint.slot + 1n;
+
+          await it(`Adding a point (block) to rollback`, async () => {
+            await client.insertPoint(tempPoint);
+          });
+
+          await it(`Removing taylorswift.com`, async () => {
+            await client.deleteTxOutRef(taylorSwiftDotComSetElem.txOutRef);
+          });
+
+          await it(`Rolling back to the first point`, async () => {
+            await client.rollBackTo(freshPoint);
+          });
+        }
+
+        await it(`Select strict infimum for ${taylorSwiftDotComSetElem.name}`, async () => {
+          const res = await client.selectStrictInfimumDensSetUtxo(
+            taylorSwiftDotComSetElem.name,
+          );
+          assert.deepStrictEqual(
+            emptySetElem.name,
+            res?.name,
+            `Expected empty element`,
+          );
+        });
+
         const googleDotComSetElem = {
           name: Samples.sampleNameGoogleDotCom,
           pointer: Samples.fcGenerate(Samples.fcAssetClass()),
@@ -149,7 +173,6 @@ it("Database basic tests", async () => {
         };
         await it(`Inserting the google.com DeNS set UTxO ${googleDotComSetElem.name}`, async () => {
           await client.insertTxOutRef(
-            freshPoint,
             googleDotComSetElem.txOutRef,
           );
 
@@ -183,7 +206,7 @@ it("Database basic tests", async () => {
         );
         await it(`Adding rrs to taylorswift.com`, async () => {
           // Insert the first RR
-          await client.insertTxOutRef(freshPoint, taylorSwiftDotComRrsUtxo1);
+          await client.insertTxOutRef(taylorSwiftDotComRrsUtxo1);
 
           const taylorSwiftRrs1 = {
             name: taylorSwiftDotComSetElem.name,
@@ -201,7 +224,7 @@ it("Database basic tests", async () => {
 
           // Insert the second RR
 
-          await client.insertTxOutRef(freshPoint, taylorSwiftDotComRrsUtxo2);
+          await client.insertTxOutRef(taylorSwiftDotComRrsUtxo2);
 
           const taylorSwiftRrs2 = {
             name: taylorSwiftDotComSetElem.name,
@@ -222,11 +245,14 @@ it("Database basic tests", async () => {
         });
 
         await it(`Adding another point (block)`, async () => {
-          await client.insertPoint(Samples.fcGenerate(Samples.fcPoint()));
+          const tempPoint = Samples.fcGenerate(Samples.fcPoint());
+          tempPoint.slot = freshPoint.slot + 1n;
+
+          await client.insertPoint(tempPoint);
         });
 
-        await it(`Deleting all points strictly after the first block`, async () => {
-          await client.deletePointsStrictlyAfter(freshPoint);
+        await it(`Rolling back to the first block`, async () => {
+          await client.rollBackTo(freshPoint);
         });
 
         await it(`Select strict infimum for ${taylorSwiftDotComSetElem.name}`, async () => {
@@ -240,8 +266,8 @@ it("Database basic tests", async () => {
           );
         });
 
-        await it(`Deleting all points`, async () => {
-          await client.deleteAllPoints();
+        await it(`Rolling back to the origin`, async () => {
+          await client.rollBackToOrigin();
         });
       });
     } finally {

@@ -191,13 +191,13 @@ class DensDbClient {
   }
 
   async insertTxOutRef(
-    { blockId, slot }: Point,
     { txOutRefId, txOutRefIdx }: TxOutRef,
   ): Promise<void> {
     await this.query(
       {
-        text: `INSERT INTO tx_out_refs VALUES($1,$2,$3,$4)`,
-        values: [txOutRefId, txOutRefIdx, slot, blockId],
+        text:
+          `INSERT INTO tx_out_refs VALUES ($1,$2, (get_most_recent_block()).*)`,
+        values: [txOutRefId, txOutRefIdx],
       },
     );
   }
@@ -366,25 +366,20 @@ class DensDbClient {
     }
   }
 
-  async deletePointsStrictlyAfter({ slot, blockId }: Point): Promise<void> {
+  async rollBackTo({ slot, blockId }: Point): Promise<void> {
     blockId;
     await this.query(
       {
-        text: `DELETE FROM blocks
-           WHERE $1 < block_slot`,
-        values: [slot],
+        text: `SELECT undo_log_rollback_to($1, $2)`,
+        values: [slot, blockId],
       },
     );
     return;
   }
 
-  async deleteAllPoints(): Promise<void> {
-    await this.query(
-      {
-        text: `DELETE FROM blocks`,
-        values: [],
-      },
-    );
+  async rollBackToOrigin(): Promise<void> {
+    // Put a block which doesn't exist, s.t. it'll undo everything.
+    await this.rollBackTo({ slot: -1n, blockId: Uint8Array.from([]) });
     return;
   }
 }

@@ -87,7 +87,7 @@ class InsertDensSetUtxoCommand implements fc.AsyncCommand<Model, Db.DensDb> {
       }
 
       await client.insertPoint(this.#point);
-      await client.insertTxOutRef(this.#point, this.#densSetRow.txOutRef);
+      await client.insertTxOutRef(this.#densSetRow.txOutRef);
       await client.insertDensSetUtxo(
         [[
           Prelude.fromJust(
@@ -175,7 +175,6 @@ it(`Database model tests`, async () => {
 
                 await client.insertPoint(freshPoint);
                 await client.insertTxOutRef(
-                  freshPoint,
                   protocolUtxo,
                 );
 
