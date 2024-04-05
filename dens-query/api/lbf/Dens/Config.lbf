@@ -1,0 +1,35 @@
+-- Dens.Config contains all the protocol configurations (scripts and such)
+module Dens.Config
+
+import Prelude
+import Plutus.V1 (AssetClass)
+
+-- Configuration for running ogmios
+record OgmiosConfig =
+    { host :Text
+    , port :Integer
+    }
+derive Eq OgmiosConfig
+derive Json OgmiosConfig
+
+-- Configuration for connecting to the DB
+record DbConfig =
+    { host: Text
+    , port: Integer
+    , user: Text
+    , password : Text
+    , database : Text
+    }
+derive Eq DbConfig
+derive Json DbConfig
+
+-- Complete configuration for dens-query.
+record Config =
+    { ogmios : OgmiosConfig
+    , db: DbConfig
+    , initSqlFile: Text
+    , protocolNft: AssetClass
+    }
+derive Eq Config
+derive Json Config
+

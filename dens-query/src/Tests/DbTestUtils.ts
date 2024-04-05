@@ -5,15 +5,6 @@ import * as os from "node:os";
 import { join } from "node:path";
 import { setTimeout } from "timers/promises";
 
-import * as fc from "fast-check";
-import * as PlaV1 from "plutus-ledger-api/V1.js";
-import type {
-  CurrencySymbol,
-  TokenName,
-  TxOutRef,
-} from "plutus-ledger-api/V1.js";
-import * as Db from "../DensQuery/Db.js";
-
 /**
  * Runs a test with a postgres database
  *
@@ -28,6 +19,10 @@ import * as Db from "../DensQuery/Db.js";
  *  [2]: https://www.postgresql.org/docs/current/app-pg-ctl.html
  *  [3]: https://www.postgresql.org/docs/current/app-postgres.html
  *  [4]: https://www.postgresql.org/docs/current/runtime-config-connection.html
+ *
+ * TODO(jaredponn): split this function up into an `init` and `shutdown`
+ * function s.t. it can be used with node's `before` and `after` test runner
+ * functions
  */
 export async function withPgTest(
   assertion: (host: string, port: number) => Promise<unknown>,
@@ -40,8 +35,6 @@ export async function withPgTest(
   const pgCwd = await fs.mkdtemp(join(osDefaultTmpDir, `pg-`));
 
   const port = 5432;
-
-  const postgresAbortController = new AbortController();
 
   try {
     // 2.
@@ -75,17 +68,10 @@ export async function withPgTest(
     ], {
       cwd: pgCwd,
       stdio: ["ignore", "ignore", "inherit"],
-      signal: postgresAbortController.signal,
-      killSignal: "SIGTERM", // See [3] for how postgres handles this
     });
 
-    // Ignore if we abort postgres with our `postgresAbortController`
     postgres.on("error", (err) => {
-      if (err.name === "AbortError") {
-        return;
-      } else {
-        throw err;
-      }
+      throw err;
     });
 
     try {
@@ -98,7 +84,13 @@ export async function withPgTest(
       while (i < MAX_RETRIES) {
         await setTimeout(1000 + i * RETRY_TIME_MULTIPLIER);
 
-        const pg_isready = spawn("pg_isready", [`-h`, pgCwd], { cwd: pgCwd });
+        // Check if the database we just spawned is ready, and tell it  a
+        // database name is `postgres` (a database which actually exists)
+        const pg_isready = spawn(
+          "pg_isready",
+          [`-h`, pgCwd, `-d`, `postgres`],
+          { cwd: pgCwd },
+        );
 
         pg_isready.stdout.on(`data`, (buf) => {
           console.error(`pg_isready: ${buf.toString()}`);
@@ -133,8 +125,6 @@ export async function withPgTest(
       await assertion(pgCwd, port);
     } finally {
       // always kill postgres
-      postgresAbortController.abort();
-
       await new Promise((resolve, reject) => {
         postgres.on("close", (code, signal) => {
           if (signal === "SIGTERM") {
@@ -145,6 +135,7 @@ export async function withPgTest(
             reject(code);
           }
         });
+        postgres.kill(`SIGTERM`); // see [3] for how postgres handles this
       });
     }
   } catch (err) {
@@ -170,7 +161,7 @@ export async function withPgTest(
  * where `-d` and `-r` allow the `<USER>` to create databases and roles
  * and creates the DB with
  * ```
- * createdb -h <HOST> -p <PORT> -O <NAME> <DATABASE>
+ * createdb -h <HOST> -p <PORT> -O <USER> <DATABASE>
  * ```
  * where `-O` tells postgres that the user we just created is the owner of this
  * database.
@@ -227,167 +218,4 @@ export async function pgCreateUserAndDb(
       });
     });
   }
-}
-
-/**
- * Hardcoded sample data
- */
-export const sampleName: Uint8Array = (() => {
-  return Uint8Array.from([
-    116,
-    97,
-    121,
-    108,
-    111,
-    114,
-    115,
-    119,
-    105,
-    102,
-    116,
-    46,
-    99,
-    111,
-    109,
-  ]);
-})();
-
-/**
- * Hardcoded sample data
- */
-export const sampleSlot = 69n;
-
-/**
- * Hardcoded sample data
- */
-export const sampleCurrencySymbol: CurrencySymbol = (() => {
-  const arr = [];
-  for (let i = 0; i < 28; ++i) {
-    arr.push(i);
-  }
-  const mcs = PlaV1.currencySymbolFromBytes(Uint8Array.from(arr));
-  if (mcs.name === `Just`) {
-    return mcs.fields;
-  } else {
-    throw new Error(`Invalid sampleCurrencySymbol`);
-  }
-})();
-
-/**
- * Hardcoded sample data
- */
-export const sampleTokenName: TokenName = (() => {
-  const arr = [];
-  for (let i = 0; i < 32; ++i) {
-    arr.push(i);
-  }
-  const mtn = PlaV1.tokenNameFromBytes(Uint8Array.from(arr));
-  if (mtn.name === `Just`) {
-    return mtn.fields;
-  } else {
-    throw new Error(`Invalid sampleTokenName`);
-  }
-})();
-
-/**
- * Hardcoded sample data
- */
-export const sampleTxOutRef: TxOutRef = (() => {
-  const arr = [];
-  for (let i = 0; i < 32; ++i) {
-    arr.push(i);
-  }
-  const mtxId = PlaV1.txIdFromBytes(Uint8Array.from(arr));
-  if (mtxId.name === `Just`) {
-    return { txOutRefId: mtxId.fields, txOutRefIdx: 420n };
-  } else {
-    throw new Error(`Invalid sampleTxOutRef`);
-  }
-})();
-
-/**
- * Generator for an arbitrary domain name
- */
-export function fcName(): fc.Arbitrary<Uint8Array> {
-  return fc.uint8Array({ min: 0, max: 255, minLength: 0, maxLength: 255 });
-}
-
-/**
- * Generator for an arbitrary slot
- */
-export function fcSlot(): fc.Arbitrary<bigint> {
-  return fc.bigInt(
-    { min: 0n, max: (1n << 63n) - 1n },
-  );
-}
-
-/**
- * Generator for an arbitrary {@link CurrencySymbol}
- */
-export function fcCurrencySymbol(): fc.Arbitrary<CurrencySymbol> {
-  return fc.oneof(
-    fc.constant(Uint8Array.from([])),
-    fc.uint8Array({ min: 0, max: 255, minLength: 28, maxLength: 28 }),
-  )
-    .map((bytes) => {
-      const mCurrencySymbol = PlaV1.currencySymbolFromBytes(bytes);
-      if (mCurrencySymbol.name === "Just") {
-        return mCurrencySymbol.fields;
-      } else {
-        throw new Error(`Invalid generated CurrencySymbol`);
-      }
-    });
-}
-
-/**
- * Generator for an arbitrary {@link TokenName}
- */
-export function fcTokenName(): fc.Arbitrary<TokenName> {
-  return fc.uint8Array({ min: 0, max: 255, minLength: 0, maxLength: 32 })
-    .map((bytes) => {
-      const mTokenName = PlaV1.tokenNameFromBytes(bytes);
-      if (mTokenName.name === "Just") {
-        return mTokenName.fields;
-      } else {
-        throw new Error(`Invalid generated TokenName`);
-      }
-    });
-}
-
-/**
- * Generator for an arbitrary {@link TxOutRef}
- */
-export function fcTxOutRef(): fc.Arbitrary<TxOutRef> {
-  return fc.record(
-    {
-      txOutRefId: fc.uint8Array({
-        min: 0,
-        max: 255,
-        minLength: 32,
-        maxLength: 32,
-      }).map((bytes) => {
-        const mTxId = PlaV1.txIdFromBytes(bytes);
-        if (mTxId.name === "Just") {
-          return mTxId.fields;
-        } else {
-          throw new Error(`Invalid generated TxId`);
-        }
-      }),
-      txOutRefIdx: fc.bigInt(
-        { min: 0n, max: (1n << 63n) - 1n },
-      ),
-    },
-  );
-}
-
-export function fcDensSetRow(): fc.Arbitrary<Db.DensSetRow> {
-  return fc.record(
-    {
-      name: fcName(),
-      slot: fcSlot(),
-      currency_symbol: fcCurrencySymbol(),
-      token_name: fcTokenName(),
-      tx_out_ref: fcTxOutRef(),
-    },
-  );
 }

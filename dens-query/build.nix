@@ -1,5 +1,9 @@
 { inputs, lib, ... }:
 {
+  imports =
+    [
+      ./api/lbf/build.nix
+    ];
   config = {
     perSystem = { system, config, pkgs, ... }:
       let
@@ -18,6 +22,9 @@
             [
               inputs.prelude-typescript.packages.${system}.tgz
               inputs.plutus-ledger-api-typescript.packages.${system}.tgz
+
+              config.packages.lbf-dens-db-typescript
+              config.packages.lbf-dens-typescript
             ];
         };
       in
