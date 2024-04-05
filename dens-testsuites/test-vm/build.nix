@@ -34,11 +34,11 @@
       # How to's:
       # - How do I SSH in?
       #   ```
-      #   ssh -p 6969 alice@127.0.0.1
+      #   ssh -p 6969 dens@127.0.0.1
       #   ```
       # - How do I connect to postgres via PSQL?
       #   ```
-      #   psql -h 127.0.0.1 -p 6969 -U alice
+      #   psql -h 127.0.0.1 -p 6969 -U dens
       #   ```
       # - How do I see ogmios' dashboard? In the browser, type:
       #   ```
