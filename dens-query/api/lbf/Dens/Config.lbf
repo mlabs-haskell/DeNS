@@ -24,10 +24,19 @@ record DbConfig =
 derive Eq DbConfig
 derive Json DbConfig
 
+
+-- Configuration for the backend server
+record ServerConfig =
+    { port: Integer
+    }
+derive Eq ServerConfig
+derive Json ServerConfig
+
 -- Complete configuration for dens-query.
 record Config =
     { ogmios : OgmiosConfig
     , db: DbConfig
+    , server: ServerConfig
     , protocolNft: AssetClass
     }
 derive Eq Config
