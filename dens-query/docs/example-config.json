@@ -1,0 +1,20 @@
+{
+  "ogmios": {
+    "host": "127.0.0.1",
+    "port": 1337
+  },
+  "db": {
+    "host": "127.0.0.1",
+    "port": 5432,
+    "user": "dens",
+    "password": "",
+    "database": "dens"
+  },
+  "server": {
+    "port": 6969
+  },
+  "protocolNft": {
+    "currency_symbol": "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
+    "token_name": ""
+  }
+}

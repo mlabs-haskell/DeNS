@@ -11,8 +11,8 @@ import {
   DensRrsUtxo,
   DensSetUtxo,
   Point,
+  Protocol,
 } from "lbf-dens-db/LambdaBuffers/Dens/Db.mjs";
-import { Protocol } from "lbf-dens/LambdaBuffers/Dens.mjs";
 import {
   CurrencySymbol,
   TokenName,
@@ -86,15 +86,16 @@ export class DensDb {
    * @private
    * See {@link https://node-postgres.com/features/transactions}
    */
-  async densWithDbClient(
-    f: (client: DensDbClient) => Promise<void>,
-  ): Promise<void> {
+  async densWithDbClient<A>(
+    f: (client: DensDbClient) => Promise<A>,
+  ): Promise<A> {
     const client = await this.#pool.connect();
     const densClient = new DensDbClient(client);
     try {
       await densClient.query(`BEGIN`);
-      await f(densClient);
+      const result = await f(densClient);
       await densClient.query(`COMMIT`);
+      return result;
     } catch (e) {
       await densClient.query(`ROLLBACK`);
       throw e;
@@ -114,8 +115,6 @@ export class DensDb {
 /**
  * {@link DensDbClient} is a specific connection to the underlying database. In
  * particular, SQL transactions should all occur with the same client.
- * @private
- * TODO(jaredponn): it'd be faster to build one giant SQL query and submit that
  */
 class DensDbClient {
   #client: pg.ClientBase;
@@ -212,11 +211,11 @@ class DensDbClient {
     );
   }
 
-  async selectProtocol(): Promise<Protocol | undefined> {
+  async selectProtocol(): Promise<DensProtocolUtxo | undefined> {
     const res: QueryResult = await this.query(
       {
         text:
-          `SELECT element_id_minting_policy, set_elem_minting_policy, set_validator, records_validator
+          `SELECT element_id_minting_policy, set_elem_minting_policy, set_validator, records_validator, tx_out_ref_id, tx_out_ref_idx
                    FROM dens_protocol_utxos`,
         values: [],
       },
@@ -224,7 +223,7 @@ class DensDbClient {
 
     if (res.rows.length === 1) {
       const row = res.rows[0];
-      return {
+      const protocol = {
         elementIdMintingPolicy: Prelude.fromJust(
           PlaV1.scriptHashFromBytes(
             Uint8Array.from(row.element_id_minting_policy),
@@ -241,6 +240,13 @@ class DensDbClient {
         recordsValidator: Prelude.fromJust(
           PlaV1.scriptHashFromBytes(Uint8Array.from(row.records_validator)),
         ),
+      };
+      return {
+        protocol: protocol,
+        txOutRef: {
+          txOutRefId: Uint8Array.from(row.tx_out_ref_id) as unknown as TxId,
+          txOutRefIdx: BigInt(row.tx_out_ref_idx),
+        },
       };
     } else if (res.rows.length === 0) {
       return undefined;
@@ -331,11 +337,11 @@ class DensDbClient {
    */
   async selectStrictInfimumDensSetUtxo(
     name: Uint8Array,
-  ): Promise<DensSetUtxo | undefined> {
+  ): Promise<DensSetUtxo & { isAlreadyInserted: boolean } | undefined> {
     const res: QueryResult = await this.query(
       {
         text:
-          `SELECT name, currency_symbol, token_name, tx_out_ref_id, tx_out_ref_idx
+          `SELECT name, currency_symbol, token_name, tx_out_ref_id, tx_out_ref_idx, EXISTS (SELECT 1 FROM dens_set_utxos WHERE name=$1) AS is_already_inserted
            FROM dens_set_utxos
            WHERE name < $1
            ORDER BY name DESC
@@ -356,6 +362,7 @@ class DensDbClient {
           txOutRefId: Uint8Array.from(row.tx_out_ref_id) as unknown as TxId,
           txOutRefIdx: BigInt(row.tx_out_ref_idx),
         },
+        isAlreadyInserted: row.is_already_inserted as unknown as boolean,
       };
     } else if (res.rows.length === 0) {
       return undefined;

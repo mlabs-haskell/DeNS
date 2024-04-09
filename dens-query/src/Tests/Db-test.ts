@@ -79,7 +79,7 @@ it("Database basic tests", async () => {
         await it(`Select the Protocol NFT UTxO`, async () => {
           const selectedProtocol = await client.selectProtocol();
           assert.deepStrictEqual(
-            selectedProtocol,
+            selectedProtocol?.protocol,
             protocol,
             `Selected protocol doesn't match the inserted protocol`,
           );
@@ -116,6 +116,16 @@ it("Database basic tests", async () => {
             taylorSwiftDotComSetElem.txOutRef,
           );
 
+          const res = await client.selectStrictInfimumDensSetUtxo(
+            taylorSwiftDotComSetElem.name,
+          );
+
+          assert.deepStrictEqual(
+            res?.isAlreadyInserted,
+            false,
+            `Expected taylorswift.com to NOT be already inserted`,
+          );
+
           await client.insertDensSetUtxo(
             [[
               Prelude.fromJust(
@@ -135,6 +145,11 @@ it("Database basic tests", async () => {
             emptySetElem.name,
             res?.name,
             `Expected empty element`,
+          );
+
+          assert.ok(
+            res?.isAlreadyInserted,
+            `Expected taylorswift.com to be already inserted`,
           );
         });
 

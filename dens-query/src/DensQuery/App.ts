@@ -4,8 +4,8 @@
 
 import { config, initSqlFile } from "./Config.js";
 import * as ChainSync from "./ChainSync.js";
-import * as Server from "./Server.js";
 import * as Db from "./Db.js";
+import * as Server from "./Server.js";
 
 // Initialize the database
 const db = new Db.DensDb(config.db);
@@ -15,4 +15,4 @@ await db.densInit(initSqlFile);
 await ChainSync.runChainSync(config.protocolNft, config.ogmios, db);
 
 // Run the HTTP server
-await Server.runServer(db);
+Server.runServer(config.server, db);

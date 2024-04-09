@@ -139,13 +139,14 @@ export async function rollForwardDb(
            * Attempt to insert a DeNS set element
            */
           try {
-            const protocol = await client.selectProtocol();
+            const protocolUtxo = await client.selectProtocol();
             const setDatum = LbrPlutusV1.IsPlutusData[LbfDens.SetDatum]
               .fromData(plaPlutusData);
 
             const name = setDatum.key.densName;
 
-            if (protocol !== undefined) {
+            if (protocolUtxo !== undefined) {
+              const { protocol } = protocolUtxo;
               await client.insertDensSetUtxo(
                 csAndTns,
                 {

@@ -1,0 +1,139 @@
+== HTTP API
+
+DeNS Query provides an HTTP interface for accessing the UTxOs stored in the database.
+
+=== HTTP Endpoints
+
+[#query-set-insertion-utxo]
+==== POST Query Set Insertion UTxO
+Method:: *POST*
+URL:: `/api/query-set-insertion-utxo`
+
+Returns the UTxO to spend in order to purchase the given domain from the smart contracts.
+
+.Example request
+[example]
+[source,json]
+```
+{
+    "name": "7461796C6F7273776966742E636F6D" <1>
+}
+```
+<1> Hex encoded domain name one wishes to purchase
+
+.Example response
+[example]
+[source,json]
+```
+{
+    "name": "Ok",
+    "fields":
+        { 
+            "name": "676F6F676C652E636F6D", <1>
+            "pointer":                      <2>
+                {
+                    "currency_symbol": "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F"
+                    "token_name": ""
+                },
+            "txOutRef":                     <3>
+                {
+                    "txOutRef":             <4>
+                        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",  
+                    "txOutRefIx": 69        <5>
+                }
+        }
+}
+```
+<1> Hex encoded largest purchased domain name which is lexicograpically strictly less than the provided domain name.
+<2> Asset class which identifies the UTxOs of RRs
+<3> Transaction output that this information resides at
+<4> Hex encoded transaction hash
+<5> Integer index
+
+===== Errors
+
+[caption=]
+|===
+| Code | Message | Description
+| 400 | <<domain-name-already-exists>> | Thrown if the domain name to purchase has already been purchased
+| 500 | <<no-set-elements-found>>      |  Thrown if there are no UTxOs to spend in the set (most likely a misconfigured protocol)
+|===
+
+[#domain-name-already-exists]
+.Domain name already exists error response
+[example]
+[source,json]
+```
+TODO(jaredponn): write me
+```
+[#no-set-elements-found]
+.No set elements found
+[example]
+[source,json]
+```
+TODO(jaredponn): write me
+```
+
+[#query-protocol-utxo]
+==== POST Protocol UTxO
+Method:: *POST*
+URL:: `/api/protocol-utxo`
+
+Returns the UTxO which holds the Protocol type i.e., trusted information of the DeNS protocol.
+
+.Example request
+[example]
+[source,json]
+```
+{ }
+```
+
+.Example response
+[example]
+[source,json]
+```
+{
+    "name": "Ok",
+    "fields":
+        { 
+            "txOutRef":                     <1>
+                {
+                    "txOutRef":             <2>
+                        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",  
+                    "txOutRefIx": 69        <3>
+                },
+            "protocol":                     <4>
+                { 
+                    "elementIdMintingPolicy": 
+                        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "setElemMintingPolicy" : 
+                        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "setValidator": 
+                        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "recordsValidator": 
+                        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+        }
+}
+```
+<1> Transaction output that this information resides at
+<2> Hex encoded transaction hash
+<3> Integer index
+<4> JSON object of hex encoded script hashes (28 bytes)
+
+===== Errors
+
+[caption=]
+|===
+| Code | Message | Description
+| 500 | <<no-protocol-utxo-found>>      |  Thrown if there is no UTxO for the protocol
+|===
+
+```
+[#no-protocol-utxo-found]
+.No protocol utxo found
+[example]
+[source,json]
+```
+TODO(jaredponn): write me
+```

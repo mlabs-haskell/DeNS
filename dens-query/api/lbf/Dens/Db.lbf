@@ -15,7 +15,7 @@ import Plutus.V2
 record Point = 
     { blockId: Bytes
         -- ^ The block hash used to identify the block.
-    , slot : Integer 
+    , slot: Integer 
         -- ^ Slot number for the block
     }
 derive Eq Point

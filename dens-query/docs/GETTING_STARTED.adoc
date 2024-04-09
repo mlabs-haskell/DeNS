@@ -1,0 +1,37 @@
+== Getting Started
+
+DeNS query will look for a _configuration file_ provided in the environment variable in `+DENS_QUERY_CONFIG+`.
+
+.Example configuration file
+[example]
+[source,json]
+```
+{
+    "ogmios":       <1>
+        {
+            "host": "127.0.0.1",
+            "port": 1337
+        },
+    "db":           <2>
+        {
+            "host": "127.0.0.1",
+            "port": 5432,
+            "user": "dens",
+            "password": "",
+            "database": "dens"
+        },
+    "server":       <3>
+        {
+            "port": 6969
+        },
+    "protocolNft":  <4>
+        {
+            "currency_symbol": "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
+            "token_name": ""
+        }
+}
+```
+<1> The connection to ogmios.
+<2> The connection to a PostgreSQL database.
+<3> The port that DeNS query will serve HTTP requests on.
+<4> The protocol's NFT to uniquely identify the DeNS protocol used. The `+currency_symbol+` and `+token_name+` are hex encoded.

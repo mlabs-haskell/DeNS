@@ -1,0 +1,62 @@
+module Dens.Server
+
+import Prelude   (Eq, Json, Text, Bytes)
+import Plutus.V1 (TxOutRef)
+import Dens.Db   (DensProtocolUtxo, DensSetUtxo)
+
+---------------------------------------------------
+-- Response type
+---------------------------------------------------
+
+sum Response a
+    = Ok a
+    | Failed ResponseFailed
+
+record ResponseFailed = { error: Text }
+
+derive Eq (Response a)
+derive Json (Response a)
+
+derive Eq ResponseFailed
+derive Json ResponseFailed
+
+---------------------------------------------------
+-- Set insertion request / response
+---------------------------------------------------
+
+record QueryDensSetInsertionUtxoRequest = { name : Bytes }
+prod QueryDensSetInsertionUtxoResponse = (Response DensSetUtxo)
+
+derive Eq QueryDensSetInsertionUtxoRequest
+derive Json QueryDensSetInsertionUtxoRequest
+
+derive Eq QueryDensSetInsertionUtxoResponse
+derive Json QueryDensSetInsertionUtxoResponse
+
+---------------------------------------------------
+-- Set query request / response
+---------------------------------------------------
+-- TODO(jaredponn): implementing this would be useful for updates, but we don't
+-- support this now.
+-- record QueryDensSettxoRequest = { name : Bytes }
+-- prod QueryDensSetUtxoResponse = (Response DensSetUtxo)
+-- 
+-- derive Eq QueryDensSetUtxoRequest
+-- derive Json QueryDensSetUtxoRequest
+-- 
+-- derive Eq QueryDensSetUtxoResponse
+-- derive Json QueryDensSetUtxoResponse
+
+---------------------------------------------------
+-- Protocol info query / response
+---------------------------------------------------
+-- TODO(jaredponn): LB doesn't like JSON objects for empty records. I'll PR
+-- this in LB.
+-- record QueryDensProtocolUtxoRequest = { }
+prod QueryDensProtocolUtxoResponse = (Response DensProtocolUtxo)
+
+-- derive Eq QueryDensProtocolUtxoRequest
+-- derive Json QueryDensProtocolUtxoRequest
+
+derive Eq QueryDensProtocolUtxoResponse
+derive Json QueryDensProtocolUtxoResponse

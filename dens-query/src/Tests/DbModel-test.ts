@@ -92,7 +92,7 @@ class InsertDensSetUtxoCommand implements fc.AsyncCommand<Model, Db.DensDb> {
         [[
           Prelude.fromJust(
             PlaV1.currencySymbolFromBytes(
-              selectedProtocol.setElemMintingPolicy,
+              selectedProtocol.protocol.setElemMintingPolicy,
             ),
           ),
           PlaV1.adaToken,

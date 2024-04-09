@@ -19,7 +19,7 @@
       lbf-dens-db-args = {
         name = "lbf-dens-db";
         src = ./.;
-        files = [ "Dens/Db.lbf" "Dens/Config.lbf" ];
+        files = [ "Dens/Db.lbf" "Dens/Config.lbf" "Dens/Server.lbf" ];
         configs = [ lbf-dens-config ];
         npmExtraDependencies = [ config.packages.lbf-dens-typescript ];
       };
