@@ -61,13 +61,114 @@ CREATE TABLE IF NOT EXISTS tx_out_refs (
 );
 
 -----------------------------------------------------------------------------
+-- = Tables for the protocol
+-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------
+-- == Table for the Linked list for associating domain names to RRs
+-----------------------------------------------------------------------------
+-- Linked list set data structure
+CREATE TABLE IF NOT EXISTS dens_set_utxos (
+    -- name for the DNS record that is owned
+    name bytea UNIQUE,
+
+    -- Token which associates this `+name+` with a validator address which
+    -- actually holds (a reference) to the RRs.
+    currency_symbol bytea,
+    token_name bytea,
+
+    tx_out_ref_id bytea NOT NULL,
+    tx_out_ref_idx bigint NOT NULL,
+
+    PRIMARY KEY (tx_out_ref_id, tx_out_ref_idx),
+
+    FOREIGN KEY (tx_out_ref_id, tx_out_ref_idx) REFERENCES tx_out_refs (tx_out_ref_id, tx_out_ref_idx)
+    ON DELETE CASCADE DEFERRABLE,
+
+    CONSTRAINT currency_symbol_and_token_name_both_present_or_not CHECK
+    (
+        (currency_symbol IS null AND token_name IS null)
+        OR (currency_symbol IS NOT null AND token_name IS NOT null)
+    ),
+
+    -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L75-L92
+    CONSTRAINT currency_symbol_length_0_or_28 CHECK
+    (
+        (octet_length(currency_symbol) = 0) OR (octet_length(currency_symbol) = 28)
+    ),
+
+    -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L99-L112
+    CONSTRAINT token_name_length_at_most_32 CHECK (octet_length(token_name) <= 32),
+
+    -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Tx.hs#L51-L65
+    CONSTRAINT tx_id_length_is_32 CHECK (octet_length(tx_out_ref_id) = 32)
+);
+
+-- Index s.t. one can efficiently query if change has happened in the
+-- dens_set_utxos
+CREATE INDEX IF NOT EXISTS dens_set_utxos_currency_symbol_token_name ON dens_set_utxos (currency_symbol, token_name);
+
+-- Index s.t. one can efficiently query which UTxO to spend
+CREATE INDEX IF NOT EXISTS dens_set_utxos_name ON dens_set_utxos (name);
+
+
+-----------------------------------------------------------------------------
+-- == Table for representing the UTxOs which contain RRs
+-----------------------------------------------------------------------------
+
+-- `+DensValidator+`s with pointer to the `+dens_set_utxos+` i.e., we have 
+--      - M:1 relationship of many DensValidator to 1 dens_set_utxos
+CREATE TABLE IF NOT EXISTS dens_rrs_utxos (
+    -- Foreign key to the dens_set_utxos
+    name bytea REFERENCES dens_set_utxos (name)
+    ON DELETE CASCADE,
+
+    rrs bytea NOT NULL,
+
+    -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Tx.hs#L51-L65
+    CONSTRAINT tx_id_length_is_32 CHECK (octet_length(tx_out_ref_id) = 32),
+
+    tx_out_ref_id bytea NOT NULL,
+
+    tx_out_ref_idx bigint NOT NULL,
+
+    PRIMARY KEY (tx_out_ref_id, tx_out_ref_idx),
+
+    FOREIGN KEY (tx_out_ref_id, tx_out_ref_idx) REFERENCES tx_out_refs (tx_out_ref_id, tx_out_ref_idx)
+    ON DELETE CASCADE DEFERRABLE
+);
+
+-- Index s.t. we can efficiently join dens_set_utxos with dens_rrs_utxos on the name
+CREATE INDEX IF NOT EXISTS dens_rrs_utxos_name_index ON dens_rrs_utxos (name);
+
+-----------------------------------------------------------------------------
+-- == Table for the protocol UTxO
+-----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS dens_protocol_utxos (
+    element_id_minting_policy bytea NOT NULL,
+
+    set_elem_minting_policy bytea NOT NULL,
+
+    set_validator bytea NOT NULL,
+
+    records_validator bytea NOT NULL,
+
+    tx_out_ref_id bytea NOT NULL,
+
+    tx_out_ref_idx bigint NOT NULL,
+
+    PRIMARY KEY (tx_out_ref_id, tx_out_ref_idx),
+
+    FOREIGN KEY (tx_out_ref_id, tx_out_ref_idx) REFERENCES tx_out_refs (tx_out_ref_id, tx_out_ref_idx)
+    ON DELETE CASCADE DEFERRABLE
+);
+
+-----------------------------------------------------------------------------
 -- = Tables for the undo log
 -----------------------------------------------------------------------------
 
 -- Associates a block (the block id and block slot) with an SQL statement to
 -- undo something. 
--- Note that `+undo_statement+` can indeed be NULL which denotes this row is a
--- block that was just added to the blockchain.
 
 -- TODO(jaredponn): we can play around with the length of undo_log and make it
 -- based on the maximum length of the rollback to save some memory.
@@ -79,7 +180,7 @@ CREATE TABLE IF NOT EXISTS undo_log (
 
     block_id bytea NOT NULL,
 
-    undo_statement text,
+    undo_statement text NOT NULL,
 
     FOREIGN KEY (block_id, block_slot) REFERENCES blocks (block_id, block_slot)
     ON DELETE CASCADE DEFERRABLE,
@@ -286,130 +387,21 @@ $body$
 $body$
 LANGUAGE plpgsql;
 
------------------------------------------------------------------------------
--- = Tables for the protocol
------------------------------------------------------------------------------
 
--- Add undoing to the `+blocks+`
+-----------------------------------------------------------------------------
+-- = Undo log triggers
+-----------------------------------------------------------------------------
 SELECT create_table_undo_insert('blocks');
 SELECT create_table_undo_delete('blocks');
 
--- Add undoing to the `+tx_out_refs+`
 SELECT create_table_undo_insert('tx_out_refs');
 SELECT create_table_undo_delete('tx_out_refs');
 
------------------------------------------------------------------------------
--- == Table for the Linked list for associating domain names to RRs
------------------------------------------------------------------------------
--- Linked list set data structure
-CREATE TABLE IF NOT EXISTS dens_set_utxos (
-    -- name for the DNS record that is owned
-    name bytea UNIQUE,
-
-    -- Token which associates this `+name+` with a validator address which
-    -- actually holds (a reference) to the RRs.
-    currency_symbol bytea,
-    token_name bytea,
-
-    tx_out_ref_id bytea NOT NULL,
-    tx_out_ref_idx bigint NOT NULL,
-
-    PRIMARY KEY (tx_out_ref_id, tx_out_ref_idx),
-
-    FOREIGN KEY (tx_out_ref_id, tx_out_ref_idx) REFERENCES tx_out_refs (tx_out_ref_id, tx_out_ref_idx)
-    ON DELETE CASCADE DEFERRABLE,
-
-    CONSTRAINT currency_symbol_and_token_name_both_present_or_not CHECK
-    (
-        (currency_symbol IS null AND token_name IS null)
-        OR (currency_symbol IS NOT null AND token_name IS NOT null)
-    ),
-
-    -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L75-L92
-    CONSTRAINT currency_symbol_length_0_or_28 CHECK
-    (
-        (octet_length(currency_symbol) = 0) OR (octet_length(currency_symbol) = 28)
-    ),
-
-    -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L99-L112
-    CONSTRAINT token_name_length_at_most_32 CHECK (octet_length(token_name) <= 32),
-
-    -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Tx.hs#L51-L65
-    CONSTRAINT tx_id_length_is_32 CHECK (octet_length(tx_out_ref_id) = 32)
-);
-
--- Index s.t. one can efficiently query if change has happened in the
--- dens_set_utxos
-CREATE INDEX IF NOT EXISTS dens_set_utxos_currency_symbol_token_name ON dens_set_utxos (currency_symbol, token_name);
-
--- Index s.t. one can efficiently query which UTxO to spend
-CREATE INDEX IF NOT EXISTS dens_set_utxos_name ON dens_set_utxos (name);
-
------------------------------------------------------------------------------
--- === Undo log triggers
------------------------------------------------------------------------------
 SELECT create_table_undo_insert('dens_set_utxos');
 SELECT create_table_undo_delete('dens_set_utxos');
 
------------------------------------------------------------------------------
--- == Table for representing the UTxOs which contain RRs
------------------------------------------------------------------------------
-
--- `+DensValidator+`s with pointer to the `+dens_set_utxos+` i.e., we have 
---      - M:1 relationship of many DensValidator to 1 dens_set_utxos
-CREATE TABLE IF NOT EXISTS dens_rrs_utxos (
-    -- Foreign key to the dens_set_utxos
-    name bytea REFERENCES dens_set_utxos (name)
-    ON DELETE CASCADE,
-
-    rrs bytea NOT NULL,
-
-    -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Tx.hs#L51-L65
-    CONSTRAINT tx_id_length_is_32 CHECK (octet_length(tx_out_ref_id) = 32),
-
-    tx_out_ref_id bytea NOT NULL,
-
-    tx_out_ref_idx bigint NOT NULL,
-
-    PRIMARY KEY (tx_out_ref_id, tx_out_ref_idx),
-
-    FOREIGN KEY (tx_out_ref_id, tx_out_ref_idx) REFERENCES tx_out_refs (tx_out_ref_id, tx_out_ref_idx)
-    ON DELETE CASCADE DEFERRABLE
-);
-
--- Index s.t. we can efficiently join dens_set_utxos with dens_rrs_utxos on the name
-CREATE INDEX IF NOT EXISTS dens_rrs_utxos_name_index ON dens_rrs_utxos (name);
-
------------------------------------------------------------------------------
--- === Undo log triggers
------------------------------------------------------------------------------
 SELECT create_table_undo_insert('dens_rrs_utxos');
 SELECT create_table_undo_delete('dens_rrs_utxos');
 
------------------------------------------------------------------------------
--- == Table for the protocol UTxO
------------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS dens_protocol_utxos (
-    element_id_minting_policy bytea NOT NULL,
-
-    set_elem_minting_policy bytea NOT NULL,
-
-    set_validator bytea NOT NULL,
-
-    records_validator bytea NOT NULL,
-
-    tx_out_ref_id bytea NOT NULL,
-
-    tx_out_ref_idx bigint NOT NULL,
-
-    PRIMARY KEY (tx_out_ref_id, tx_out_ref_idx),
-
-    FOREIGN KEY (tx_out_ref_id, tx_out_ref_idx) REFERENCES tx_out_refs (tx_out_ref_id, tx_out_ref_idx)
-    ON DELETE CASCADE DEFERRABLE
-);
-
------------------------------------------------------------------------------
--- === Undo log triggers
------------------------------------------------------------------------------
 SELECT create_table_undo_insert('dens_protocol_utxos');
 SELECT create_table_undo_delete('dens_protocol_utxos');
