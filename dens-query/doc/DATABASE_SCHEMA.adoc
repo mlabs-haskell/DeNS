@@ -10,5 +10,5 @@ requiring the protocol to undo all the changes from the present to the block to 
 .Database schema source code
 [source,plpgsql]
 ```
-include::../api/postgres/dens.sql[]
+include::{apidir}/postgres/dens.sql[]
 ```

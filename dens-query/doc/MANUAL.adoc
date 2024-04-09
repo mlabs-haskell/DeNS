@@ -1,4 +1,5 @@
 :sectlinks:
+:apidir: ../api
 
 = DeNS Query
 :toc:

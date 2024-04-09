@@ -32,7 +32,8 @@ Returns the UTxO to spend in order to purchase the given domain from the smart c
             "name": "676F6F676C652E636F6D", <1>
             "pointer":                      <2>
                 {
-                    "currency_symbol": "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F"
+                    "currency_symbol": 
+                        "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
                     "token_name": ""
                 },
             "txOutRef":                     <3>

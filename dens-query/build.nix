@@ -61,10 +61,19 @@
           dens-query-tgz = tsFlake.packages.dens-query-typescript-tgz;
 
           # User manual
-          dens-query-user-manual = pkgs.stdenv.mkDerivation {
-            name = "dens-query-user-manual";
-            nativeBuildInputs = [ pkgs.asciidoctor pkgs.autoreconfHook ];
-            src = ./docs;
+          dens-query-manual = pkgs.stdenv.mkDerivation {
+            name = "dens-query-manual";
+            nativeBuildInputs = [ pkgs.nodejs pkgs.asciidoctor ];
+            src = ./.;
+            buildPhase =
+              ''
+                npm run doc-manual
+              '';
+            installPhase =
+              ''
+                mkdir -p "$out/share/doc"
+                mv index.html "$out/share/doc"
+              '';
           };
         };
 
