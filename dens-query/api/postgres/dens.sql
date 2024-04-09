@@ -29,7 +29,7 @@
 --
 -- = References
 -- 
--- * [[ogmios]] https://ogmios.dev/api/
+-- * [#ogmios] https://ogmios.dev/api/
 
 -----------------------------------------------------------------------------
 -- = Tables for general information about the blockchain

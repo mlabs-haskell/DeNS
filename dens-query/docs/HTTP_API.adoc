@@ -129,7 +129,6 @@ Returns the UTxO which holds the Protocol type i.e., trusted information of the 
 | 500 | <<no-protocol-utxo-found>>      |  Thrown if there is no UTxO for the protocol
 |===
 
-```
 [#no-protocol-utxo-found]
 .No protocol utxo found
 [example]

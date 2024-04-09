@@ -43,6 +43,7 @@
       {
 
         packages = {
+
           # Executable
           dens-query-cli = tsFlake.packages.dens-query-typescript-exe.overrideAttrs (_self: super:
             {
@@ -55,8 +56,16 @@
                       --set DENS_QUERY_INIT_SQL_FILE ${lib.escapeShellArg ./api/postgres/dens.sql}
                 '';
             });
+
           # Tarball to use in other projects
           dens-query-tgz = tsFlake.packages.dens-query-typescript-tgz;
+
+          # User manual
+          dens-query-user-manual = pkgs.stdenv.mkDerivation {
+            name = "dens-query-user-manual";
+            nativeBuildInputs = [ pkgs.asciidoctor pkgs.autoreconfHook ];
+            src = ./docs;
+          };
         };
 
         # When developing, in this directory, run
