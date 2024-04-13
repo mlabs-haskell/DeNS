@@ -21,8 +21,10 @@
     plutarch.follows = "lambda-buffers/plutarch";
 
     # ogmios: Websockets for interacting with the cardano-node
-    plutip.url = "github:mlabs-haskell/plutip/1bf0b547cd3689c727586abb8385c008fb2a3d1c";
     ogmios.url = "github:mlabs-haskell/ogmios-nixos/78e829e9ebd50c5891024dcd1004c2ac51facd80";
+
+    # plutip: local testnet cluster
+    plutip.url = "github:mlabs-haskell/plutip/1bf0b547cd3689c727586abb8385c008fb2a3d1c";
 
     # cardano-node:
     cardano-node.url = "github:input-output-hk/cardano-node";
