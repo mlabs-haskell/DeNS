@@ -31,7 +31,6 @@ export function runServer(
   db: Db.DensDb,
 ): void {
   const app = express();
-  const port = Number(config.port);
 
   app.use("/api", lbJson);
 
@@ -99,7 +98,22 @@ export function runServer(
     }
   });
 
-  app.listen(port, () => {
-    logger.info(`Server running on port ${port}`);
-  });
+  switch (config.name) {
+    case `InternetDomain`: {
+      const host = config.fields.host;
+      const port = Number(config.fields.port);
+
+      app.listen(port, host, () => {
+        logger.info(`Server running on host ${host} and port ${port}`);
+      });
+      break;
+    }
+    case `UnixDomain`: {
+      const path = config.fields.path;
+      app.listen(path, () => {
+        logger.info(`Server running Unix domain socket: '${path}`);
+      });
+      break;
+    }
+  }
 }

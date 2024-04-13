@@ -33,10 +33,24 @@ export class DensDb {
   #pool: pg.Pool;
   constructor(connectionOptions: DbConfig) {
     const cOpts = connectionOptions;
+
+    let host: string = ``;
+    let port: number | undefined;
+
+    switch (cOpts.socket.name) {
+      case `InternetDomain`:
+        host = cOpts.socket.fields.host;
+        port = Number(cOpts.socket.fields.port);
+        break;
+      case `UnixDomain`:
+        host = cOpts.socket.fields.path;
+        break;
+    }
+
     this.#pool = new pg.Pool(
       {
-        host: cOpts.host,
-        port: Number(cOpts.port),
+        host: host,
+        port: port,
         user: cOpts.user,
         database: cOpts.database,
         password: cOpts.password,

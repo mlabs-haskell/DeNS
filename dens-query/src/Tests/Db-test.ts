@@ -31,8 +31,13 @@ it("Database basic tests", async () => {
      * Create the database
      */
     const db: Db.DensDb = new Db.DensDb({
-      host,
-      port: BigInt(port),
+      socket: {
+        name: `InternetDomain`,
+        fields: {
+          host,
+          port: BigInt(port),
+        },
+      },
       database,
       user,
       password: ``,
