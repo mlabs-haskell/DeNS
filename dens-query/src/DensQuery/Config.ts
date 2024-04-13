@@ -9,6 +9,7 @@ import {
   Config,
   DbConfig,
   OgmiosConfig,
+  ServerConfig,
 } from "lbf-dens-db/LambdaBuffers/Dens/Config.mjs";
 import * as LbrPrelude from "lbr-prelude";
 import * as Prelude from "prelude";
@@ -16,7 +17,7 @@ import * as Prelude from "prelude";
 import { readFile } from "node:fs/promises";
 
 // Rexport LB things
-export { Config, DbConfig, OgmiosConfig };
+export { Config, DbConfig, OgmiosConfig, ServerConfig };
 
 const DENS_QUERY_CONFIG_ENV_VAR = "DENS_QUERY_CONFIG";
 const DENS_QUERY_INIT_SQL_FILE_ENV_VAR = "DENS_QUERY_INIT_SQL_FILE";

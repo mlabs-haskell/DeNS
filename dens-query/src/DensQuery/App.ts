@@ -8,7 +8,7 @@ import * as Db from "./Db.js";
 import * as Server from "./Server.js";
 
 // Initialize the database
-const db = new Db.DensDb(config.db);
+const db = new Db.DensDb(config.database);
 await db.densInit(initSqlFile);
 
 // Run the chain sync

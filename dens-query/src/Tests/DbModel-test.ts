@@ -138,8 +138,13 @@ class StrictInfimumDensSetUtxoCommand implements fc.Command<Model, Db.DensDb> {
 it(`Database model tests`, async () => {
   await DbTestUtils.withPgTest(async (host, port) => {
     const db: Db.DensDb = new Db.DensDb({
-      host: host,
-      port: BigInt(port),
+      socket: {
+        name: `InternetDomain`,
+        fields: {
+          host,
+          port: BigInt(port),
+        },
+      },
       user: "dens",
       database: `dens`,
       password: ``,

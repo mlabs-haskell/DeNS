@@ -12,8 +12,16 @@ import { setTimeout } from "timers/promises";
  * Here's what's going on:
  * 1. Go in a temporary directory
  * 2. Run `initdb -D .` to create a postgres db cluster (see [1])
- * 3. Run `postgres -D . -k . -p 5432 -c listen-addresses=` to actually start a
- *    new pg db (see [2], [3], [4])
+ * 3. Run
+ *    ```
+ *    postgres -D . -k . -p 5432 -c listen-addresses=
+ *    ```
+ *    Note that one could alternatively run
+ *    ```
+ *    postgres -D . -k . -h "" -p 5432 -c listen-addresses=
+ *    ```
+ *    to make postgres ONLY listen on the unix socket domain
+ *    (see [2], [3], [4])
  * References:
  *  [1]: https://www.postgresql.org/docs/current/app-initdb.html
  *  [2]: https://www.postgresql.org/docs/current/app-pg-ctl.html
