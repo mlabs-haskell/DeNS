@@ -26,6 +26,7 @@
 -- will run, then the trigger for B will run -- so undoing will temporarily
 -- violate the foreign key constraint. Hence, why we always have `+DEFERRABLE+`
 -- set for foreign keys.
+-- 
 --
 -- = References
 -- 
@@ -205,48 +206,21 @@ $body$
 $body$
 LANGUAGE plpgsql;
 
--- Roll backs the database to the given block i.e., 
--- Using the `+undo_log+`, execute all `+undo_statement+` _strictly after_ the
--- provided block, and delete such rows from the `+undo_log+`.
-CREATE OR REPLACE FUNCTION undo_log_rollback_to(block_slot bigint, block_id bytea)
-RETURNS void AS
+-- Given a `+table_name+`, returns `+<table_name>_undo_insert+`. This exists to
+-- ensure that we have a consistent way of generating the trigger / function
+-- name associated with a table.
+CREATE OR REPLACE FUNCTION create_undo_insert_name(table_name text)
+RETURNS text AS
 $body$
-    DECLARE
-        the_block_seq bigint;
-        to_undo record;
     BEGIN
-        SET CONSTRAINTS ALL DEFERRED;
-
-        SELECT coalesce(max(undo_log.seq), 0) INTO STRICT the_block_seq
-        FROM undo_log
-        WHERE undo_log.block_id = undo_log_rollback_to.block_id AND undo_log.block_slot = undo_log_rollback_to.block_slot;
-
-        FOR to_undo IN
-            WITH deleted AS(
-                DELETE FROM undo_log
-                WHERE seq > the_block_seq
-                RETURNING *
-            )
-            SELECT *
-            FROM deleted
-            ORDER BY seq DESC
-        LOOP
-            IF to_undo.undo_statement IS NOT NULL
-                THEN EXECUTE to_undo.undo_statement;
-            END IF;
-        END LOOP;
-
-        -- Needed to remove the stuff we just added by undoing
-        -- TODO(jaredponn): this isn't so efficient is it? It would be
-        -- preferable to pass an argument to the trigger dynamically!
-        DELETE FROM undo_log
-        WHERE NOT(seq <= the_block_seq);
+        RETURN table_name || '_undo_insert';
     END
 $body$
 LANGUAGE plpgsql;
 
 -- Creates a function and trigger with the name `+table_name_undo_insert+`
--- which on insertion to `+table_name+`, append an SQL statement of the form
+-- which on insertion to `+table_name+`, assuming that `+undo_log.freeze_log+`
+-- is not true, appends an SQL statement of the form
 -- ---
 -- format
 --  ( $$ DELETE FROM table_name WHERE table_name.primary_key1 = %L AND ... table_name.primary_keyN = %L $$
@@ -261,7 +235,7 @@ CREATE OR REPLACE FUNCTION create_table_undo_insert(table_name text)
 RETURNS void AS
 $body$
     DECLARE
-        name text := table_name || '_undo_insert';
+        name text := create_undo_insert_name(table_name);
         sql_is_primary_keys text;
         sql_new_primary_keys text;
     BEGIN
@@ -300,6 +274,10 @@ $body$
                         DECLARE
                             most_recent_block record := get_most_recent_block();
                         BEGIN
+                            IF current_setting('undo_log.freeze_log', TRUE) = 'TRUE' THEN
+                                RETURN NEW;
+                            END IF;
+
                             IF most_recent_block IS NOT NULL THEN -- if there is no block, then we can't associate the undo log with anything
                                 INSERT INTO undo_log (seq, block_slot, block_id, undo_statement)
                                 VALUES (DEFAULT, most_recent_block.block_slot, most_recent_block.block_id, format(%L, %s));
@@ -332,8 +310,21 @@ $body$
 $body$
 LANGUAGE plpgsql;
 
+-- Given a `+table_name+`, returns `+<table_name>_undo_delete+`. This exists to
+-- ensure that we have a consistent way of generating the trigger / function
+-- name associated with a table.
+CREATE OR REPLACE FUNCTION create_undo_delete_name(table_name text)
+RETURNS text AS
+$body$
+    BEGIN
+        RETURN table_name || '_undo_delete';
+    END
+$body$
+LANGUAGE plpgsql;
+
 -- Creates a function and trigger with the name `+table_name_undo_delete+`
--- which on deletion to `+table_name+`, append an SQL statement of the form
+-- which on deletion to `+table_name+`, assuming that `+undo_log.freeze_log+`
+-- is not true, append an SQL statement of the form
 -- ---
 -- format
 --  ( $$ INSERT INTO table_name VALUES ((CAST (%L AS table_name)).*) $$
@@ -346,7 +337,7 @@ CREATE OR REPLACE FUNCTION create_table_undo_delete(table_name text)
 RETURNS void AS
 $body$
     DECLARE
-        name text := table_name || '_undo_delete';
+        name text := create_undo_delete_name(table_name);
     BEGIN
         EXECUTE
             format(
@@ -357,7 +348,12 @@ $body$
                             DECLARE
                                 most_recent_block record := get_most_recent_block();
                             BEGIN
-                                IF most_recent_block IS NOT NULL THEN -- if there is no block, then we can't associate the undo log with anything
+                                IF current_setting('undo_log.freeze_log', TRUE) = 'TRUE' THEN
+                                    RETURN OLD;
+                                END IF;
+
+                                IF most_recent_block IS NOT NULL 
+                                    THEN -- if there is no block, then we can't associate the undo log with anything
                                     INSERT INTO undo_log (seq, block_slot, block_id, undo_statement)
                                     VALUES (DEFAULT, most_recent_block.block_slot, most_recent_block.block_id, format(%L, OLD));
                                 END IF;
@@ -387,6 +383,65 @@ $body$
 $body$
 LANGUAGE plpgsql;
 
+-- Freezes the `+undo_log+` i.e., stops triggers from automatically adding
+-- things to the `+undo_log+` in the current transaction
+CREATE OR REPLACE FUNCTION freeze_undo_log()
+RETURNS void as
+$body$
+    BEGIN
+        SET LOCAL undo_log.freeze_log = TRUE;
+    END
+$body$
+LANGUAGE plpgsql;
+
+-- Unfreezes the `+undo_log+` i.e., allows things to be added to the
+-- `+undo_log+` again in the current transaction
+CREATE OR REPLACE FUNCTION unfreeze_undo_log()
+RETURNS void as
+$body$
+    BEGIN
+        SET LOCAL undo_log.freeze_log = FALSE;
+    END
+$body$
+LANGUAGE plpgsql;
+
+-- Roll backs the database to the given block i.e., 
+-- Using the `+undo_log+`, execute all `+undo_statement+` _strictly after_ the
+-- provided block, and delete such rows from the `+undo_log+`.
+CREATE OR REPLACE FUNCTION undo_log_rollback_to(block_slot bigint, block_id bytea)
+RETURNS void AS
+$body$
+    DECLARE
+        the_block_seq bigint;
+        to_undo record;
+    BEGIN
+        SET CONSTRAINTS ALL DEFERRED;
+
+        SELECT coalesce(max(undo_log.seq), 0) INTO STRICT the_block_seq
+        FROM undo_log
+        WHERE undo_log.block_id = undo_log_rollback_to.block_id AND undo_log.block_slot = undo_log_rollback_to.block_slot;
+
+        PERFORM freeze_undo_log();
+
+        FOR to_undo IN
+            WITH deleted AS(
+                DELETE FROM undo_log
+                WHERE seq > the_block_seq
+                RETURNING *
+            )
+            SELECT *
+            FROM deleted
+            ORDER BY seq DESC
+        LOOP
+            IF to_undo.undo_statement IS NOT NULL
+                THEN EXECUTE to_undo.undo_statement;
+            END IF;
+        END LOOP;
+
+        PERFORM unfreeze_undo_log();
+    END
+$body$
+LANGUAGE plpgsql;
 
 -----------------------------------------------------------------------------
 -- = Undo log triggers
