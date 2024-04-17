@@ -8,10 +8,6 @@
 # ENVIRONMENT.
 #   - DENS_QUERY_CONFIG must be set to a file path containing a JSON
 #     configuration file
-#
-# LIMITATIONS:
-#   - This always syncs from the beginning of time (easy to fix)
-#   - There is no API to query the database
 { inputs, lib, ... }:
 {
   imports =

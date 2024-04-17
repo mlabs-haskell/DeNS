@@ -73,6 +73,24 @@ export function runServer(
     }
   });
 
+  app.post(`/api/set-protocol-nft`, async (req, res) => {
+    const { protocolNft } = LbrPrelude
+      .Json[LbDensServer.SetProtocolNftRequest].fromJson(req.body);
+
+    const newProtocolNft = await db.densWithDbClient((client) => {
+      return client.setProtocolNft(protocolNft);
+    });
+
+    const resJson = LbrPrelude
+      .Json[LbDensServer.SetProtocolNftResponse].toJson(
+        {
+          name: `Ok`,
+          fields: { protocolNft: newProtocolNft },
+        },
+      );
+    res.send(PJson.stringify(resJson));
+  });
+
   app.post(`/api/query-protocol-utxo`, async (_req, res) => {
     const lkup = await db.densWithDbClient((client) => {
       return client.selectProtocol();
