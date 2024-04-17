@@ -52,6 +52,17 @@ it("Database basic tests", async () => {
       });
 
       await db.densWithDbClient(async (client) => {
+        await it(`Setting the protocol NFT`, async () => {
+          const newProtocolNft = await client.setProtocolNft(
+            Samples.sampleProtocolNftAssetClass,
+          );
+          assert.deepStrictEqual(
+            newProtocolNft,
+            Samples.sampleProtocolNftAssetClass,
+            `Protocol NFT doesn't match the protocol NFT just inserted`,
+          );
+        });
+
         const freshPoint = Samples.fcGenerate(Samples.fcPoint());
         await it(`Adding a point (block)`, async () => {
           await client.insertPoint(freshPoint);

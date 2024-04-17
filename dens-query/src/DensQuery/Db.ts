@@ -403,6 +403,51 @@ class DensDbClient {
     await this.rollBackTo({ slot: -1n, blockId: Uint8Array.from([]) });
     return;
   }
+
+  /**
+   * Sets the protocol NFT -- see the postgres function for details.
+   */
+  async setProtocolNft(
+    assetClass: PlaV1.AssetClass,
+  ): Promise<PlaV1.AssetClass> {
+    const [currencySymbol, tokenName] = assetClass;
+    const res = await this.query(
+      {
+        text:
+          `SELECT * FROM (VALUES ((set_protocol_nft($1, $2)).*) ) AS t (pk, currency_symbol, token_name)`,
+        values: [currencySymbol, tokenName],
+      },
+    );
+
+    if (res.rows.length === 1) {
+      const row = res.rows[0];
+      console.log(JSON.stringify(row));
+      return [
+        Uint8Array.from(row.currency_symbol) as unknown as CurrencySymbol,
+        Uint8Array.from(row.token_name) as unknown as TokenName,
+      ];
+    } else {
+      throw new Error(
+        `setProtocolNft: internal error returned too many rows.`,
+      );
+    }
+  }
+
+  async recentPoints(): Promise<Point[]> {
+    const res = await this.query(
+      {
+        text: `SELECT block_slot, block_id FROM recent_points()`,
+        values: [],
+      },
+    );
+
+    return res.rows.map((row) => {
+      return {
+        blockId: Uint8Array.from(row.block_id),
+        slot: BigInt(row.block_slot),
+      };
+    });
+  }
 }
 
 /**
