@@ -1,7 +1,7 @@
 module Dens.Server
 
 import Prelude   (Eq, Json, Text, Bytes)
-import Plutus.V1 (TxOutRef)
+import Plutus.V1 (TxOutRef, AssetClass)
 import Dens.Db   (DensProtocolUtxo, DensSetUtxo)
 
 ---------------------------------------------------
@@ -23,7 +23,6 @@ derive Json ResponseFailed
 ---------------------------------------------------
 -- Set insertion request / response
 ---------------------------------------------------
-
 record QueryDensSetInsertionUtxoRequest = { name : Bytes }
 prod QueryDensSetInsertionUtxoResponse = (Response DensSetUtxo)
 
@@ -60,3 +59,15 @@ prod QueryDensProtocolUtxoResponse = (Response DensProtocolUtxo)
 
 derive Eq QueryDensProtocolUtxoResponse
 derive Json QueryDensProtocolUtxoResponse
+
+---------------------------------------------------
+-- Set protocol NFT query /response
+---------------------------------------------------
+record SetProtocolNftRequest = { protocolNft: AssetClass }
+prod   SetProtocolNftResponse = (Response SetProtocolNftRequest)
+
+derive Eq SetProtocolNftRequest
+derive Json SetProtocolNftRequest
+
+derive Eq SetProtocolNftResponse
+derive Json SetProtocolNftResponse

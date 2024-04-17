@@ -244,13 +244,13 @@ export class ChainSync extends WebSocket {
   }
 
   static isFindIntersectionResponse(
-    response: unknown,
+    response: object,
   ): response is OgmiosSchema.Ogmios["FindIntersectionResponse"] {
     return "method" in response && response["method"] === "findIntersection";
   }
 
   static isNextBlockResponse(
-    response: unknown,
+    response: object,
   ): response is OgmiosSchema.Ogmios["NextBlockResponse"] {
     return "method" in response && response["method"] === "nextBlock";
   }
