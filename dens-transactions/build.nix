@@ -9,6 +9,15 @@
           inherit (config.settings)
             devShellTools
             devShellHook;
+
+          npmExtraDependencies =
+            [
+              inputs.prelude-typescript.packages.${system}.lib
+              inputs.plutus-ledger-api-typescript.packages.${system}.lib
+
+              config.packages.lbf-dens-db-typescript
+              config.packages.lbf-dens-typescript
+            ];
         };
       in
       {

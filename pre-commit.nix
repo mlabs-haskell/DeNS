@@ -22,7 +22,7 @@
 
         # TS/JS hooks
         denofmt = {
-          enable = true;
+          enable = false;
           # Note(jaredponn): We follow the default files this formats, except
           # we exclude markdown files. See  
           #   [1] https://docs.deno.com/runtime/manual/tools/formatter
@@ -46,7 +46,7 @@
           exclude = "*.md";
         };
 
-        hlint.hintFile = ./.hlint.yaml;
+        hlint.hintFile = ./hlint.yaml;
 
       };
     };
