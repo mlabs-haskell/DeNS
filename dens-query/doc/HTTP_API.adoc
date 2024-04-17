@@ -8,14 +8,17 @@ Some endpoints provided by DeNS Query are exposed internal functionalities to
 and are made available to facilitate testing and development.
 
 [IMPORTANT]
+====
 To prevent malicious interactions/modifications of DeNS Query's database, 
 it is therefore expected that these endpoints must NOT be exposed publicly 
 (i.e., not accessible to end-users). 
 For this to be effective, 
 a HTTPS reverse proxy may be used to: 
+
 * ensure that proper encryption is enforced; 
 * guarantee host authentication; and 
 * make sure that only user-specific endpoints are exposed for the public.
+====
 
 Below is a list of these internal endpoints that should not be exposed in the public API:
 
