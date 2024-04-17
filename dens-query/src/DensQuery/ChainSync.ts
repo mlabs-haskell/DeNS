@@ -2,12 +2,9 @@
  * Functionality for syncing with the chain via ogmios.
  *
  * @private
- * Mostly taken from: {@link https://github.com/CardanoSolutions/ogmios-ts-client-starter-kit/tree/main/src }
+ * Mostly taken from: {@link https://ogmios.dev/mini-protocols/local-chain-sync/ }
  */
-import { createInteractionContext } from "@cardano-ogmios/client";
-import type * as OgmiosClient from "@cardano-ogmios/client";
 import * as OgmiosSchema from "@cardano-ogmios/schema";
-import { createChainSynchronizationClient } from "@cardano-ogmios/client";
 
 import { logger } from "./Logger.js";
 import { OgmiosConfig } from "lbf-dens-db/LambdaBuffers/Dens/Config.mjs";
@@ -18,6 +15,7 @@ import * as Prelude from "prelude";
 import * as LbrPlutusV1 from "lbr-plutus/V1.js";
 import * as LbfDens from "lbf-dens/LambdaBuffers/Dens.mjs";
 import * as csl from "@emurgo/cardano-serialization-lib-nodejs";
+import { WebSocket } from "ws";
 
 /**
  * {@link rollForwardDb} rolls the database forwards via
@@ -201,79 +199,153 @@ export async function rollBackwardDb(
 }
 
 /**
+ * Extends {@link WebSocket} to provide convenient functionality to isolate the
+ * JSON RPC queries that ogmios expects.
+ *
+ * @private
+ * Why don't we just use the client library provided by Ogmios? It's a bit
+ * opinionated with how we will interact with Ogmios e.g. looking at the diagram in
+ * {@link https://ogmios.dev/mini-protocols/local-chain-sync/}, once we're in
+ * the "Initialized" state, their library makes it easy to call "nextBlock",
+ * but it's not so easy to call "findIntersection".
+ * We want to be able to dynamically change the intersection. Plus, it's
+ * actually not that difficult to write this ourselves :).
+ */
+export class ChainSync extends WebSocket {
+  /**
+   * Unwraps {@link OgmiosConfig} s.t. {@link WebSocket}'s constructor can be
+   * called
+   */
+  constructor(ogmiosConfig: OgmiosConfig) {
+    super(ogmiosConfig.host, { port: Number(ogmiosConfig.port) });
+  }
+
+  /**
+   * @internal
+   * TODO(jaredponn): perhaps we should use LB's JSON mechanisms
+   */
+  rpc(method: string, params: unknown, id: unknown): void {
+    super.send(JSON.stringify({ jsonrpc: "2.0", method, params, id }));
+  }
+
+  /**
+   * {@link https://ogmios.dev/mini-protocols/local-chain-sync/#finding-an-intersection}
+   */
+  findIntersection(points: (OgmiosSchema.Point | "origin")[], id?: unknown) {
+    points.push("origin");
+    this.rpc("findIntersection", { points }, id);
+  }
+
+  /**
+   * {@link https://ogmios.dev/mini-protocols/local-chain-sync/#requesting-next-blocks}
+   */
+  nextBlock(id?: unknown) {
+    this.rpc("nextBlock", {}, id);
+  }
+
+  static isFindIntersectionResponse(
+    response: unknown,
+  ): response is OgmiosSchema.Ogmios["FindIntersectionResponse"] {
+    return "method" in response && response["method"] === "findIntersection";
+  }
+
+  static isNextBlockResponse(
+    response: unknown,
+  ): response is OgmiosSchema.Ogmios["NextBlockResponse"] {
+    return "method" in response && response["method"] === "nextBlock";
+  }
+}
+
+/**
  * {@link runChainSync} is the main function which synchronises with the chain.
+ * More precisely,
+ *
+ *  1. We create a Websocket connection to Ogmios
+ *  2. Loop the following forever
+ *     2.1 Reset the database to the provided protocolNft (note this
+ *     essentially polls to allow dynamically updating which DeNS protocol we
+ *     follow)
+ *     2.2 Find an intersection with the current database and ogmios
+ *     2.3 Gets 100 of the next blocks.
+ *
+ * @private
+ * It would be preferable to set up Postgres' `LISTEN`/`NOTIFY` so we don't
+ * have this awkward polling situation. This needs more thought
  */
 export async function runChainSync(
   protocolNft: PlaV1.AssetClass,
   ogmiosConfig: OgmiosConfig,
   db: Db.DensDb,
 ) {
-  // Avoids errors when serializing BigInt
-  // deno-lint-ignore no-explicit-any
-  const replacer = (_key: any, value: any) =>
-    typeof value === "bigint" ? value.toString() : value;
+  const client = new ChainSync(ogmiosConfig);
 
-  const context = await createContext(
-    ogmiosConfig.host,
-    Number(ogmiosConfig.port),
-  );
-  const client = await createChainSynchronizationClient(context, {
-    rollForward: async (
-      { block }: {
-        block: OgmiosSchema.Block;
-        tip: OgmiosSchema.Tip | OgmiosSchema.Origin;
-      },
-      nextBlock: () => void,
-    ) => {
-      try {
-        await rollForwardDb(protocolNft, db, { block });
-      } catch (e) {
-        logger.warn(
-          `Roll forward failed for the following block with error ${e}:\n${
-            JSON.stringify(block, replacer)
-          }`,
-        );
+  while (1) {
+    protocolNft = await db.densWithDbClient((dbClient) => {
+      return dbClient.setProtocolNft(protocolNft);
+    });
+
+    const recentPoints: (OgmiosSchema.Point | "origin")[] = await db
+      .densWithDbClient((dbClient) => {
+        return dbClient.recentPoints();
+      }).then((points) => points.map(plaPointToOgmiosPoint));
+
+    recentPoints.push("origin");
+
+    client.findIntersection(recentPoints);
+
+    let resolveBatch: (value?: unknown) => void;
+    const task = new Promise((resolve) => resolveBatch = resolve);
+
+    client.on("message", async (msg) => {
+      const stringMsg: string = (() => {
+        if (Array.isArray(msg)) {
+          return msg.map((buf) => buf.toString()).join("");
+        } else {
+          return msg.toString();
+        }
+      })();
+      const response = JSON.parse(stringMsg);
+
+      if (ChainSync.isFindIntersectionResponse(response)) {
+        if ("error" in response) {
+          logger.log(
+            "error",
+            `No intersection found: ${response.error.message}`,
+          );
+        }
+        return;
+      } else if (ChainSync.isNextBlockResponse(response)) {
+        --numberOfRequests;
+        const result = response.result;
+
+        switch (result.direction) {
+          case "forward": {
+            const block = result.block;
+            await rollForwardDb(protocolNft, db, { block });
+            break;
+          }
+          case "backward": {
+            const point = result.point;
+            await rollBackwardDb(db, { point });
+            break;
+          }
+        }
+
+        if (numberOfRequests === 0) {
+          resolveBatch();
+        }
+      } else {
+        throw new Error(`Unexpected response from Ogmios:\n\t${msg}`);
       }
-      nextBlock();
-    },
-    rollBackward: async (
-      { point }: {
-        point: OgmiosSchema.Point | OgmiosSchema.Origin;
-        tip: OgmiosSchema.Tip | OgmiosSchema.Origin;
-      },
-      nextBlock: () => void,
-    ) => {
-      try {
-        await rollBackwardDb(db, { point });
-      } catch (e) {
-        logger.warn(
-          `Roll backward failed for the following block with error ${e}:\n${
-            JSON.stringify(point, replacer)
-          }`,
-        );
-      }
-      nextBlock();
-    },
-  });
+    });
 
-  await db.densWithDbClient(async (_client) => {
-    // TODO(jaredponn): put the most recent points as an argument to `resume`...
-    await client.resume();
-  });
-}
+    let numberOfRequests = 100;
+    for (let i = 0; i < numberOfRequests; ++i) {
+      client.nextBlock();
+    }
 
-/**
- * @internal
- */
-function createContext(
-  host: string,
-  port: number,
-): Promise<OgmiosClient.InteractionContext> {
-  return createInteractionContext(
-    (err) => logger.error(`Ogmios connection error: ${err}`),
-    () => logger.info("Ogmios connection closed"),
-    { connection: { host: host, port: port } },
-  );
+    await task;
+  }
 }
 
 /**
@@ -306,6 +378,18 @@ function ogmiosPointToPlaPoint(
     slot: BigInt(slot),
   };
   return point;
+}
+
+/**
+ * @internal
+ */
+function plaPointToOgmiosPoint(
+  dbPoint: Db.Point,
+): OgmiosSchema.Point {
+  return {
+    id: Buffer.from(dbPoint.blockId).toString("hex"),
+    slot: Number(dbPoint.slot),
+  };
 }
 
 /**

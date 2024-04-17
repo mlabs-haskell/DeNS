@@ -26,6 +26,10 @@
 -- will run, then the trigger for B will run -- so undoing will temporarily
 -- violate the foreign key constraint. Hence, why we always have `+DEFERRABLE+`
 -- set for foreign keys.
+--
+-- Finally, this schema assumes that we are only following a single DeNS
+-- protocol. Thus, it assumes that there is a unique protocol NFT we are
+-- interested in following -- see the table `+dens_protocol_nft+` for details.
 -- 
 --
 -- = References
@@ -163,6 +167,33 @@ CREATE TABLE IF NOT EXISTS dens_protocol_utxos (
     FOREIGN KEY (tx_out_ref_id, tx_out_ref_idx) REFERENCES tx_out_refs (tx_out_ref_id, tx_out_ref_idx)
     ON DELETE CASCADE DEFERRABLE
 );
+
+-----------------------------------------------------------------------------
+-- == Table for the protocol NFT
+-----------------------------------------------------------------------------
+-- Note that we assume that we are only following a single instance of the DeNS
+-- protocol in this schema, so really _all_ DeNS tables depend on this table;
+-- and hence have a foreign key to this table.
+-- But, to simplify the schema, we only allow at most one dens_protocol_nft to
+-- exist, and hence we don't write this foreign key dependency explicitly in
+-- the tables.
+-- See `+set_protocol_nft+` for details.
+CREATE TABLE IF NOT EXISTS dens_protocol_nft(
+    at_most_one boolean PRIMARY KEY DEFAULT TRUE,
+    currency_symbol bytea NOT NULL,
+    token_name bytea NOT NULL,
+
+    -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L75-L92
+    CONSTRAINT currency_symbol_length_0_or_28 CHECK
+    (
+        (octet_length(currency_symbol) = 0) OR (octet_length(currency_symbol) = 28)
+    ),
+
+    -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L99-L112
+    CONSTRAINT token_name_length_at_most_32 CHECK (octet_length(token_name) <= 32),
+
+    CONSTRAINT at_most_one CHECK (at_most_one)
+    );
 
 -----------------------------------------------------------------------------
 -- = Tables for the undo log
@@ -460,3 +491,63 @@ SELECT create_table_undo_delete('dens_rrs_utxos');
 
 SELECT create_table_undo_insert('dens_protocol_utxos');
 SELECT create_table_undo_delete('dens_protocol_utxos');
+
+-----------------------------------------------------------------------------
+-- = Helper functions
+-----------------------------------------------------------------------------
+
+-- If the provided asset class (currency symbol / token name) matches the
+-- existing asset class in the `+dens_protocol_nft+` table, do nothing.
+-- Otherwise, overwrite the existing `+dens_protocol_nft+` and clear the entire
+-- database.
+CREATE OR REPLACE FUNCTION set_protocol_nft(currency_symbol bytea, token_name bytea)
+RETURNS dens_protocol_nft AS
+$body$
+    DECLARE
+        old_protocol_nft dens_protocol_nft;
+        new_protocol_nft dens_protocol_nft;
+    BEGIN
+        SELECT * INTO old_protocol_nft FROM dens_protocol_nft;
+
+        INSERT INTO dens_protocol_nft(currency_symbol, token_name)
+        VALUES(set_protocol_nft.currency_symbol, set_protocol_nft.token_name)
+        ON CONFLICT (at_most_one) DO UPDATE
+            SET currency_symbol = EXCLUDED.currency_symbol,
+                token_name = EXCLUDED.token_name;
+
+        SELECT * INTO STRICT new_protocol_nft FROM dens_protocol_nft;
+
+        IF old_protocol_nft IS NULL THEN
+            RETURN new_protocol_nft;
+        END IF;
+
+        IF old_protocol_nft.currency_symbol = new_protocol_nft.currency_symbol AND old_protocol_nft.token_name = new_protocol_nft.token_name THEN
+            RETURN new_protocol_nft;
+        END IF;
+
+        -- Clear all tables
+        TRUNCATE blocks * RESTART IDENTITY CASCADE;
+
+        RETURN new_protocol_nft;
+    END
+$body$
+LANGUAGE plpgsql;
+
+-- Gets a collection of the most recent points suitable for resynchronizing
+-- with the blockchain after shutting down.
+-- TODO(jaredponn): there's a better way to do this e.g. use binary search to
+-- find the first common point. This requires a somewhat tricky interactions
+-- between ogmios / postgres; and it's unclear if this would actually be better
+-- at all.
+CREATE OR REPLACE FUNCTION recent_points()
+RETURNS SETOF blocks AS
+$body$
+    BEGIN
+        RETURN QUERY 
+            SELECT block_slot, block_id
+            FROM blocks
+            ORDER BY blocks.block_slot DESC
+            LIMIT 64;
+    END
+$body$ 
+LANGUAGE plpgsql;
