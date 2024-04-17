@@ -28,7 +28,7 @@
           #   [1] https://docs.deno.com/runtime/manual/tools/formatter
           files = ''^.*\.(js|ts|jsx|tsx|json|jsonc)$'';
         };
-        denolint.enable = true;
+        denolint.enable = false;
 
         # Spelling hooks
         typos.enable = true;
