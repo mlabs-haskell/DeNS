@@ -2,6 +2,8 @@
 
 DeNS query will look for a _configuration file_ provided in the environment variable in `+DENS_QUERY_CONFIG+`.
 
+TODO(jaredponn): this has changed
+
 .Example configuration file
 [example]
 [source,json]
