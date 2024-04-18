@@ -311,9 +311,9 @@ export async function runChainSync(
     let resolveBatch: (value?: unknown) => void;
     const task = new Promise((resolve) => resolveBatch = resolve);
 
-    let numberOfRequests = 64;
+    let numberOfRequests = 2;
 
-    client.on("message", async (msg) => {
+    const callback = async (msg: Buffer | Buffer[] | ArrayBuffer) => {
       const stringMsg: string = (() => {
         if (Array.isArray(msg)) {
           return msg.map((buf) => buf.toString()).join("");
@@ -356,10 +356,15 @@ export async function runChainSync(
       } else {
         throw new Error(`Unexpected response from Ogmios:\n\t${msg}`);
       }
-    });
+    };
+
+    client.on("message", callback);
 
     client.nextBlock();
+
     await task;
+
+    client.off("message", callback);
   }
 }
 

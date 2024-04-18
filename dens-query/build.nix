@@ -49,7 +49,14 @@
                   ${super.postFixup or ""}
 
                   wrapProgram $out/bin/dens-query-cli \
-                      --set DENS_QUERY_INIT_SQL_FILE ${lib.escapeShellArg ./api/postgres/dens.sql}
+                      --set DENS_QUERY_INIT_SQL_FILE ${
+                            # Awkwardness since Hercules CI doesn't like
+                            # depending on files in the nix store at run time,
+                            # and instead prefers derivations
+                            pkgs.runCommand "dens-sql"  { SQL_FILE = ./api/postgres/dens.sql; } ''
+                                cp "$SQL_FILE" "$out"
+                            ''
+                        }
                 '';
             });
 
