@@ -196,7 +196,11 @@ export async function rollBackwardDb(
   db: Db.DensDb,
   { point }: { point: OgmiosSchema.Point | OgmiosSchema.Origin },
 ): Promise<void> {
-  logger.info(`Rolling backwards to ${JSON.stringify(point)}`);
+  logger.info(
+    `Rolling backwards to ${
+      point === "origin" ? "origin" : `${point.id} at slot ${point.slot}`
+    }`,
+  );
 
   await db.densWithDbClient(async (client) => {
     if (point === "origin") {
