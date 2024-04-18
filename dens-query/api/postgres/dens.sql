@@ -126,7 +126,7 @@ CREATE INDEX IF NOT EXISTS dens_set_utxos_name ON dens_set_utxos (name);
 CREATE TABLE IF NOT EXISTS dens_rrs_utxos (
     -- Foreign key to the dens_set_utxos
     name bytea REFERENCES dens_set_utxos (name)
-    ON DELETE CASCADE,
+    ON DELETE CASCADE DEFERRABLE,
 
     rrs bytea NOT NULL,
 

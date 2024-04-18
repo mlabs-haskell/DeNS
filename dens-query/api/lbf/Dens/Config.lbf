@@ -31,7 +31,11 @@ derive Eq UnixDomainOrInternetDomain
 derive Json UnixDomainOrInternetDomain
 
 -- Configuration for running ogmios
-prod OgmiosConfig = InternetDomain
+record Url = {url: Text}
+derive Eq Url
+derive Json Url
+
+prod OgmiosConfig = (Url)
     
 derive Eq OgmiosConfig
 derive Json OgmiosConfig
