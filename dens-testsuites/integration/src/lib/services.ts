@@ -12,11 +12,16 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as timers from "timers/promises";
 import * as path from "node:path";
+import { Config } from "lbf-dens-db/LambdaBuffers/Dens/Config.mjs";
 
 import chalk from "chalk";
 
 import * as utils from "./utils.js";
-// import * as Pla from "plutus-ledger-api/V1.js";
+
+import * as PlaV1 from "plutus-ledger-api/V1.js";
+import * as P from "prelude";
+import * as PJson from "prelude/Json.js";
+import * as LbrPrelude from "lbr-prelude";
 
 interface Cardano {
   /** Path to UNIX domain socket that the cardano node is running on */
@@ -44,6 +49,13 @@ interface Ogmios {
   childProcess: ChildProcess;
 }
 
+interface DensQuery {
+  /** Path to UNIX domain socket that dens query is listening on */
+  socketPath: string;
+
+  childProcess: ChildProcess;
+}
+
 /**
  * {@link Services} a class to
  */
@@ -51,11 +63,18 @@ export class Services {
   cardano: Cardano;
   database: Database;
   ogmios: Ogmios;
+  densQuery: DensQuery;
 
-  constructor(cardano: Cardano, database: Database, ogmios: Ogmios) {
+  constructor(
+    cardano: Cardano,
+    database: Database,
+    ogmios: Ogmios,
+    densQuery: DensQuery,
+  ) {
     this.cardano = cardano;
     this.database = database;
     this.ogmios = ogmios;
+    this.densQuery = densQuery;
   }
 
   /**
@@ -68,29 +87,19 @@ export class Services {
       spawnDatabase(),
     ]);
     const ogmios = await spawnOgmios(cardano);
-    return new Services(cardano, database, ogmios);
+    const densQuery = await spawnDensQuery(database, ogmios);
+    return new Services(cardano, database, ogmios, densQuery);
   }
 
   kill(): Promise<void> {
     this.cardano.childProcess.kill("SIGINT");
     this.database.childProcess.kill("SIGINT"); // See {@link https://www.postgresql.org/docs/current/server-shutdown.html}
     this.ogmios.childProcess.kill("SIGINT");
+    this.densQuery.childProcess.kill("SIGINT");
+
+    return Promise.resolve();
   }
 }
-
-// export class DensQueryService {
-//   static async spawn(
-//     protocolNft: [string],
-//     services: Services,
-//   ): Promise<DensQueryService> {
-//     const [cardano, database] = await Promise.all([
-//       spawnPlutip(numWallets),
-//       spawnDatabase(),
-//     ]);
-//     const ogmios = await spawnOgmios(cardano);
-//     return new Services(cardano, database, ogmios);
-//   }
-// }
 
 /**
  * This is needed because of the awkwardness of knowing when plutip is
@@ -156,6 +165,108 @@ async function pollReadJsonFile(filePath: string): Promise<any | undefined> {
   return result;
 }
 
+async function spawnDensQuery(
+  database: Database,
+  ogmios: Ogmios,
+): Promise<DensQuery> {
+  // Create the database user / names
+  const densUserName = `dens`;
+  const createDensUserProcess = child_process.spawn(`createuser`, [
+    `-h`,
+    database.socketPath,
+    `-d`,
+    `-r`,
+    densUserName,
+  ], { stdio: ["ignore", "ignore", "inherit"] });
+
+  const densDatabase = `dens`;
+
+  const createDensDbProcess = child_process.spawn(`createdb`, [
+    `-h`,
+    database.socketPath,
+    `-O`,
+    densUserName,
+    densDatabase,
+  ], { stdio: ["ignore", "ignore", "inherit"] });
+
+  await new Promise<void>((resolve, reject) =>
+    createDensUserProcess.on("close", (code) => {
+      if (code !== 0) {
+        return reject(new Error(`createuser failed`));
+      }
+      resolve();
+    })
+  );
+  await new Promise<void>((resolve, reject) =>
+    createDensDbProcess.on("close", (code) => {
+      if (code !== 0) {
+        return reject(new Error(`createdb failed`));
+      }
+      resolve();
+    })
+  );
+
+  // Create a temporary directory to put dens-query's files
+  const densQueryDir = await fs.mkdtemp(path.join(os.tmpdir(), `dens-query-`));
+  console.error(chalk.blue(`dens-query working directory:\n\t${densQueryDir}`));
+
+  // Create the database user / names
+  const socketPath = path.join(densQueryDir, `.s.dens-query`);
+  const zeroCurrencySymbolBytes = [];
+  for (let i = 0; i < 28; ++i) {
+    zeroCurrencySymbolBytes.push(0);
+  }
+
+  const config: Config = {
+    ogmios: { url: `ws://${ogmios.host}:${ogmios.port}` },
+    database: {
+      socket: { name: `UnixDomain`, fields: { path: database.socketPath } },
+      user: densUserName,
+      password: ``,
+      database: densDatabase,
+    },
+    server: { name: `UnixDomain`, fields: { path: socketPath } },
+    protocolNft: [
+      P.fromJust(
+        PlaV1.currencySymbolFromBytes(Uint8Array.from(zeroCurrencySymbolBytes)),
+      ),
+      PlaV1.adaToken,
+    ],
+  };
+
+  const configFileName = path.join(densQueryDir, `config.json`);
+  await fs.appendFile(
+    configFileName,
+    PJson.stringify(LbrPrelude.Json[Config].toJson(config)),
+  );
+
+  // Start dens-query
+  const env = JSON.parse(JSON.stringify(process.env)); // silly way to copy the current environment
+  env["DENS_QUERY_CONFIG"] = configFileName;
+
+  const densQueryProcess = child_process.spawn(`dens-query-cli`, [], {
+    env,
+    stdio: [`inherit`, `inherit`, `inherit`],
+    cwd: densQueryDir,
+  });
+
+  densQueryProcess.on("close", (code, signal) => {
+    if (code === 0 || signal === "SIGINT") {
+      return;
+    }
+    throw new Error(`dens-query-cli failed with exit code ${code}`);
+  });
+
+  // FIXME(jaredponn): we wait 15 seconds to let initialize. Change this to poll
+  // dens-query until it replies
+  await timers.setTimeout(15000);
+
+  return { socketPath, childProcess: densQueryProcess };
+}
+
+/**
+ * Spawns an ogmios connection
+ */
 function spawnOgmios(cardano: Cardano): Promise<Ogmios> {
   // See {@link https://www.rfc-editor.org/rfc/rfc6335.html}'s Dynamic ports
   // for why we choose this range
@@ -173,9 +284,13 @@ function spawnOgmios(cardano: Cardano): Promise<Ogmios> {
     host,
     `--port`,
     port.toString(),
-  ]);
+  ], { stdio: [`ignore`, `ignore`, `inherit`] });
 
-  return { host, port: port.toString(), childProcess: ogmiosProcess };
+  return Promise.resolve({
+    host,
+    port: port.toString(),
+    childProcess: ogmiosProcess,
+  });
 }
 
 /**
@@ -186,6 +301,16 @@ async function spawnDatabase(): Promise<Database> {
   const postgresDir = await fs.mkdtemp(path.join(os.tmpdir(), `postgres-`));
 
   console.error(chalk.blue(`Postgres working directory:\n\t${postgresDir}`));
+  console.error(
+    chalk.blue(
+      `To restart Postgres execute\n\tcd ${postgresDir} && postgres -h '' -k ${postgresDir} -D ${postgresDir}`,
+    ),
+  );
+  console.error(
+    chalk.blue(
+      `To connect to Postgres via psql execute:\n\tpsql -h ${postgresDir}`,
+    ),
+  );
 
   {
     // Use `initdb` to initialize the database
@@ -222,7 +347,7 @@ async function spawnDatabase(): Promise<Database> {
       postgresDir,
       `-r`,
       path.join(postgresDir, `logs.output`),
-    ], { stdio: [`ignore`, `ignore`, `inherit`] });
+    ], { stdio: [`ignore`, `ignore`, `ignore`] });
 
     // Somewhere in the postgres docs it says this is what the socket is
     // named
@@ -280,7 +405,7 @@ async function spawnPlutip(numWallets: number): Promise<Cardano> {
     numWallets.toString(),
     `--wallets-dir`,
     plutipWalletsDir,
-  ], { stdio: [`ignore`, `ignore`, `inherit`] });
+  ], { stdio: [`ignore`, `ignore`, `ignore`] });
 
   result.childProcess = childProcess;
 
