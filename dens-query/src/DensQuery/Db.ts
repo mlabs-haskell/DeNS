@@ -35,7 +35,7 @@ export class DensDb {
     const cOpts = connectionOptions;
 
     let host: string = ``;
-    let port: number | undefined;
+    let port: number | undefined = undefined;
 
     switch (cOpts.socket.name) {
       case `InternetDomain`:
@@ -421,7 +421,6 @@ class DensDbClient {
 
     if (res.rows.length === 1) {
       const row = res.rows[0];
-      console.log(JSON.stringify(row));
       return [
         Uint8Array.from(row.currency_symbol) as unknown as CurrencySymbol,
         Uint8Array.from(row.token_name) as unknown as TokenName,

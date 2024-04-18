@@ -16,6 +16,7 @@ import * as LbrPlutusV1 from "lbr-plutus/V1.js";
 import * as LbfDens from "lbf-dens/LambdaBuffers/Dens.mjs";
 import * as csl from "@emurgo/cardano-serialization-lib-nodejs";
 import { WebSocket } from "ws";
+import * as url from "node:url";
 
 /**
  * {@link rollForwardDb} rolls the database forwards via
@@ -30,6 +31,12 @@ export async function rollForwardDb(
   db: Db.DensDb,
   { block }: { block: OgmiosSchema.Block },
 ): Promise<void> {
+  logger.info(
+    `Rolling forward to ${block.id} at slot ${
+      `slot` in block ? block.slot : "<no slot>"
+    }`,
+  );
+
   // These block types contain useful tx information for DeNS
   if (block.type === "bft" || block.type === "praos") {
     // The new block we are inserting
@@ -189,6 +196,8 @@ export async function rollBackwardDb(
   db: Db.DensDb,
   { point }: { point: OgmiosSchema.Point | OgmiosSchema.Origin },
 ): Promise<void> {
+  logger.info(`Rolling backwards to ${JSON.stringify(point)}`);
+
   await db.densWithDbClient(async (client) => {
     if (point === "origin") {
       await client.rollBackToOrigin();
@@ -217,7 +226,8 @@ export class ChainSync extends WebSocket {
    * called
    */
   constructor(ogmiosConfig: OgmiosConfig) {
-    super(ogmiosConfig.host, { port: Number(ogmiosConfig.port) });
+    const myUrl = new url.URL(ogmiosConfig.url);
+    super(myUrl);
   }
 
   /**
@@ -277,6 +287,7 @@ export async function runChainSync(
   ogmiosConfig: OgmiosConfig,
   db: Db.DensDb,
 ) {
+  logger.info(`Started synchronizing with Ogmios via ${ogmiosConfig.url}`);
   const client = new ChainSync(ogmiosConfig);
 
   while (1) {

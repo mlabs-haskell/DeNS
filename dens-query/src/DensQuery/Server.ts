@@ -34,6 +34,10 @@ export function runServer(
 
   app.use("/api", lbJson);
 
+  app.post(`/api/check-health`, (req, res) => {
+    res.send(PJson.stringify(req.body));
+  });
+
   app.post(`/api/query-set-insertion-utxo`, async (req, res) => {
     const { name } = LbrPrelude
       .Json[LbDensServer.QueryDensSetInsertionUtxoRequest].fromJson(req.body);
