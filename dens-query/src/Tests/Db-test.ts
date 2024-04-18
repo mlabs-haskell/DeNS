@@ -64,8 +64,26 @@ it("Database basic tests", async () => {
         });
 
         const freshPoint = Samples.fcGenerate(Samples.fcPoint());
+        await it(`Checking if a point doesn't exist`, async () => {
+          const doesPointExist = await client.selectPointExists(freshPoint);
+          assert.deepStrictEqual(
+            doesPointExist,
+            false,
+            `Point shouldn't exist!`,
+          );
+        });
+
         await it(`Adding a point (block)`, async () => {
           await client.insertPoint(freshPoint);
+        });
+
+        await it(`Checking if the point now exists`, async () => {
+          const doesPointExist = await client.selectPointExists(freshPoint);
+          assert.deepStrictEqual(
+            doesPointExist,
+            true,
+            `Point shouldn't exist!`,
+          );
         });
 
         await it(`Adding and deleting a UTxO `, async () => {

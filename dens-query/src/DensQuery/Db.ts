@@ -203,6 +203,18 @@ class DensDbClient {
     );
   }
 
+  // NOTE(jaredponn): this is deprecated
+  async selectPointExists({ blockId, slot }: Point): Promise<boolean> {
+    const res = await this.query(
+      {
+        text: `SELECT true FROM blocks WHERE block_slot = $1 AND block_id = $2`,
+        values: [slot, blockId],
+      },
+    );
+
+    return res.rows.length === 1;
+  }
+
   async insertTxOutRef(
     { txOutRefId, txOutRefIdx }: TxOutRef,
   ): Promise<void> {
