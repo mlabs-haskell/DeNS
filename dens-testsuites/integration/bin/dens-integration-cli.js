@@ -1,5 +1,5 @@
 #!/usr/bin/env node 
 
-import "../dist/lib/services.js";
+import { Services } from "../dist/lib/services.js";
 
 await Services.spawn();

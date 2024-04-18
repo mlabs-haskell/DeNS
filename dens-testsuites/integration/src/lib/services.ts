@@ -179,16 +179,6 @@ async function spawnDensQuery(
     densUserName,
   ], { stdio: ["ignore", "ignore", "inherit"] });
 
-  const densDatabase = `dens`;
-
-  const createDensDbProcess = child_process.spawn(`createdb`, [
-    `-h`,
-    database.socketPath,
-    `-O`,
-    densUserName,
-    densDatabase,
-  ], { stdio: ["ignore", "ignore", "inherit"] });
-
   await new Promise<void>((resolve, reject) =>
     createDensUserProcess.on("close", (code) => {
       if (code !== 0) {
@@ -197,6 +187,16 @@ async function spawnDensQuery(
       resolve();
     })
   );
+
+  const densDatabase = `dens`;
+  const createDensDbProcess = child_process.spawn(`createdb`, [
+    `-h`,
+    database.socketPath,
+    `-O`,
+    densUserName,
+    densDatabase,
+  ], { stdio: ["ignore", "ignore", "inherit"] });
+
   await new Promise<void>((resolve, reject) =>
     createDensDbProcess.on("close", (code) => {
       if (code !== 0) {
