@@ -443,21 +443,16 @@ CREATE OR REPLACE FUNCTION undo_log_rollback_to(block_slot bigint, block_id byte
 RETURNS void AS
 $body$
     DECLARE
-        the_block_seq bigint;
         to_undo record;
     BEGIN
         SET CONSTRAINTS ALL DEFERRED;
-
-        SELECT coalesce(max(undo_log.seq), 0) INTO STRICT the_block_seq
-        FROM undo_log
-        WHERE undo_log.block_id = undo_log_rollback_to.block_id AND undo_log.block_slot = undo_log_rollback_to.block_slot;
 
         PERFORM freeze_undo_log();
 
         FOR to_undo IN
             WITH deleted AS(
                 DELETE FROM undo_log
-                WHERE seq > the_block_seq
+                WHERE undo_log.block_slot > undo_log_rollback_to.block_slot
                 RETURNING *
             )
             SELECT *
