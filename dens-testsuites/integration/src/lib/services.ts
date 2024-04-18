@@ -302,12 +302,12 @@ async function spawnDatabase(): Promise<Database> {
 
   console.error(chalk.blue(`Postgres working directory:\n\t${postgresDir}`));
   console.error(
-    chalk.blue(
-      `To restart Postgres execute\n\tcd ${postgresDir} && postgres -h '' -k ${postgresDir} -D ${postgresDir}`,
+    chalk.yellow(
+      `To restart Postgres execute:\n\tcd ${postgresDir} && postgres -h '' -k ${postgresDir} -D ${postgresDir}`,
     ),
   );
   console.error(
-    chalk.blue(
+    chalk.yellow(
       `To connect to Postgres via psql execute:\n\tpsql -h ${postgresDir}`,
     ),
   );
