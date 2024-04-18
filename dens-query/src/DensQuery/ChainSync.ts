@@ -307,6 +307,8 @@ export async function runChainSync(
     let resolveBatch: (value?: unknown) => void;
     const task = new Promise((resolve) => resolveBatch = resolve);
 
+    let numberOfRequests = 64;
+
     client.on("message", async (msg) => {
       const stringMsg: string = (() => {
         if (Array.isArray(msg)) {
@@ -344,17 +346,15 @@ export async function runChainSync(
 
         if (numberOfRequests === 0) {
           resolveBatch();
+        } else {
+          client.nextBlock();
         }
       } else {
         throw new Error(`Unexpected response from Ogmios:\n\t${msg}`);
       }
     });
 
-    let numberOfRequests = 100;
-    for (let i = 0; i < numberOfRequests; ++i) {
-      client.nextBlock();
-    }
-
+    client.nextBlock();
     await task;
   }
 }
