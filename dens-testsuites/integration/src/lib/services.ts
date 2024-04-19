@@ -93,10 +93,21 @@ export class Services {
   }
 
   kill(): Promise<void> {
-    this.cardano.childProcess.kill("SIGINT");
-    this.database.childProcess.kill("SIGINT"); // See {@link https://www.postgresql.org/docs/current/server-shutdown.html}
-    this.ogmios.childProcess.kill("SIGINT");
-    this.densQuery.childProcess.kill("SIGINT");
+    if (this.cardano.childProcess.killed === false) {
+      this.cardano.childProcess.kill("SIGINT");
+    }
+
+    if (this.database.childProcess.killed === false) {
+      this.database.childProcess.kill("SIGINT"); // See {@link https://www.postgresql.org/docs/current/server-shutdown.html}
+    }
+
+    if (this.ogmios.childProcess.killed === false) {
+      this.ogmios.childProcess.kill("SIGINT");
+    }
+
+    if (this.densQuery.childProcess.killed === false) {
+      this.densQuery.childProcess.kill("SIGINT");
+    }
 
     return Promise.resolve();
   }
@@ -266,7 +277,7 @@ async function spawnDensQuery(
 
   // FIXME(jaredponn): we wait 15 seconds to let initialize. Change this to poll
   // dens-query until it replies
-  poll(async () => {
+  await poll(async () => {
     try {
       await fs.access(socketPath);
       return true;
