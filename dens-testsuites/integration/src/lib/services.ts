@@ -8,6 +8,7 @@
 // https://www.rfc-editor.org/rfc/rfc6335.html
 import * as child_process from "node:child_process";
 import type { ChildProcess } from "node:child_process";
+import process from "node:process";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as timers from "timers/promises";
@@ -250,6 +251,12 @@ async function spawnDensQuery(
     cwd: densQueryDir,
   });
 
+  process.once("exit", () => {
+    if (densQueryProcess.killed === false) {
+      densQueryProcess.kill();
+    }
+  });
+
   densQueryProcess.on("close", (code, signal) => {
     if (code === 0 || signal === "SIGINT") {
       return;
@@ -259,7 +266,21 @@ async function spawnDensQuery(
 
   // FIXME(jaredponn): we wait 15 seconds to let initialize. Change this to poll
   // dens-query until it replies
-  await timers.setTimeout(15000);
+  poll(async () => {
+    try {
+      await fs.access(socketPath);
+      return true;
+    } catch (err) {
+      if (
+        err !== null && typeof err === "object" && "code" in err &&
+        err.code === "ENOENT"
+      ) {
+        return undefined;
+      } else {
+        throw err;
+      }
+    }
+  });
 
   return { socketPath, childProcess: densQueryProcess };
 }
@@ -285,6 +306,12 @@ function spawnOgmios(cardano: Cardano): Promise<Ogmios> {
     `--port`,
     port.toString(),
   ], { stdio: [`ignore`, `ignore`, `inherit`] });
+
+  process.once("exit", () => {
+    if (ogmiosProcess.killed === false) {
+      ogmiosProcess.kill();
+    }
+  });
 
   return Promise.resolve({
     host,
@@ -353,6 +380,12 @@ async function spawnDatabase(): Promise<Database> {
     // named
     result.socketPath = path.join(postgresDir);
     result.childProcess = postgresChildProcess;
+
+    process.once("exit", () => {
+      if (postgresChildProcess.killed === false) {
+        postgresChildProcess.kill();
+      }
+    });
   }
 
   // Busy loop until postgres is ready
@@ -363,7 +396,7 @@ async function spawnDatabase(): Promise<Database> {
         `postgres`,
         `-h`,
         result.socketPath,
-      ]);
+      ], {});
 
       pgIsReadChildProcess.on("close", (code) => {
         if (code === 0) {
@@ -534,6 +567,12 @@ async function spawnPlutip(numWallets: number): Promise<Cardano> {
 
     await Promise.all(publicAndPrivateKeyTasks);
   }
+
+  process.once("exit", () => {
+    if (childProcess.killed === false) {
+      childProcess.kill();
+    }
+  });
 
   return result;
 }
