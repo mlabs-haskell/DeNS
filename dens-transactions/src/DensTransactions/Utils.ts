@@ -38,7 +38,6 @@ export const unsafeCurrSymb = (x: string) => {
 
 export const emptyCS = unsafeCurrSymb("");
 
-
 export const findProtocolOut: (lucid: L.Lucid) => Promise<L.UTxO> = async (lucid: L.Lucid) => {
     const response = await fetch(serverBaseUrl + '/api/protocol-utxo', {
         method: 'post',
@@ -107,9 +106,6 @@ export const findElemIDUTxO = async (assetClass: string, lucid: L.Lucid): Promis
     // TODO: Comically unsafe, do better error handling
     return walletUtxos.filter(x => x.assets[assetClass] >= 1)[0]
 }
-
-
-
 
 export type DeNSParams = {
   setValidator: L.SpendingValidator;
