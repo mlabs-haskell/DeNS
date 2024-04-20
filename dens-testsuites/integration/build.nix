@@ -8,8 +8,7 @@
           name = "dens-integration";
           src = ./.;
           inherit (config.settings)
-            devShellTools
-            devShellHook;
+            devShellTools;
 
           testTools =
             [
@@ -17,6 +16,7 @@
               inputs.plutip.packages.${system}."plutip-core:exe:local-cluster"
               inputs.ogmios.packages.${system}."ogmios:exe:ogmios"
               config.packages.dens-query-cli
+              pkgs.glibcLocales
             ];
 
           npmExtraDependencies =
@@ -27,6 +27,11 @@
               config.packages.lbf-dens-db-typescript
               config.packages.lbf-dens-typescript
             ];
+
+          devShellHook =
+            ''
+              ${config.settings.devShellHook}
+            '';
         };
       in
       {
