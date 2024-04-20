@@ -32,32 +32,26 @@ class HttpTester {
   ): Promise<http.IncomingMessage & { body: string }> {
     options.socketPath = this.socketPath;
 
-    let done: (value: http.IncomingMessage & { body: string }) => void = (_) =>
-      false;
-    let bad: (err: Error) => void = (_) => false;
     const task = new Promise<http.IncomingMessage & { body: string }>(
       (resolve, reject) => {
-        done = resolve;
-        bad = reject;
+        const callback = (res: http.IncomingMessage) => {
+          res.setEncoding("utf8");
+          const chunks: string[] = [];
+          res.on("data", (chunk) => chunks.push(chunk));
+          res.on("error", reject);
+
+          res.on("end", () => {
+            const resultingData: string = chunks.join("");
+            (res as unknown as { body: string }).body = resultingData;
+            resolve(res as http.IncomingMessage & { body: string });
+          });
+        };
+        const req = http.request(options, callback);
+        req.on("error", reject);
+        req.write(data);
+        req.end();
       },
     );
-
-    const callback = (res: http.IncomingMessage) => {
-      res.setEncoding("utf8");
-      const chunks: string[] = [];
-      res.on("data", (chunk) => chunks.push(chunk));
-      res.on("error", bad);
-
-      res.on("end", () => {
-        const resultingData: string = chunks.join("");
-        (res as unknown as { body: string }).body = resultingData;
-        done(res as http.IncomingMessage & { body: string });
-      });
-    };
-    const req = http.request(options, callback);
-    req.on("error", bad);
-    req.write(data);
-    req.end();
 
     return task;
   }
