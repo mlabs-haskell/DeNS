@@ -5,7 +5,6 @@
  * @module
  */
 
-// https://www.rfc-editor.org/rfc/rfc6335.html
 import * as child_process from "node:child_process";
 import type { ChildProcess } from "node:child_process";
 import process from "node:process";
