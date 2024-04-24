@@ -254,7 +254,7 @@ LANGUAGE plpgsql;
 -- is not true, appends an SQL statement of the form
 -- ---
 -- format
---  ( $$ DELETE FROM table_name WHERE table_name.primary_key1 = %L AND ... table_name.primary_keyN = %L $$
+--  ( $$ DELETE FROM table_name WHERE primary_key1 = %L AND ... primary_keyN = %L $$
 --  , NEW.primary_key1
 --  , ...
 --  , NEW.primary_keyN
@@ -274,6 +274,8 @@ $body$
             primary_key text
         ) ON COMMIT DROP;
 
+        -- See <https://wiki.postgresql.org/wiki/Retrieve_primary_key_columns>
+        -- for details
         INSERT INTO table_primary_keys 
         SELECT a.attname
         FROM pg_index i
@@ -305,7 +307,7 @@ $body$
                         DECLARE
                             most_recent_block record := get_most_recent_block();
                         BEGIN
-                            IF current_setting('undo_log.freeze_log', TRUE) = 'TRUE' THEN
+                            IF current_setting('undo_log.freeze_log', TRUE) = CAST(TRUE AS TEXT) THEN
                                 RETURN NEW;
                             END IF;
 
@@ -379,7 +381,7 @@ $body$
                             DECLARE
                                 most_recent_block record := get_most_recent_block();
                             BEGIN
-                                IF current_setting('undo_log.freeze_log', TRUE) = 'TRUE' THEN
+                                IF current_setting('undo_log.freeze_log', TRUE) = CAST(TRUE as TEXT) THEN
                                     RETURN OLD;
                                 END IF;
 
@@ -410,6 +412,145 @@ $body$
                 name
             );
 
+    END
+$body$
+LANGUAGE plpgsql;
+
+-- Given a `+table_name+`, returns `+<table_name>_undo_update+`. This exists to
+-- ensure that we have a consistent way of generating the trigger / function
+-- name associated with a table.
+CREATE OR REPLACE FUNCTION create_undo_update_name(table_name text)
+RETURNS text AS
+$body$
+    BEGIN
+        RETURN table_name || '_undo_update';
+    END
+$body$
+LANGUAGE plpgsql;
+
+-- Creates a function and trigger with the name `+table_name_undo_update+`
+-- which on update to `+table_name+`, assuming that `+undo_log.freeze_log+`
+-- is not true, appends an SQL statement of the form
+-- ---
+-- format
+--  ( $$ UPDATE table_name SET column_name1 = %L, ..., column_nameN = %L WHERE primary_key1 = %L AND ... AND primary_keyM = %L;
+--  , OLD.column_name1
+--  , ...
+--  , OLD.column_nameN
+--  , NEW.primary_key1
+--  , ...
+--  , NEW.primary_keyM
+--  )
+-- ---
+-- to `+undo_log+` associated with the most recently added block (if it exists,
+-- otherwise we do nothing).
+CREATE OR REPLACE FUNCTION create_table_undo_update(table_name text)
+RETURNS void AS
+$body$
+    DECLARE
+        name text := create_undo_update_name(table_name);
+        sql_is_primary_keys text;
+        sql_new_primary_keys text;
+        sql_set_columns text;
+        sql_old_columns text;
+    BEGIN
+        -- = SQL strings relating to the primary keys
+        CREATE TEMP TABLE table_primary_keys(
+            primary_key text
+        ) ON COMMIT DROP;
+
+        -- See <https://wiki.postgresql.org/wiki/Retrieve_primary_key_columns>
+        -- for details
+        INSERT INTO table_primary_keys 
+        SELECT a.attname
+        FROM pg_index i
+        JOIN pg_attribute a ON a.attrelid = i.indrelid
+                             AND a.attnum = ANY(i.indkey)
+        WHERE i.indrelid = CAST (table_name AS regclass)
+        AND i.indisprimary;
+
+        -- Create a string of the form 
+        -- ---
+        -- primary_key1 = %L AND primary_key2 = %L ... AND primary_keyN = %L
+        -- ---
+        SELECT string_agg(format('%I = %%L', primary_key),  ' AND ' ORDER BY primary_key ASC) INTO STRICT sql_is_primary_keys
+        FROM table_primary_keys;
+
+        -- Create a string of the form 
+        -- ---
+        -- NEW.primary_key1, NEW.primary_key2, ..., NEW.primary_keyN
+        -- ---
+        SELECT string_agg(format('NEW.%I', primary_key), ',' ORDER BY primary_key ASC) INTO STRICT sql_new_primary_keys
+        FROM table_primary_keys;
+
+        -- = SQL strings relating to all columns
+
+        CREATE TEMP TABLE table_column_names(
+            column_name text
+        ) ON COMMIT DROP;
+
+        INSERT INTO table_column_names 
+        SELECT i.attname
+        FROM pg_attribute i
+        WHERE i.attrelid = CAST (table_name AS regclass) AND i.attnum > 0 AND NOT i.attisdropped;
+
+        -- Create a string of the form 
+        -- ---
+        -- column_name1 = %L, column_name2 = %L, ..., column_nameN = %L
+        -- ---
+        SELECT string_agg(format('%I = %%L', column_name), ',' ORDER BY column_name ASC) INTO STRICT sql_set_columns
+        FROM table_column_names;
+
+        -- Create a string of the form 
+        -- ---
+        -- OLD.column_name1, column_name2, ..., OLD.column_nameN
+        -- ---
+        SELECT string_agg(format('OLD.%I', column_name), ',' ORDER BY column_name ASC) INTO STRICT sql_old_columns
+        FROM table_column_names;
+
+        EXECUTE
+            format(
+                $undo_function$
+                CREATE OR REPLACE FUNCTION %I()
+                    RETURNS trigger AS
+                    $$
+                        DECLARE
+                            most_recent_block record := get_most_recent_block();
+                        BEGIN
+                            IF current_setting('undo_log.freeze_log', TRUE) = CAST(TRUE AS TEXT) THEN
+                                RETURN NEW;
+                            END IF;
+
+                            IF most_recent_block IS NOT NULL THEN -- if there is no block, then we can't associate the undo log with anything
+                                INSERT INTO undo_log (seq, block_slot, block_id, undo_statement)
+                                VALUES (DEFAULT, most_recent_block.block_slot, most_recent_block.block_id, format(%L, %s, %s));
+                            END IF;
+
+                            RETURN NEW;
+                        END
+                    $$
+                    LANGUAGE plpgsql;
+                $undo_function$, 
+                name,
+                format('UPDATE %I SET %s WHERE %s', table_name, sql_set_columns, sql_is_primary_keys),
+                sql_old_columns,
+                sql_new_primary_keys
+            );
+
+        EXECUTE
+            format(
+                $undo_trigger$
+                    CREATE OR REPLACE TRIGGER %I AFTER UPDATE ON %I 
+                    FOR EACH ROW
+                    EXECUTE FUNCTION %I();
+                $undo_trigger$, 
+                name,
+                table_name, 
+                name
+            );
+
+        DROP TABLE IF EXISTS table_primary_keys;
+        DROP TABLE IF EXISTS table_column_names;
     END
 $body$
 LANGUAGE plpgsql;
@@ -477,15 +618,19 @@ SELECT create_table_undo_delete('blocks');
 
 SELECT create_table_undo_insert('tx_out_refs');
 SELECT create_table_undo_delete('tx_out_refs');
+SELECT create_table_undo_update('tx_out_refs');
 
 SELECT create_table_undo_insert('dens_set_utxos');
 SELECT create_table_undo_delete('dens_set_utxos');
+SELECT create_table_undo_update('dens_set_utxos');
 
 SELECT create_table_undo_insert('dens_rrs_utxos');
 SELECT create_table_undo_delete('dens_rrs_utxos');
+SELECT create_table_undo_update('dens_rrs_utxos');
 
 SELECT create_table_undo_insert('dens_protocol_utxos');
 SELECT create_table_undo_delete('dens_protocol_utxos');
+SELECT create_table_undo_update('dens_protocol_utxos');
 
 -----------------------------------------------------------------------------
 -- = Helper functions
