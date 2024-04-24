@@ -10,6 +10,56 @@ import * as csl from "@emurgo/cardano-serialization-lib-nodejs";
 import { fromJust } from "prelude";
 import { currencySymbolFromBytes, scriptHashFromBytes } from "plutus-ledger-api/V1.js";
 import fetch from 'node-fetch'
+import elemIdMPEnvelope from "./scripts/mkElemIDMintingPolicy.json" with {type: "json"};
+import setElemMPEnvelope from "./scripts/mkSetElemMintingPolicy.json" with {type: "json"};
+import protocolMPEnvelope from "./scripts/mkProtocolMintingPolicy.json" with {type: "json"};
+import recordEnvelope from "./scripts/mkRecordValidator.json" with {type: "json"};
+import setValEnvelope from "./scripts/mkSetValidator.json" with {type: "json"};
+
+export const mkParams  = (lucid: L.Lucid, ref: L.OutRef): DeNSParams => {
+  const utils = new L.Utils(lucid);
+  const OutRefSchema = L.Data.Tuple([L.Data.Bytes(),L.Data.Integer()],{hasConstr: true})
+
+  type OutRefParams = L.Data.Static<typeof OutRefSchema>;
+  const OutRefParams = OutRefSchema as unknown as OutRefParams;
+
+  const arg: [string,bigint] = [ref.txHash,BigInt(ref.outputIndex)]
+
+  const protocolPolicy: L.MintingPolicy = {
+    type: "PlutusV2",
+    script: L.applyParamsToScript<OutRefParams>(protocolMPEnvelope.cborHex,[ref.txHash,BigInt(ref.outputIndex)],OutRefParams)
+  }
+
+  const protocolCS = utils.validatorToScriptHash(protocolPolicy);
+
+  const setValidator: L.SpendingValidator = {
+    type: "PlutusV2",
+    script: L.applyParamsToScript(setValEnvelope.cborHex,[protocolCS])
+  }
+
+  const recordValidator: L.SpendingValidator = {
+    type: "PlutusV2",
+    script: L.applyParamsToScript(recordEnvelope.cborHex,[protocolCS])
+  }
+
+  const setElemIDPolicy: L.MintingPolicy = {
+    type: "PlutusV2",
+    script: L.applyParamsToScript(setElemMPEnvelope.cborHex,[protocolCS])
+  }
+
+  const elemIDPolicy: L.MintingPolicy = {
+    type: "PlutusV2",
+    script: L.applyParamsToScript(elemIdMPEnvelope.cborHex,[protocolCS])
+  }
+
+  return {
+    setValidator: setValidator,
+    recordValidator: recordValidator,
+    setElemIDPolicy: setElemIDPolicy,
+    elemIDPolicy: elemIDPolicy,
+    protocolPolicy: protocolPolicy
+  }
+}
 
 const serverBaseUrl: string = "www.test.com";
 
@@ -114,6 +164,7 @@ export type DeNSParams = {
   elemIDPolicy: L.MintingPolicy;
   protocolPolicy: L.MintingPolicy;
 };
+
 
 
 // Hopefully I'm getting the encoding right...

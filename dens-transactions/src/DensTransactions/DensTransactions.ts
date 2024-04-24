@@ -7,6 +7,28 @@ import {
 } from "lbf-dens/LambdaBuffers/Dens.mjs";
 import { IsPlutusData } from "lbr-plutus/PlutusData.js";
 import * as Utils  from "./Utils.js"
+// Scripts
+
+
+
+export const mkProtocolOneShot = async (lucid: L.Lucid): Promise<L.OutRef> => {
+  const builder = new L.Tx(lucid);
+  const myAddr = await lucid.wallet.address();
+
+  const tx = builder.payToAddress(myAddr,{lovelace: BigInt(1)})
+
+  const complete = await tx.complete();
+  const signed =  complete.sign();
+
+  const readyToSubmit = await signed.complete();
+  const hash = await readyToSubmit.submit();
+
+  const walletUTXOs = await lucid.wallet.getUtxos();
+
+  const utxoWithHash = walletUTXOs.find(x => x.txHash == hash);
+
+  return {txHash: hash, outputIndex: utxoWithHash.outputIndex}
+}
 
 export const initializeDeNS = async (
   lucid: L.Lucid,

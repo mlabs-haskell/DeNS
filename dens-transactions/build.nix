@@ -26,6 +26,7 @@
           dens-transactions-cli = tsFlake.packages.dens-transactions-typescript-exe;
           # Tarball to use in other projects
           dens-transactions-tgz = tsFlake.packages.dens-transactions-typescript-tgz;
+          dens-transactions-typescript-lib = tsFlake.packages.dens-transactions-typescript-lib;
         };
 
         # When developing, in this directory, run
