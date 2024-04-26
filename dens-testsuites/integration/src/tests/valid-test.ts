@@ -14,6 +14,8 @@ test.describe("Runtime services can be initialized", async () => {
     console.log('ogmios url: ' + services.ogmios.host);
     console.log('ogmios port: ' + services.ogmios.port)
 
+    const socketPath = services.densQuery.socketPath;
+
     const fakeProvider = new Tx.OgmiosOnly(services.ogmios.host,parseInt(services.ogmios.port),'Mainnet');
 
     const lucidNoWallet = await L.Lucid.new(fakeProvider);
@@ -28,11 +30,11 @@ test.describe("Runtime services can be initialized", async () => {
 
     const oneShotRef = await Tx.mkProtocolOneShot(lucid);
 
-    const params = Tx.mkParams(lucid,oneShotRef);
+    const params = await Tx.mkParams(lucid,oneShotRef,socketPath);
 
     console.log('scripts: \n' + JSON.stringify(params,null,4));
 
-    const initializeDeNSTx = await Tx.initializeDeNS(lucid,params);
+    const initializeDeNSTx = await Tx.initializeDeNS(lucid,params,socketPath);
 
     const initTxHash = await Tx.signAndSubmitTx(lucid,initializeDeNSTx);
 

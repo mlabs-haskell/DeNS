@@ -33,6 +33,7 @@
     "@emurgo/cardano-serialization-lib-nodejs": "^11.5.0",
     "@sinclair/typebox": "^0.32.22",
     "express": "^4.19.2",
+    "got": "^14.2.1",
     "lbf-dens": "file:.extra-dependencies/lbf-dens",
     "lbf-dens-db": "file:.extra-dependencies/lbf-dens-db",
     "lbf-plutus": "file:.extra-dependencies/lbf-plutus",

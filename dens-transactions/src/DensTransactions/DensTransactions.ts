@@ -34,38 +34,44 @@ export const mkProtocolOneShot = async (lucid: L.Lucid): Promise<L.OutRef> => {
 export const initializeDeNS = async (
   lucid: L.Lucid,
   params: Utils.DeNSParams,
+  path: string
 ): Promise<L.Tx> => {
+  console.log('a')
   const builder = new L.Tx(lucid);
   const utils = new L.Utils(lucid);
-
+  console.log('b')
   const initialSetDatumPD = IsPlutusData[SetDatum].toData(Utils.initialSetDatum);
+  console.log('c')
   const initialSetDatumCSL = (Utils.toCslPlutusData(initialSetDatumPD)).to_hex();
+  console.log('d')
   const initialSetDatumDatum: L.OutputData = { inline: initialSetDatumCSL };
-
+  console.log('e')
   const protocolDatumRaw: Protocol = {
     elementIdMintingPolicy: Utils.mkLBScriptHash(params.elemIDPolicy),
     setElemMintingPolicy: Utils.mkLBScriptHash(params.setElemIDPolicy),
     setValidator: Utils.mkLBScriptHash(params.setValidator),
     recordsValidator: Utils.mkLBScriptHash(params.recordValidator),
   };
-
+  console.log('f')
   const protocolDatum: L.OutputData = {
     inline: Utils.toCslPlutusData(IsPlutusData[Protocol].toData(protocolDatumRaw))
       .to_hex(),
   };
-
-  const protocolOut = await Utils.findProtocolOut(lucid);
-
+  console.log('g')
+  const protocolOut = await Utils.findProtocolOut(lucid,path);
+  console.log('h')
   // Mint one protocol token
   const protocolPolicyID = utils.mintingPolicyToId(params.protocolPolicy);
+  console.log('i')
   const oneProtocolToken = { [protocolPolicyID]: BigInt(1) };
-
+  console.log('j')
   // Mint one setElem token
   const setElemPolicyID = utils.mintingPolicyToId(params.setElemIDPolicy);
+  console.log('k')
   const oneSetElemToken = { [setElemPolicyID]: BigInt(1) };
-
+  console.log('l')
   const setValidatorAddr = utils.validatorToAddress(params.setValidator);
-
+  console.log('m')
   // TODO: Figure out how to make a unit datum
   return builder
     .attachMintingPolicy(params.protocolPolicy)
@@ -86,6 +92,7 @@ export const registerDomain = async (
   lucid: L.Lucid,
   params: Utils.DeNSParams,
   domain: string,
+  path: string
 ): Promise<L.Tx> => {
   const builder = new L.Tx(lucid);
   const utils = new L.Utils(lucid);
@@ -94,7 +101,7 @@ export const registerDomain = async (
     [utils.mintingPolicyToId(params.setElemIDPolicy)]: BigInt(1),
   };
 
-  const setDatumResponse = await Utils.findOldSetDatum(lucid,domain);
+  const setDatumResponse = await Utils.findOldSetDatum(lucid,path,domain);
 
   const oldSetDatum = setDatumResponse.setDatum;
   const oldSetDatumUtxo = setDatumResponse.setDatumUTxO;
@@ -120,7 +127,7 @@ export const registerDomain = async (
 
   const oneElemIDToken = { [elemIDAssetClass]: BigInt(1) };
 
-  const protocolOut = await Utils.findProtocolOut(lucid);
+  const protocolOut = await Utils.findProtocolOut(lucid,path);
 
   const setValidatorAddr = utils.validatorToAddress(params.setValidator);
 
@@ -142,6 +149,7 @@ export const updateRecord = async (
   user: L.Address,
   domain: string,
   record: RecordDatum,
+  path: string
 ) => {
   const builder = new L.Tx(lucid);
   const utils = new L.Utils(lucid);
@@ -153,8 +161,7 @@ export const updateRecord = async (
 
   const elemIDToken = { [elemIDAssetClass]: BigInt(1) };
 
-  const protocolOut = await Utils.findProtocolOut(lucid);
-
+  const protocolOut = await Utils.findProtocolOut(lucid,path);
 
   const elemIDUTxO: L.UTxO = await Utils.findElemIDUTxO(elemIDAssetClass,lucid);
 

@@ -232,7 +232,7 @@ async function spawnDensQuery(
   const config: Config = {
     ogmios: { url: `ws://${ogmios.host}:${ogmios.port}` },
     database: {
-      socket: { name: `UnixDomain`, fields: { path: database.socketPath } },
+      socket: { name: 'UnixDomain', fields: { path: database.socketPath} },
       user: densUserName,
       password: ``,
       database: densDatabase,
@@ -274,6 +274,7 @@ async function spawnDensQuery(
     }
     throw new Error(`dens-query-cli failed with exit code ${code}`);
   });
+
 
   // FIXME(jaredponn): we wait 15 seconds to let initialize. Change this to poll
   // dens-query until it replies

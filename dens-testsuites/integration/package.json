@@ -16,6 +16,7 @@
     "@emurgo/cardano-serialization-lib-nodejs": "^11.5.0",
     "chalk": "^4.0.0",
     "dens-transactions": "file:.extra-dependencies/dens-transactions",
+    "got": "^14.2.1",
     "lbf-dens": "file:.extra-dependencies/lbf-dens",
     "lbf-dens-db": "file:.extra-dependencies/lbf-dens-db",
     "lbf-plutus": "file:.extra-dependencies/lbf-plutus",

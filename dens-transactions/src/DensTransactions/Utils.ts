@@ -9,14 +9,14 @@ import * as Pla from "plutus-ledger-api/PlutusData.js";
 import * as csl from "@emurgo/cardano-serialization-lib-nodejs";
 import { fromJust } from "prelude";
 import { currencySymbolFromBytes, scriptHashFromBytes } from "plutus-ledger-api/V1.js";
-import fetch from 'node-fetch'
+import { got, Options } from 'got';
 import elemIdMPEnvelope from "./scripts/mkElemIDMintingPolicy.json" with {type: "json"};
 import setElemMPEnvelope from "./scripts/mkSetElemMintingPolicy.json" with {type: "json"};
 import protocolMPEnvelope from "./scripts/mkProtocolMintingPolicy.json" with {type: "json"};
 import recordEnvelope from "./scripts/mkRecordValidator.json" with {type: "json"};
 import setValEnvelope from "./scripts/mkSetValidator.json" with {type: "json"};
 
-export const mkParams  = (lucid: L.Lucid, ref: L.OutRef): DeNSParams => {
+export const mkParams  = async (lucid: L.Lucid, ref: L.OutRef, path: string): Promise<DeNSParams> => {
   const utils = new L.Utils(lucid);
   const OutRefSchema = L.Data.Tuple([L.Data.Bytes(),L.Data.Integer()],{hasConstr: true})
 
@@ -52,6 +52,8 @@ export const mkParams  = (lucid: L.Lucid, ref: L.OutRef): DeNSParams => {
     script: L.applyParamsToScript(elemIdMPEnvelope.rawHex,[protocolCS])
   }
 
+  await setProtocolNFT(path,protocolCS);
+  await new Promise(r => setTimeout(r,5000));
   return {
     setValidator: setValidator,
     recordValidator: recordValidator,
@@ -69,10 +71,8 @@ export const signAndSubmitTx = async (lucid: L.Lucid, tx: L.Tx) => {
    return hash
 }
 
-const serverBaseUrl: string = "http://127.0.0.1:10169";
-
 export const mkDensKey = (domain: string): DensKey => {
-  return  {densName: Buffer.from(domain,'utf8'), densClass: BigInt(0)}
+  return  {densName: Buffer.from(domain,'utf16le'), densClass: BigInt(0)}
 }
 
 type ProtocolResponseBody = {
@@ -91,20 +91,24 @@ type ProtocolResponse = {
 }
 
 export const unsafeCurrSymb = (x: string) => {
-  return fromJust(currencySymbolFromBytes(Buffer.from(x,'utf8')))
+  return fromJust(currencySymbolFromBytes(Buffer.from(x,'utf16le')))
 }
+
 
 export const emptyCS = unsafeCurrSymb("");
 
-export const findProtocolOut: (lucid: L.Lucid) => Promise<L.UTxO> = async (lucid: L.Lucid) => {
-    const response = await fetch(serverBaseUrl + '/api/protocol-utxo', {
+export const findProtocolOut: (lucid: L.Lucid, path: string) => Promise<L.UTxO> = async (lucid: L.Lucid, path: string) => {
+    console.log('findProtocolOut');
+    const data = await got('http://unix:' + path + ':/api/protocol-utxo', {
         method: 'post',
-        headers: {'Content-Type': 'application/json'}
-    });
+        headers: {'Content-Type': 'application/json'},
+        json: {},
+        enableUnixSockets: true
+    }).json();
 
-    const data = await response.json();
+    console.log('protocol response data: ' + JSON.stringify(data,null,4));
 
-    const protocolResponse = data as ProtocolResponse;
+    const protocolResponse = data  as ProtocolResponse;
 
     const txOutRef = protocolResponse.fields[0].txOutRef.txOutRef;
     const txOutRefIx = protocolResponse.fields[0].txOutRef.txOutRefIx;
@@ -131,16 +135,16 @@ type SetDatumResponseBody = {
 
 type SetDatumResponse = {name: string, fields: Array<SetDatumResponseBody>}
 
-export const findOldSetDatum: (lucid: L.Lucid, domain: string) => Promise<SetDatumQueryResult> = async (lucid: L.Lucid, domain: string) => {
-    const hexDomain = Buffer.from(domain,'utf8').toString('hex');
+export const findOldSetDatum: (lucid: L.Lucid, path: string, domain: string) => Promise<SetDatumQueryResult> = async (lucid: L.Lucid, path: string, domain: string) => {
+    const hexDomain = Buffer.from(domain,'utf16le').toString('hex');
 
-    const response = await fetch(serverBaseUrl + '/api/protocol-utxo', {
+    const data = await got('http://unix:' + path + ':/api/query-set-insertion-utxo', {
         method: 'post',
-        body: JSON.stringify({name: hexDomain}),
-        headers: {'Content-Type': 'application/json'}
-    });
+        json: {name: hexDomain},
+        headers: {'Content-Type': 'application/json'},
+        enableUnixSockets: true
+    }).json();
 
-    const data = await response.json()
 
     const setDatumResponse = data as SetDatumResponse;
 
@@ -155,6 +159,19 @@ export const findOldSetDatum: (lucid: L.Lucid, domain: string) => Promise<SetDat
 
     return {setDatumUTxO: setDatumUtxo, setDatum: setDatum}
 };
+
+export const setProtocolNFT = async (path: string, protocolCS: string) => {
+  const body = {protocolNft: {currency_symbol: protocolCS, token_name: ""}};
+
+  const data = await got('http://unix:' + path + ":/api/set-protocol-nft",{
+    method: 'post',
+    json: body,
+    headers: {'Content-Type': 'application/json'},
+    enableUnixSockets: true
+  }).json();
+
+  console.log('set protocol nft response:\n' + JSON.stringify(data,null,4));
+}
 
 // TODO: Figure out if lucid exposes any utilities for filtering wallet UTxOs.
 export const findElemIDUTxO = async (assetClass: string, lucid: L.Lucid): Promise<L.UTxO> => {
