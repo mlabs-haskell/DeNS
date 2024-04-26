@@ -1,6 +1,7 @@
 import test from "node:test";
 import { Services } from "../lib/services.js";
 import * as L from "lucid-cardano";
+import * as CSL from "@emurgo/cardano-serialization-lib-nodejs"
 import * as Tx from "../../.extra-dependencies/dens-transactions/dist/DensTransactions/index.js";
 
 test.describe("Runtime services can be initialized", async () => {
@@ -9,21 +10,35 @@ test.describe("Runtime services can be initialized", async () => {
     services = await Services.spawn();
   });
 
-  const ogmiosUrl = 'ws://' + services.ogmios.host + ':' + services.ogmios.port;
+  test.it('offchain', async () => {
+    console.log('ogmios url: ' + services.ogmios.host);
+    console.log('ogmios port: ' + services.ogmios.port)
 
-  const fakeProvider = new Tx.OgmiosOnly(ogmiosUrl);
+    const fakeProvider = new Tx.OgmiosOnly(services.ogmios.host,parseInt(services.ogmios.port),'Mainnet');
 
-  const lucidNoWallet = await L.Lucid.new(fakeProvider);
+    const lucidNoWallet = await L.Lucid.new(fakeProvider);
 
-  const userPrivKey = Buffer.from(services.cardano.walletKeyPairs[0].signingKey).toString('hex');
+    console.log('priv key bytes: \n ' + JSON.stringify(services.cardano.walletKeyPairs[0].signingKey));
 
-  console.log('user priv key: ' + JSON.stringify(userPrivKey))
+    const userPrivKey = CSL.PrivateKey.from_normal_bytes(services.cardano.walletKeyPairs[0].signingKey);
 
-  const lucid = lucidNoWallet.selectWalletFromPrivateKey(userPrivKey);
+    console.log('user priv key: ' + JSON.stringify(userPrivKey))
 
-  const oneShotRef = await Tx.mkProtocolOneShot(lucid);
+    const lucid = lucidNoWallet.selectWalletFromPrivateKey(userPrivKey.to_bech32());
 
-  console.log(JSON.stringify(oneShotRef));
+    const oneShotRef = await Tx.mkProtocolOneShot(lucid);
+
+    const params = Tx.mkParams(lucid,oneShotRef);
+
+    console.log('scripts: \n' + JSON.stringify(params,null,4));
+
+    const initializeDeNSTx = await Tx.initializeDeNS(lucid,params);
+
+    const initTxHash = await Tx.signAndSubmitTx(lucid,initializeDeNSTx);
+
+    console.log('initialize dens tx hash:\n  ' +  initTxHash);
+  });
+
 
   await test.after(async () => {
     await services!.kill();

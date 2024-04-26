@@ -23,6 +23,7 @@ export const mkProtocolOneShot = async (lucid: L.Lucid): Promise<L.OutRef> => {
   const readyToSubmit = await signed.complete();
   const hash = await readyToSubmit.submit();
 
+  await new Promise(r => setTimeout(r, 10000));
   const walletUTXOs = await lucid.wallet.getUtxos();
 
   const utxoWithHash = walletUTXOs.find(x => x.txHash == hash);
@@ -67,8 +68,11 @@ export const initializeDeNS = async (
 
   // TODO: Figure out how to make a unit datum
   return builder
+    .attachMintingPolicy(params.protocolPolicy)
     .mintAssets(oneProtocolToken)
+    .attachMintingPolicy(params.setElemIDPolicy)
     .mintAssets(oneSetElemToken)
+    .attachSpendingValidator(params.setValidator)
     .payToAddressWithData(
       setValidatorAddr,
       initialSetDatumDatum,
@@ -120,11 +124,14 @@ export const registerDomain = async (
 
   const setValidatorAddr = utils.validatorToAddress(params.setValidator);
 
-  return builder // TODO: null redeemers
+  return builder // TODO: null redeemer
+    .attachMintingPolicy(params.setElemIDPolicy)
     .mintAssets(oneSetElemToken)
+    .attachMintingPolicy(params.elemIDPolicy)
     .mintAssets(oneElemIDToken)
     .readFrom([protocolOut])
     .collectFrom([oldSetDatumUtxo])
+    .attachSpendingValidator(params.setValidator)
     .payToAddressWithData(setValidatorAddr, newSetDatumL, oneSetElemToken)
     .payToAddressWithData(setValidatorAddr, newSetDatumR, oneSetElemToken);
 };
@@ -156,6 +163,7 @@ export const updateRecord = async (
   };
 
   return builder
+    .attachSpendingValidator(params.recordValidator)
     .readFrom([protocolOut])
     .collectFrom([elemIDUTxO])
     .payToAddressWithData(recValidatorAddr, recordDatum, {

@@ -27,29 +27,29 @@ export const mkParams  = (lucid: L.Lucid, ref: L.OutRef): DeNSParams => {
 
   const protocolPolicy: L.MintingPolicy = {
     type: "PlutusV2",
-    script: L.applyParamsToScript<OutRefParams>(protocolMPEnvelope.cborHex,[ref.txHash,BigInt(ref.outputIndex)],OutRefParams)
+    script: L.applyParamsToScript(protocolMPEnvelope.rawHex,[ref.txHash,BigInt(ref.outputIndex)])
   }
 
   const protocolCS = utils.validatorToScriptHash(protocolPolicy);
 
   const setValidator: L.SpendingValidator = {
     type: "PlutusV2",
-    script: L.applyParamsToScript(setValEnvelope.cborHex,[protocolCS])
+    script: L.applyParamsToScript(setValEnvelope.rawHex,[protocolCS])
   }
 
   const recordValidator: L.SpendingValidator = {
     type: "PlutusV2",
-    script: L.applyParamsToScript(recordEnvelope.cborHex,[protocolCS])
+    script: L.applyParamsToScript(recordEnvelope.rawHex,[protocolCS])
   }
 
   const setElemIDPolicy: L.MintingPolicy = {
     type: "PlutusV2",
-    script: L.applyParamsToScript(setElemMPEnvelope.cborHex,[protocolCS])
+    script: L.applyParamsToScript(setElemMPEnvelope.rawHex,[protocolCS])
   }
 
   const elemIDPolicy: L.MintingPolicy = {
     type: "PlutusV2",
-    script: L.applyParamsToScript(elemIdMPEnvelope.cborHex,[protocolCS])
+    script: L.applyParamsToScript(elemIdMPEnvelope.rawHex,[protocolCS])
   }
 
   return {
@@ -61,7 +61,15 @@ export const mkParams  = (lucid: L.Lucid, ref: L.OutRef): DeNSParams => {
   }
 }
 
-const serverBaseUrl: string = "www.test.com";
+export const signAndSubmitTx = async (lucid: L.Lucid, tx: L.Tx) => {
+   const complete = await tx.complete();
+   const signed =  complete.sign();
+   const readyToSubmit = await signed.complete();
+   const hash = await readyToSubmit.submit();
+   return hash
+}
+
+const serverBaseUrl: string = "http://127.0.0.1:10169";
 
 export const mkDensKey = (domain: string): DensKey => {
   return  {densName: Buffer.from(domain,'utf8'), densClass: BigInt(0)}
@@ -91,7 +99,6 @@ export const emptyCS = unsafeCurrSymb("");
 export const findProtocolOut: (lucid: L.Lucid) => Promise<L.UTxO> = async (lucid: L.Lucid) => {
     const response = await fetch(serverBaseUrl + '/api/protocol-utxo', {
         method: 'post',
-        body: JSON.stringify({}),
         headers: {'Content-Type': 'application/json'}
     });
 
@@ -175,8 +182,13 @@ export const initialSetDatum: SetDatum = {
 }
 
 export const mkLBScriptHash = (script: L.SpendingValidator) => {
+  const hash = L.C.PlutusScript.from_bytes(
+          L.fromHex(L.applyDoubleCborEncoding(script.script)),
+        )
+          .hash(L.C.ScriptHashNamespace.PlutusV2)
+          .to_bytes();
   return fromJust(
-    scriptHashFromBytes(L.fromHex(L.applyDoubleCborEncoding(script.script))),
+    scriptHashFromBytes(hash),
   );
 };
 
