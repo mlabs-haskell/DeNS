@@ -1,7 +1,7 @@
 import * as Db from "./Db.js";
 
 import { default as express } from "express";
-import type { RequestHandler } from "express";
+import type { ErrorRequestHandler, RequestHandler } from "express";
 import { ServerConfig } from "lbf-dens-db/LambdaBuffers/Dens/Config.mjs";
 import { logger } from "./Logger.js";
 import { default as getRawBody } from "raw-body";
@@ -119,6 +119,14 @@ export function runServer(
       res.send(PJson.stringify(resJson));
     }
   });
+
+  // Custom error handler s.t. we don't generate a full HTML page for the
+  // errors.
+  const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+    logger.warn(`Bad request: ${err}`);
+    res.status(500).send(err.toString());
+  };
+  app.use(errorHandler);
 
   switch (config.name) {
     case `InternetDomain`: {
