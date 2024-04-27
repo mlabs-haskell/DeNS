@@ -103,7 +103,7 @@ TODO(jaredponn): write me
 [#query-protocol-utxo]
 ==== POST Protocol UTxO
 Method:: *POST*
-URL:: `/api/protocol-utxo`
+URL:: `/api/query-protocol-utxo`
 
 Returns the UTxO which holds the Protocol type i.e., trusted information of the DeNS protocol.
 
