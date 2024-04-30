@@ -10,7 +10,7 @@ import type {
   TxOutRef,
 } from "plutus-ledger-api/V1.js";
 import * as Db from "../DensQuery/Db.js";
-import { Protocol } from "lbf-dens/LambdaBuffers/Dens.mjs";
+import { DensRr, Protocol, RData } from "lbf-dens/LambdaBuffers/Dens.mjs";
 import prand from "pure-rand";
 
 /**
@@ -354,13 +354,6 @@ export function fcAssetClass(): fc.Arbitrary<AssetClass> {
 }
 
 /**
- * Generator for an arbitrary resource record (alias for random bytes)
- */
-export function fcRrs(): fc.Arbitrary<Uint8Array> {
-  return fc.uint8Array();
-}
-
-/**
  * Generator for an arbitrary {@link TokenName}
  */
 export function fcTokenName(): fc.Arbitrary<TokenName> {
@@ -455,10 +448,41 @@ export function fcDensRrsUtxo(): fc.Arbitrary<Db.DensRrsUtxo> {
   return fc.record(
     {
       name: fcName(),
-      rrs: fc.uint8Array(),
+      rrs: fc.array(fcDensRr()),
       txOutRef: fcTxOutRef(),
     },
   );
+}
+
+export function fcDensRr(): fc.Arbitrary<DensRr> {
+  return fc.record(
+    {
+      ttl: fc.bigInt({ min: 0n, max: 2n ^ 32n - 1n }),
+      rData: fcRdata(),
+    },
+  );
+}
+
+export function fcRdata(): fc.Arbitrary<RData> {
+  return fc.oneof(
+    fc.record(
+      {
+        name: fc.constant(`A`),
+        fields: fc.ipV4().map((ip) =>
+          Uint8Array.from(ip, (c) => c.charCodeAt(0))
+        ),
+      },
+    ),
+    fc.record(
+      {
+        name: fc.constant(`AAAA`),
+        fields: fc.ipV6().map((ip) =>
+          Uint8Array.from(ip, (c) => c.charCodeAt(0))
+        ),
+      },
+    ),
+    // TODO(jaredponn): actually generate all the possible RRs here
+  ) as fc.Arbitrary<RData>;
 }
 
 export function fcDensProtocolUtxo(): fc.Arbitrary<Db.DensProtocolUtxo> {

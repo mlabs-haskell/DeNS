@@ -128,8 +128,6 @@ CREATE TABLE IF NOT EXISTS dens_rrs_utxos (
     name bytea REFERENCES dens_set_utxos (name)
     ON DELETE CASCADE DEFERRABLE,
 
-    rrs bytea NOT NULL,
-
     -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Tx.hs#L51-L65
     CONSTRAINT tx_id_length_is_32 CHECK (octet_length(tx_out_ref_id) = 32),
 
@@ -145,6 +143,39 @@ CREATE TABLE IF NOT EXISTS dens_rrs_utxos (
 
 -- Index s.t. we can efficiently join dens_set_utxos with dens_rrs_utxos on the name
 CREATE INDEX IF NOT EXISTS dens_rrs_utxos_name_index ON dens_rrs_utxos (name);
+
+-- The list of RRs at `+DensValidator+`s addresses i.e., this forms a
+-- . M:1 relationship of `+dens_rrs+` to `+dens_rrs_utxos+`
+--
+-- NOTE(jaredponn): this loosely follows the records table in
+-- <https://github.com/PowerDNS/pdns/blob/0b6eb67e14ce894e8286c0993e393b1191411c96/modules/gpgsqlbackend/schema.pgsql.sql>
+-- NOTE(jaredponn): the only DNS backend we support is PowerDNS. The following
+-- are useful docs:
+-- . <https://github.com/PowerDNS/pdns/blob/0b6eb67e14ce894e8286c0993e393b1191411c96/modules/gpgsqlbackend/schema.pgsql.sql>
+-- for the schema
+-- . <https://github.com/PowerDNS/pdns/blob/0b6eb67e14ce894e8286c0993e393b1191411c96/modules/gpgsqlbackend/gpgsqlbackend.cc>
+-- . In the future, it'll probably be a reasonable idea to write up our own Cardano backend.
+-- See over here: <https://doc.powerdns.com/authoritative/appendices/backend-writers-guide.html> for details
+
+CREATE TABLE IF NOT EXISTS dens_rrs (
+    id bigserial,
+
+    tx_out_ref_id bytea NOT NULL,
+
+    tx_out_ref_idx bigint NOT NULL,
+
+    -- The type of the RR e.g. `+A+`, `+AAAA+`, etc.
+    type varchar(10) NOT NULL,
+
+    ttl int NOT NULL,
+
+    content varchar(65535) NOT NULL,
+
+    PRIMARY KEY(id),
+
+    FOREIGN KEY (tx_out_ref_id, tx_out_ref_idx) REFERENCES dens_rrs_utxos (tx_out_ref_id, tx_out_ref_idx)
+    ON DELETE CASCADE DEFERRABLE
+);
 
 -----------------------------------------------------------------------------
 -- == Table for the protocol UTxO
@@ -627,6 +658,10 @@ SELECT create_table_undo_update('dens_set_utxos');
 SELECT create_table_undo_insert('dens_rrs_utxos');
 SELECT create_table_undo_delete('dens_rrs_utxos');
 SELECT create_table_undo_update('dens_rrs_utxos');
+
+SELECT create_table_undo_insert('dens_rrs');
+SELECT create_table_undo_delete('dens_rrs');
+SELECT create_table_undo_update('dens_rrs');
 
 SELECT create_table_undo_insert('dens_protocol_utxos');
 SELECT create_table_undo_delete('dens_protocol_utxos');
