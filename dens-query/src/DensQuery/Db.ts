@@ -170,7 +170,6 @@ class DensDbClient {
       {
         // TODO(jaredponn): there's an easy optimization to not include the
         // token names
-        //
         text:
           `INSERT INTO dens_set_utxos (name, currency_symbol, token_name, tx_out_ref_id, tx_out_ref_idx)
                     (SELECT $3::bytea, $4::bytea, $5::bytea, $6::bytea, $7::bigint
@@ -330,11 +329,21 @@ class DensDbClient {
         text: `INSERT INTO dens_rrs_utxos(name, tx_out_ref_id, tx_out_ref_idx)
                SELECT name,$3::bytea,$4::bigint
                FROM dens_set_utxos
-               WHERE (currency_symbol,token_name)
-                    IN (SELECT * 
-                        FROM UNNEST($1::bytea[],$2::bytea[]) as asset_classes_at_the_utxo(currency_symbol,token_name))
+               WHERE (currency_symbol,token_name) IN (SELECT * FROM UNNEST($1::bytea[],$2::bytea[]) as asset_classes_at_the_utxo(currency_symbol,token_name))
+                    AND (encode(name, 'escape') SIMILAR TO '.|(([a-z]([-a-z0-9]*[a-z0-9])?)(.([a-z]([-a-z0-9]*[a-z0-9])?))*)')
                ON CONFLICT DO NOTHING
                     `,
+        // Note that we ONLY add records which match the domains in
+        // Section 3.5 of
+        // <https://datatracker.ietf.org/doc/html/rfc1034> AND are
+        // lower case (this is to ensure adversaries can't add
+        // random RRs to someone elses things.
+        //
+        // For compatibility with DNS backends like PowerDNS, we must ensure:
+        //      - names are NEVER terminated with a trailing `.`,
+        //      - with the exception of the root zone, which must have the name of `.`
+        // See <https://doc.powerdns.com/authoritative/backends/generic-sql.html#:~:text=The%20generic%20SQL%20backends%20(like,needed%20to%20cover%20all%20needs.>
+        //
         values: [
           transposedAssetClassesAtTheUtxo[0].map((bs) =>
             Buffer.from(bs.buffer)
