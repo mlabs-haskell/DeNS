@@ -5,9 +5,11 @@ import pg from "pg";
 import type { QueryConfig, QueryResult } from "pg";
 import { DbConfig } from "lbf-dens-db/LambdaBuffers/Dens/Config.mjs";
 import { logger } from "./Logger.js";
+import * as net from "node:net";
 import * as fs from "node:fs/promises";
 import {
   DensProtocolUtxo,
+  DensRr,
   DensRrsUtxo,
   DensSetUtxo,
   Point,
@@ -168,7 +170,9 @@ class DensDbClient {
       {
         // TODO(jaredponn): there's an easy optimization to not include the
         // token names
-        text: `INSERT INTO dens_set_utxos 
+        //
+        text:
+          `INSERT INTO dens_set_utxos (name, currency_symbol, token_name, tx_out_ref_id, tx_out_ref_idx)
                     (SELECT $3::bytea, $4::bytea, $5::bytea, $6::bytea, $7::bigint
                      FROM dens_protocol_utxos
                      WHERE set_elem_minting_policy IN 
@@ -315,6 +319,7 @@ class DensDbClient {
     const transposedAssetClassesAtTheUtxo: [CurrencySymbol[], TokenName[]] =
       transposeAssetClasses(assetClassesAtTheUtxo);
 
+    // First, we make note of the UTxO which contains the RRs
     await this.query(
       {
         // NOTE(jaredponn): we don't use the following query since we need to
@@ -322,12 +327,14 @@ class DensDbClient {
         // ```
         // text: `INSERT INTO dens_rrs_utxos VALUES($1,$2,$3,$4,$5,$6)`,
         // ```
-        text: `INSERT INTO dens_rrs_utxos 
-               SELECT name,$3::bytea,$4::bytea,$5::bigint
+        text: `INSERT INTO dens_rrs_utxos(name, tx_out_ref_id, tx_out_ref_idx)
+               SELECT name,$3::bytea,$4::bigint
                FROM dens_set_utxos
                WHERE (currency_symbol,token_name)
                     IN (SELECT * 
-                        FROM UNNEST($1::bytea[],$2::bytea[]) as asset_classes_at_the_utxo(currency_symbol,token_name))`,
+                        FROM UNNEST($1::bytea[],$2::bytea[]) as asset_classes_at_the_utxo(currency_symbol,token_name))
+               ON CONFLICT DO NOTHING
+                    `,
         values: [
           transposedAssetClassesAtTheUtxo[0].map((bs) =>
             Buffer.from(bs.buffer)
@@ -335,25 +342,95 @@ class DensDbClient {
           transposedAssetClassesAtTheUtxo[1].map((bs) =>
             Buffer.from(bs.buffer)
           ),
-          Buffer.from(rrs.buffer),
           Buffer.from(txOutRef.txOutRefId.buffer),
           txOutRef.txOutRefIdx,
         ],
       },
     );
+
+    // Then, we add the list of RRs
+    for (const rr of rrs) {
+      const { ttl } = rr;
+      const content = validateDensRr(rr);
+
+      if (content === undefined) {
+        logger.info(
+          `Invalid RR at ${
+            JSON.stringify(
+              txOutRef,
+              (_, v) => typeof v === "bigint" ? v.toString() : v,
+            )
+          }: ${
+            JSON.stringify(
+              rr,
+              (_, v) => typeof v === "bigint" ? v.toString() : v,
+            )
+          }`,
+        );
+        continue;
+      }
+
+      await this.query(
+        {
+          text:
+            `INSERT INTO dens_rrs(tx_out_ref_id, tx_out_ref_idx, type, ttl, content)
+                       VALUES ($1, $2, $3, $4, $5)
+                            `,
+          values: [
+            Buffer.from(txOutRef.txOutRefId.buffer),
+            txOutRef.txOutRefIdx,
+            rr.rData.name,
+            Number(ttl),
+            content,
+          ],
+        },
+      );
+    }
   }
 
-  async selectNamesRrs(name: Uint8Array): Promise<Uint8Array[]> {
+  async selectNamesRrs(name: Uint8Array): Promise<DensRr[]> {
     const res: QueryResult = await this.query(
       {
-        text: `SELECT rrs 
-               FROM dens_rrs_utxos
-               WHERE dens_rrs_utxos.name = $1::bytea`,
+        text: `SELECT type, ttl, content
+               FROM dens_rrs_utxos JOIN dens_rrs
+                ON dens_rrs_utxos.tx_out_ref_id = dens_rrs.tx_out_ref_id
+                    AND dens_rrs_utxos.tx_out_ref_idx = dens_rrs.tx_out_ref_idx
+               WHERE dens_rrs_utxos.name = CAST($1 AS bytea)
+               ORDER BY dens_rrs.id ASC`,
         values: [Buffer.from(name.buffer)],
       },
     );
 
-    return res.rows.map((row) => Uint8Array.from(row.rrs));
+    return res.rows.map((row) => {
+      switch (row.type) {
+        case `A`:
+          return {
+            ttl: BigInt(row.ttl),
+            rData: {
+              name: row.type,
+              fields: Uint8Array.from(Buffer.from(row.content)),
+            },
+          };
+        case `AAAA`:
+          return {
+            ttl: BigInt(row.ttl),
+            rData: {
+              name: row.type,
+              fields: Uint8Array.from(Buffer.from(row.content)),
+            },
+          };
+        case `SOA`:
+          return {
+            ttl: BigInt(row.ttl),
+            rData: {
+              name: row.type,
+              fields: Uint8Array.from(Buffer.from(row.content)),
+            },
+          };
+        default:
+          throw new Error(`Invalid RR type in database: ${row.type}`);
+      }
+    });
   }
 
   /**
@@ -477,4 +554,42 @@ export function transposeAssetClasses(
   }
 
   return [cs, tns];
+}
+
+/**
+ * Some simple validation rules to ensure that the RRs are "valid" in a
+ * reasonable sense for backends like PowerDNS.
+ *
+ * Returns the content, or undefined if it isn't valid.
+ */
+export function validateDensRr(rr: DensRr): string | undefined {
+  // See 4.1.3 of <https://www.ietf.org/rfc/rfc1035.txt>
+  if (!(0 <= rr.ttl && rr.ttl <= (2 ^ 32 - 1))) {
+    return undefined;
+  }
+
+  const rdata = rr.rData;
+  switch (rdata.name) {
+    case `A`: {
+      const ipv4 = Buffer.from(Uint8Array.from(rdata.fields)).toString();
+
+      if (!net.isIPv4(ipv4)) {
+        return undefined;
+      }
+      return ipv4;
+    }
+    case `AAAA`: {
+      const ipv6 = Buffer.from(Uint8Array.from(rdata.fields)).toString();
+      if (!net.isIPv6(ipv6)) {
+        return undefined;
+      }
+      return ipv6;
+    }
+
+    case `SOA`: {
+      // TODO(jaredponn): write a quick regex to validate this.
+      const soa = Buffer.from(Uint8Array.from(rdata.fields)).toString();
+      return soa;
+    }
+  }
 }

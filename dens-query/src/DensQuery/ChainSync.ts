@@ -121,22 +121,31 @@ export async function rollForwardDb(
           try {
             const recordDatum = LbrPlutusV1.IsPlutusData[LbfDens.RecordDatum]
               .fromData(plaPlutusData);
-            if (recordDatum.recordReference.densPointer.name === "Just") {
-              // TODO(jaredponn): we just store the rr reference
-              // inline
-              await client.insertDensRrsUtxo(
-                csAndTns,
-                {
-                  // NOTE(jaredponn): the name isn't used
-                  name: undefined as unknown as Uint8Array,
-                  rrs: recordDatum.recordReference.densPointer.fields,
-                  txOutRef,
-                },
-              );
-            }
+
+            // Add the UTxO to the database
+            const addToDbTask = client.insertDensRrsUtxo(
+              csAndTns,
+              {
+                // NOTE(jaredponn): the name isn't used in the insertion (it
+                // will be looked up based on the DensSet element)
+                name: undefined as unknown as Uint8Array,
+                rrs: recordDatum.recordValue,
+                txOutRef,
+              },
+            );
+
+            // NOTE(jaredponn): perhaps in the future, this step will be a bit more featureful
+            await Promise.all([addToDbTask]);
           } catch (err) {
             if (!(err instanceof PlaPd.IsPlutusDataError)) {
               throw err;
+            } else {
+              logger.warn(
+                `Error when parsing datum at ${
+                  JSON.stringify(txOutRef, (_, value) =>
+                    typeof value === "bigint" ? value.toString() : value)
+                } ${err}`,
+              );
             }
           }
 
@@ -173,6 +182,13 @@ export async function rollForwardDb(
           } catch (err) {
             if (!(err instanceof PlaPd.IsPlutusDataError)) {
               throw err;
+            } else {
+              logger.warn(
+                `Error when parsing datum at ${
+                  JSON.stringify(txOutRef, (_, value) =>
+                    typeof value === "bigint" ? value.toString() : value)
+                } ${err}`,
+              );
             }
           }
         }

@@ -1,6 +1,7 @@
 // This file includes tests which go back and forth from the backing db
 // postgres to dens-query
 import { it } from "node:test";
+import * as fc from "fast-check";
 import * as assert from "node:assert/strict";
 import * as DbTestUtils from "./DbTestUtils.js";
 import * as Samples from "./Samples.js";
@@ -259,7 +260,7 @@ it("Database basic tests", async () => {
 
           const taylorSwiftRrs1 = {
             name: taylorSwiftDotComSetElem.name,
-            rrs: Samples.fcGenerate(Samples.fcRrs()),
+            rrs: Samples.fcGenerate(fc.array(Samples.fcDensRr())),
             txOutRef: taylorSwiftDotComRrsUtxo1,
           };
           await client.insertDensRrsUtxo(
@@ -269,7 +270,7 @@ it("Database basic tests", async () => {
           const res1 = await client.selectNamesRrs(
             taylorSwiftDotComSetElem.name,
           );
-          assert.deepStrictEqual(res1, [taylorSwiftRrs1.rrs]);
+          assert.deepStrictEqual(res1, taylorSwiftRrs1.rrs);
 
           // Insert the second RR
 
@@ -277,7 +278,7 @@ it("Database basic tests", async () => {
 
           const taylorSwiftRrs2 = {
             name: taylorSwiftDotComSetElem.name,
-            rrs: Samples.fcGenerate(Samples.fcRrs()),
+            rrs: Samples.fcGenerate(fc.array(Samples.fcDensRr())),
             txOutRef: taylorSwiftDotComRrsUtxo2,
           };
           await client.insertDensRrsUtxo(
@@ -287,9 +288,12 @@ it("Database basic tests", async () => {
           const res2 = await client.selectNamesRrs(
             taylorSwiftDotComSetElem.name,
           );
+
+          // WARNING(jaredponn): this test is a bit fragile because the order
+          // isn't necessarily well defined.
           assert.deepStrictEqual(
-            res2.sort(),
-            [taylorSwiftRrs1.rrs, taylorSwiftRrs2.rrs].sort(),
+            res2,
+            taylorSwiftRrs1.rrs.concat(taylorSwiftRrs2.rrs),
           );
         });
 

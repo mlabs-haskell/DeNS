@@ -3,7 +3,7 @@
 --  [1]: https://ogmios.dev/api/v5.6/#operation-publish-/?Local-Chain-Sync
 module Dens.Db
 
-import Prelude (Eq, Json, Integer)
+import Prelude (Eq, Json, Integer, List)
 import Plutus.V1
 import Plutus.V2
 
@@ -33,10 +33,10 @@ record DensSetUtxo =
 derive Eq DensSetUtxo
 derive Json DensSetUtxo
 
--- Representation of the onchain validator address which holds pointers
+-- Representation of the onchain validator address which holds the RRs (or pointers to)
 record DensRrsUtxo = 
     { name: Bytes
-    , rrs: Bytes
+    , rrs: List DensRr
     , txOutRef: TxOutRef
     }
 derive Eq DensRrsUtxo
@@ -48,6 +48,13 @@ opaque Protocol
 instance Eq Protocol
 instance Json Protocol
 instance PlutusData Protocol
+
+-- Borrow the DensRr type from `./dens-validation/api/*`
+opaque DensRr
+
+instance Eq DensRr
+instance Json DensRr
+instance PlutusData DensRr
 
 -- Representation of the onchain validator which holds the read only
 -- configuration of the entire protocol

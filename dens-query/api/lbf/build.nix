@@ -11,6 +11,11 @@
                 "LbfDens"
                 "Protocol"
               ];
+              "Dens.Db.DensRr" = [
+                "lbf-dens/LambdaBuffers/Dens.mjs"
+                "LbfDens"
+                "DensRr"
+              ];
             };
             classesConfig = { };
           }

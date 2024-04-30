@@ -3,7 +3,7 @@
 module Dens
 
 -- See: https://github.com/mlabs-haskell/lambda-buffers/blob/main/libs/lbf-prelude/Prelude.lbf
-import Prelude (Eq, Json, Integer, Maybe)
+import Prelude (Eq, Json, Integer, Maybe, List)
 -- See: https://github.com/mlabs-haskell/lambda-buffers/blob/main/libs/lbf-plutus/Plutus/V1.lbf
 import Plutus.V1
 -- See: https://github.com/mlabs-haskell/lambda-buffers/blob/main/libs/lbf-plutus/Plutus/V2.lbf
@@ -34,11 +34,35 @@ derive Eq DensKey
 derive Json DensKey
 derive PlutusData DensKey
 
-record DensValue = { densPointer : Maybe Bytes }
+prod DensValue = (List DensRr)
 
 derive Eq DensValue
 derive Json DensValue
 derive PlutusData DensValue
+
+-- See Section 3.2.1. of <https://www.ietf.org/rfc/rfc1035.txt>
+-- Note that the NAME, TYPE, CLASS, RDLENGTH can be given from the provided
+-- information / implicitly from RData and the associated element in the Dens Set.
+record DensRr = { ttl : Integer, rData : RData }
+
+derive Eq DensRr
+derive Json DensRr
+derive PlutusData DensRr
+
+-- See Section 3.2.2. of <https://www.ietf.org/rfc/rfc1035.txt>
+-- FIXME(jaredponn): perhaps we should do a more efficient encoding of these.
+sum RData 
+    = -- | Human readable representation of an ipv4 address e.g. `127.0.0.1`. See <https://doc.powerdns.com/authoritative/appendices/types.html#a>
+        A Bytes
+    | -- | Human readable representation of an ipv6 address e.g. `2001:0db8:85a3:0000:0000:8a2e:0370:7334`. See <https://doc.powerdns.com/authoritative/appendices/types.html#aaaa>
+        AAAA Bytes
+    | -- | Human readable representation of the SOA. See <https://doc.powerdns.com/authoritative/appendices/types.html#soa>
+        SOA Bytes
+
+derive Eq RData
+derive Json RData
+derive PlutusData RData
+
 
 record SetDatum = 
     { key : DensKey
@@ -63,7 +87,7 @@ derive PlutusData SetInsert
 record RecordDatum =
     { recordClass : Integer
     , recordName : Bytes
-    , recordReference : DensValue
+    , recordValue : DensValue
     , recordOwner : PubKeyHash
     }
 
