@@ -9,7 +9,7 @@ import * as Pla from "plutus-ledger-api/PlutusData.js";
 import * as csl from "@emurgo/cardano-serialization-lib-nodejs";
 import { fromJust } from "prelude";
 import { currencySymbolFromBytes, scriptHashFromBytes } from "plutus-ledger-api/V1.js";
-import { got, Options } from 'got';
+import { got, Options, HTTPError } from 'got';
 import elemIdMPEnvelope from "./scripts/mkElemIDMintingPolicy.json" with {type: "json"};
 import setElemMPEnvelope from "./scripts/mkSetElemMintingPolicy.json" with {type: "json"};
 import protocolMPEnvelope from "./scripts/mkProtocolMintingPolicy.json" with {type: "json"};
@@ -104,8 +104,19 @@ export const findProtocolOut: (lucid: L.Lucid, path: string) => Promise<L.UTxO> 
         headers: {'Content-Type': 'application/json'},
         json: {},
         enableUnixSockets: true
-    }).json();
-
+    }).json().catch
+    (err =>  {
+        // Patch the exception s.t. we can see the response body in the generated error message
+        if (err instanceof HTTPError) {
+            const body = JSON.stringify(err.response.body, null, 4)
+            if (err.message === undefined)
+                throw new Error(body)
+            else
+                throw new Error(`${err.message}\n` + body)
+        }
+        throw err
+        }
+    );
     console.log('protocol response data: ' + JSON.stringify(data,null,4));
 
     const protocolResponse = data  as ProtocolResponse;
