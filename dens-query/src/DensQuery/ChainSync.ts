@@ -162,8 +162,7 @@ export async function rollForwardDb(
             if (protocolUtxo !== undefined) {
               const { protocol } = protocolUtxo;
 
-              // TODO(jaredponn): we shouldn't hard code the class really...
-              const dnsClass = 10n;
+              const dnsClass = setDatum.key.densClass;
               const tokenName = elementIdTokenName(name, dnsClass);
 
               await client.insertDensSetUtxo(
@@ -299,7 +298,7 @@ export class ChainSync extends WebSocket {
  *     essentially polls to allow dynamically updating which DeNS protocol we
  *     follow)
  *     2.2 Find an intersection with the current database and ogmios
- *     2.3 Gets 100 of the next blocks.
+ *     2.3 Gets 2 of the next blocks.
  *
  * @private
  * It would be preferable to set up Postgres' `LISTEN`/`NOTIFY` so we don't
