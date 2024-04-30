@@ -99,7 +99,7 @@ export const emptyCS = unsafeCurrSymb("");
 
 export const findProtocolOut: (lucid: L.Lucid, path: string) => Promise<L.UTxO> = async (lucid: L.Lucid, path: string) => {
     console.log('findProtocolOut');
-    const data = await got('http://unix:' + path + ':/api/protocol-utxo', {
+    const data = await got('http://unix:' + path + ':/api/query-protocol-utxo', {
         method: 'post',
         headers: {'Content-Type': 'application/json'},
         json: {},
