@@ -161,19 +161,22 @@ export async function rollForwardDb(
 
             if (protocolUtxo !== undefined) {
               const { protocol } = protocolUtxo;
+
+              // TODO(jaredponn): we shouldn't hard code the class really...
+              const dnsClass = 10n;
+              const tokenName = elementIdTokenName(name, dnsClass);
+
               await client.insertDensSetUtxo(
                 csAndTns,
                 {
                   name,
-                  // TODO(jaredponn): compute this properly i.e., recall that
-                  // the token name should be the hash of a few things.
                   pointer: [
                     Prelude.fromJust(
                       PlaV1.currencySymbolFromBytes(
                         protocol.elementIdMintingPolicy,
                       ),
                     ),
-                    PlaV1.adaToken,
+                    tokenName,
                   ],
                   txOutRef,
                 },
@@ -625,4 +628,34 @@ export function ogmiosValueFlattenPositiveAmounts(
   }
 
   return flattened;
+}
+
+/**
+ * @internal
+ * NOTE(jaredponn): we abuse csl in weird ways to get the right
+ * hash out of it.
+ *  - Recall token names are 32 bytes <https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L99-L112>
+ *  - Note that hash_plutus_data from csl uses blake2b256 which is a 32 byte image <https://github.com/Emurgo/cardano-serialization-lib/blob/4a35ef11fd5c4931626c03025fe6f67743a6bdf9/rust/src/utils.rs#L1246-L1249>
+ *  So, we can use this for our purposes.
+ */
+export function elementIdTokenName(
+  name: Uint8Array,
+  dnsClass: bigint,
+): PlaV1.TokenName {
+  const nameAndClassTuple: PlaPd.PlutusData = {
+    name: `Constr`,
+    fields: [1n, [{ name: `Integer`, fields: dnsClass }, {
+      name: `Bytes`,
+      fields: name,
+    }]],
+  };
+
+  const cslPd = plaPlutusDataToCslPlutusData(nameAndClassTuple);
+  const cslDataHash = csl.hash_plutus_data(cslPd);
+  const result = cslDataHash.to_bytes();
+
+  cslPd.free();
+  cslDataHash.free();
+
+  return Prelude.fromJust(PlaV1.tokenNameFromBytes(result));
 }
