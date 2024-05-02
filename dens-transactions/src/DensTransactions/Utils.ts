@@ -18,10 +18,6 @@ import setValEnvelope from "./scripts/mkSetValidator.json" with {type: "json"};
 
 export const mkParams  = async (lucid: L.Lucid, ref: L.OutRef, path: string): Promise<DeNSParams> => {
   const utils = new L.Utils(lucid);
-  const OutRefSchema = L.Data.Tuple([L.Data.Bytes(),L.Data.Integer()],{hasConstr: true})
-
-  type OutRefParams = L.Data.Static<typeof OutRefSchema>;
-  const OutRefParams = OutRefSchema as unknown as OutRefParams;
 
   const arg: [string,bigint] = [ref.txHash,BigInt(ref.outputIndex)]
 
@@ -51,9 +47,6 @@ export const mkParams  = async (lucid: L.Lucid, ref: L.OutRef, path: string): Pr
     type: "PlutusV2",
     script: L.applyParamsToScript(elemIdMPEnvelope.rawHex,[protocolCS])
   }
-
-  await setProtocolNFT(path,protocolCS);
-  await new Promise(r => setTimeout(r,5000));
   return {
     setValidator: setValidator,
     recordValidator: recordValidator,
@@ -64,10 +57,10 @@ export const mkParams  = async (lucid: L.Lucid, ref: L.OutRef, path: string): Pr
 }
 
 export const signAndSubmitTx = async (lucid: L.Lucid, tx: L.Tx) => {
-   const complete = await tx.complete();
+  const complete = await tx.complete().catch(e => {throw new Error('Error when completing tx:\n' + e)});
    const signed =  complete.sign();
-   const readyToSubmit = await signed.complete();
-   const hash = await readyToSubmit.submit();
+   const readyToSubmit = await signed.complete().catch(e => {throw new Error('Error when completing signed tx:\n' + e)});
+   const hash = await readyToSubmit.submit().catch(e => {throw new Error('Error when submitting tx:\n' + e)});
    return hash
 }
 

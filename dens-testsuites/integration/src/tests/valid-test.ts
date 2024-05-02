@@ -34,7 +34,7 @@ test.describe("Runtime services can be initialized", async () => {
 
     console.log('scripts: \n' + JSON.stringify(params,null,4));
 
-    const initializeDeNSTx = await Tx.initializeDeNS(lucid,params,socketPath);
+    const initializeDeNSTx = await Tx.initializeDeNS(lucid,params,socketPath,oneShotRef);
 
     const initTxHash = await Tx.signAndSubmitTx(lucid,initializeDeNSTx);
 

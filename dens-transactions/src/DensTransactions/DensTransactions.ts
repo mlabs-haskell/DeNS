@@ -4,12 +4,26 @@ import {
   Protocol,
   RecordDatum,
   SetDatum,
+  SetInsert
 } from "lbf-dens/LambdaBuffers/Dens.mjs";
 import { IsPlutusData } from "lbr-plutus/PlutusData.js";
 import * as Utils  from "./Utils.js"
+import * as CSL from "@emurgo/cardano-serialization-lib-nodejs";
 // Scripts
 
 
+const unit = L.toHex(L.C.PlutusData.new_constr_plutus_data(L.C.ConstrPlutusData.new(L.C.BigNum.zero(),L.C.PlutusList.new())).to_bytes());
+console.log('unit: \n' + JSON.stringify(unit,null,4));
+// throw new Error('UNIT DATA:\n' + JSON.stringify(unitData,null,0))
+
+//const initialSetInsert: L.Data = Utils.toCslPlutusData(IsPlutusData[SetInsert].toData({name: 'Insert', fields: Utils.mkDensKey("")})).to_hex();
+
+const initSetInsert = () => {
+  const innerKey = Utils.toCslPlutusData(IsPlutusData[DensKey].toData(Utils.mkDensKey("")));
+  let list = CSL.PlutusList.new();
+  list.add(innerKey)
+  return CSL.PlutusData.new_list(list);
+}
 
 export const mkProtocolOneShot = async (lucid: L.Lucid): Promise<L.OutRef> => {
   const builder = new L.Tx(lucid);
@@ -34,7 +48,8 @@ export const mkProtocolOneShot = async (lucid: L.Lucid): Promise<L.OutRef> => {
 export const initializeDeNS = async (
   lucid: L.Lucid,
   params: Utils.DeNSParams,
-  path: string
+  path: string,
+  oneShotOutRef: L.OutRef
 ): Promise<L.Tx> => {
   console.log('a')
   const builder = new L.Tx(lucid);
@@ -58,7 +73,8 @@ export const initializeDeNS = async (
       .to_hex(),
   };
   console.log('g')
-  const protocolOut = await Utils.findProtocolOut(lucid,path);
+  const oneShotUtxos = await lucid.utxosByOutRef([oneShotOutRef]);
+  const oneShotUtxo = oneShotUtxos[0];
   console.log('h')
   // Mint one protocol token
   const protocolPolicyID = utils.mintingPolicyToId(params.protocolPolicy);
@@ -77,7 +93,7 @@ export const initializeDeNS = async (
     .attachMintingPolicy(params.protocolPolicy)
     .mintAssets(oneProtocolToken)
     .attachMintingPolicy(params.setElemIDPolicy)
-    .mintAssets(oneSetElemToken)
+    .mintAssets(oneSetElemToken,initSetInsert().to_hex())
     .attachSpendingValidator(params.setValidator)
     .payToAddressWithData(
       setValidatorAddr,
@@ -85,7 +101,7 @@ export const initializeDeNS = async (
       oneSetElemToken,
     )
     .payToAddressWithData(setValidatorAddr, protocolDatum, oneProtocolToken)
-    .collectFrom([protocolOut]);
+    .collectFrom([oneShotUtxo]);
 };
 
 export const registerDomain = async (
