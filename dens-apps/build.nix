@@ -4,5 +4,6 @@ _:
   imports = [
     ./ogmios/build.nix
     ./cardano-node/build.nix
+    ./pdns/build.nix
   ];
 }
