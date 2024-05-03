@@ -20,7 +20,7 @@ import { readFile } from "node:fs/promises";
 export { Config, DbConfig, OgmiosConfig, ServerConfig };
 
 const DENS_QUERY_CONFIG_ENV_VAR = "DENS_QUERY_CONFIG";
-const DENS_QUERY_INIT_SQL_FILE_ENV_VAR = "DENS_QUERY_INIT_SQL_FILE";
+const DENS_QUERY_POSTGRES_SCHEMA_ENV_VAR = "DENS_QUERY_POSTGRES_SCHEMA";
 
 /**
  * {@link initConfig} reads the environment variable {@link
@@ -42,10 +42,10 @@ export async function initConfig(): Promise<Config> {
 
 export const config: Config = await initConfig();
 export const initSqlFile: string = (() => {
-  const initSqlFile = process.env[DENS_QUERY_INIT_SQL_FILE_ENV_VAR];
+  const initSqlFile = process.env[DENS_QUERY_POSTGRES_SCHEMA_ENV_VAR];
   if (initSqlFile === undefined) {
     throw new Error(
-      `environment variable ${DENS_QUERY_INIT_SQL_FILE_ENV_VAR} is undefined, so no init SQL file was found.`,
+      `environment variable ${DENS_QUERY_POSTGRES_SCHEMA_ENV_VAR} is undefined, so no init SQL file was found.`,
     );
   }
   return initSqlFile;
