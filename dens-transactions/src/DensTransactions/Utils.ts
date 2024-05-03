@@ -6,6 +6,7 @@ import {
 } from "lbf-dens/LambdaBuffers/Dens.mjs";
 import { IsPlutusData } from "lbr-plutus/PlutusData.js";
 import * as Pla from "plutus-ledger-api/PlutusData.js";
+import * as PlaV1 from "plutus-ledger-api/V1.js";
 import * as csl from "@emurgo/cardano-serialization-lib-nodejs";
 import { fromJust } from "prelude";
 import { currencySymbolFromBytes, scriptHashFromBytes } from "plutus-ledger-api/V1.js";
@@ -19,14 +20,14 @@ import setValEnvelope from "./scripts/mkSetValidator.json" with {type: "json"};
 export const mkParams  = async (lucid: L.Lucid, ref: L.OutRef, path: string): Promise<DeNSParams> => {
   const utils = new L.Utils(lucid);
 
-  const outRefData = new L.Constr(0, 
-          [new L.Constr(0, [ref.txHash])
-              ,BigInt(ref.outputIndex)]
-  )
+  const outRef: PlaV1.TxOutRef = { txOutRefId: fromJust(PlaV1.txIdFromBytes(Buffer.from(ref.txHash, 'hex')))
+                     , txOutRefIdx: BigInt(ref.outputIndex) }
 
   const protocolPolicy: L.MintingPolicy = {
     type: "PlutusV2",
-    script: L.applyParamsToScript(protocolMPEnvelope.rawHex,[outRefData])
+    script: L.applyParamsToScript(protocolMPEnvelope.rawHex,
+                                    [plaPdToLucidPd(PlaV1.isPlutusDataTxOutRef.toData(outRef))]
+                                 )
   }
 
   const protocolCS = utils.validatorToScriptHash(protocolPolicy);
@@ -216,6 +217,47 @@ export const mkLBScriptHash = (script: L.SpendingValidator) => {
     scriptHashFromBytes(hash),
   );
 };
+
+/**
+ * Converts the PlutusData type from plutus-ledger-api into the equivalent type
+ * from Lucid
+ *
+ * @private TODO(jaredponn): this needs the inverse function + testing.
+ */
+export function plaPdToLucidPd(plutusData: Pla.PlutusData): L.Data {
+    switch (plutusData.name) {
+        case `Integer`: {
+            return plutusData.fields
+        }
+        case `Bytes`: {
+            return Buffer.from(plutusData.fields).toString('hex')
+        }
+        case `List`: {
+            return plaPdListToLucidPdList( plutusData.fields)
+        }
+        case `Constr`: {
+            return new L.Constr(Number(plutusData.fields[0]), plaPdListToLucidPdList(plutusData.fields[1]))
+        }
+        case `Map`: {
+            const result:Map<L.Data,L.Data> = new Map();
+
+            for (const [k,v] of plutusData.fields)
+                result.set(plaPdToLucidPd(k), plaPdToLucidPd(v))
+
+            return result;
+        }
+    }
+}
+
+/**
+ * @internal
+ */
+function plaPdListToLucidPdList (plutusDatas: Pla.PlutusData[]): L.Data[] {
+            const result: L.Data[] = []
+            for (const x of plutusDatas)
+                result.push(plaPdToLucidPd(x))
+            return result
+}
 
 export function toCslPlutusData(
   plutusData: Pla.PlutusData,
