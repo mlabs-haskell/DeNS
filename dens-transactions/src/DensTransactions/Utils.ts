@@ -16,15 +16,44 @@ import protocolMPEnvelope from "./scripts/mkProtocolMintingPolicy.json" with {ty
 import recordEnvelope from "./scripts/mkRecordValidator.json" with {type: "json"};
 import setValEnvelope from "./scripts/mkSetValidator.json" with {type: "json"};
 
+export const applyTxOutRef = (script: string, ref: L.OutRef): string => {
+  let argDataList = L.C.PlutusList.new();
+  argDataList.add(L.C.PlutusData.new_bytes(L.fromHex(ref.txHash)))
+  argDataList.add(L.C.PlutusData.new_integer(L.C.BigInt.from_str(ref.outputIndex.toString())))
+
+  const outRefCtor = L.C.ConstrPlutusData.new(L.C.BigNum.zero(),argDataList)
+  const outRefData = L.C.PlutusData.new_constr_plutus_data(outRefCtor)
+
+  let apArgList = L.C.PlutusList.new()
+  apArgList.add(outRefData)
+
+  return L.toHex(
+    L.C.apply_params_to_plutus_script(
+      apArgList,
+      L.C.PlutusScript.from_bytes(L.fromHex(L.applyDoubleCborEncoding(script))),
+    ).to_bytes()
+  )
+}
+
 export const mkParams  = async (lucid: L.Lucid, ref: L.OutRef, path: string): Promise<DeNSParams> => {
   const utils = new L.Utils(lucid);
 
   const arg: [string,bigint] = [ref.txHash,BigInt(ref.outputIndex)]
 
+  /*
+
+  const outRefData: L.Constr<L.Data> = {index: 0, fields: [ref.txHash,BigInt(ref.outputIndex)]}
+
   const protocolPolicy: L.MintingPolicy = {
     type: "PlutusV2",
-    script: L.applyParamsToScript(protocolMPEnvelope.rawHex,[ref.txHash,BigInt(ref.outputIndex)])
+    script: L.applyParamsToScript(protocolMPEnvelope.rawHex,[outRefData])
   }
+  */
+  const protocolPolicy: L.MintingPolicy = {
+    type: 'PlutusV2',
+    script: applyTxOutRef(protocolMPEnvelope.rawHex,ref)
+  }
+
 
   const protocolCS = utils.validatorToScriptHash(protocolPolicy);
 
@@ -65,7 +94,7 @@ export const signAndSubmitTx = async (lucid: L.Lucid, tx: L.Tx) => {
 }
 
 export const mkDensKey = (domain: string): DensKey => {
-  return  {densName: Buffer.from(domain,'utf16le'), densClass: BigInt(0)}
+  return  {densName: Buffer.from(domain), densClass: BigInt(0)}
 }
 
 type ProtocolResponseBody = {
@@ -84,7 +113,7 @@ type ProtocolResponse = {
 }
 
 export const unsafeCurrSymb = (x: string) => {
-  return fromJust(currencySymbolFromBytes(Buffer.from(x,'utf16le')))
+  return fromJust(currencySymbolFromBytes(Buffer.from(x)))
 }
 
 
@@ -140,7 +169,7 @@ type SetDatumResponseBody = {
 type SetDatumResponse = {name: string, fields: Array<SetDatumResponseBody>}
 
 export const findOldSetDatum: (lucid: L.Lucid, path: string, domain: string) => Promise<SetDatumQueryResult> = async (lucid: L.Lucid, path: string, domain: string) => {
-    const hexDomain = Buffer.from(domain,'utf16le').toString('hex');
+    const hexDomain = Buffer.from(domain).toString('hex');
 
     const data = await got('http://unix:' + path + ':/api/query-set-insertion-utxo', {
         method: 'post',

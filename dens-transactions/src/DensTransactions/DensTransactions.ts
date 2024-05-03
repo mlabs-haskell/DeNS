@@ -126,10 +126,10 @@ export const registerDomain = async (
   const nxt: DensKey = oldSetDatum.next;
 
   const sdl: SetDatum = {key: k,
-                         next: {densName: Buffer.from(domain,'utf8'), densClass: BigInt(0)},
+                         next: {densName: Buffer.from(domain), densClass: BigInt(0)},
                          ownerApproval: Utils.emptyCS
                         };
-  const sdr: SetDatum = {key: {densName: Buffer.from(domain,'utf8'), densClass: BigInt(0)},
+  const sdr: SetDatum = {key: {densName: Buffer.from(domain), densClass: BigInt(0)},
                          next: nxt,
                          ownerApproval: Utils.emptyCS
                         };
