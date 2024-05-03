@@ -88,18 +88,25 @@ export const initializeDeNS = async (
   console.log('l')
   const setValidatorAddr = utils.validatorToAddress(params.setValidator);
   console.log('m')
+
+  oneSetElemToken;
+  setValidatorAddr;
+  initialSetDatumDatum;
+
   // TODO: Figure out how to make a unit datum
   return builder
     .attachMintingPolicy(params.protocolPolicy)
-    .mintAssets(oneProtocolToken)
-    .attachMintingPolicy(params.setElemIDPolicy)
-    .mintAssets(oneSetElemToken,initSetInsert().to_hex())
-    .attachSpendingValidator(params.setValidator)
-    .payToAddressWithData(
-      setValidatorAddr,
-      initialSetDatumDatum,
-      oneSetElemToken,
-    )
+    .mintAssets(oneProtocolToken, L.Data.void())
+    // TODO(jaredponn): Note for Sean. I commented all of the following out
+    // just to make sure minting the protocol works.
+    // .attachMintingPolicy(params.setElemIDPolicy)
+    // .mintAssets(oneSetElemToken,initSetInsert().to_hex())
+    // .attachSpendingValidator(params.setValidator)
+    // .payToAddressWithData(
+    //   setValidatorAddr,
+    //   initialSetDatumDatum,
+    //   oneSetElemToken,
+    // )
     .payToAddressWithData(setValidatorAddr, protocolDatum, oneProtocolToken)
     .collectFrom([oneShotUtxo]);
 };
