@@ -6,55 +6,37 @@
 #   with the RRs stored by
 #
 # ENVIRONMENT.
-#   - DENS_QUERY_CONFIG must be set to a file path containing a JSON
-#     configuration file
+#   - TODO(jaredponn): write me down
 { inputs, lib, ... }:
 {
   imports =
     [
     ];
   config = {
-    perSystem = { system, config, pkgs, ... }:
+    perSystem = { config, system, pkgs, ... }:
       let
         tsFlake = inputs.flake-lang.lib.${system}.typescriptFlake {
           name = "dens-pdns-backend";
           src = ./.;
           inherit (config.settings)
-            devShellTools
-            devShellHook;
+            devShellTools;
 
-          testTools = [ pkgs.postgresql ];
+          devShellHook = ''
+            ${config.settings.devShellHook or ""}
+            export DENS_QUERY_POSTGRES_SCHEMA=${config.packages.dens-query-postgres-schema}
+          '';
 
-          npmExtraDependencies =
-            [
-              # inputs.prelude-typescript.packages.${system}.lib
-              # inputs.plutus-ledger-api-typescript.packages.${system}.lib
-            ];
+          testTools = [ pkgs.postgresql pkgs.pdns ];
+
+          npmExtraDependencies = [ ];
+
         };
       in
       {
-
         packages = {
 
           # Executable
-          dens-pdns-backend = tsFlake.packages.dens-pdns-backend-typescript-exe.overrideAttrs (_self: super:
-            {
-              buildInputs = super.buildInputs ++ [ pkgs.makeWrapper ];
-              postFixup =
-                ''
-                  ${super.postFixup or ""}
-
-                  wrapProgram $out/bin/dens-pdns-backend-cli \
-                      --set DENS_QUERY_INIT_SQL_FILE ${
-                            # Awkwardness since Hercules CI doesn't like
-                            # depending on files in the nix store at run time,
-                            # and instead prefers derivations
-                            pkgs.runCommand "dens-sql"  { SQL_FILE = ./api/postgres/dens.sql; } ''
-                                cp "$SQL_FILE" "$out"
-                            ''
-                        }
-                '';
-            });
+          dens-pdns-backend = tsFlake.packages.dens-pdns-backend-typescript-exe;
 
           # User manual
           # dens-pdns-backend-manual = pkgs.stdenv.mkDerivation {
@@ -83,7 +65,11 @@
           inherit (tsFlake.devShells) dens-pdns-backend-typescript;
         };
 
-        inherit (tsFlake) checks;
+        checks = {
+          dens-pdns-backend-typescript-test = tsFlake.checks.dens-pdns-backend-typescript-test.overrideAttrs (_self: _super: {
+            DENS_QUERY_POSTGRES_SCHEMA = config.packages.dens-query-postgres-schema;
+          });
+        };
       };
   };
 }
