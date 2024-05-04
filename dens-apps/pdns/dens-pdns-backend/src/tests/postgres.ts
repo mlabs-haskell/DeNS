@@ -5,9 +5,10 @@
 import * as child_process from "node:child_process";
 import type { ChildProcess } from "node:child_process";
 import * as fs from "node:fs/promises";
-import * as timers from "node:timers/promises";
 import * as os from "node:os";
 import * as path from "node:path";
+import { poll, processFailedMessage } from "./utils.js";
+
 /**
  * {@link Postgres} is a class for the related data of spawning a fresh
  * Postgres instance in a temporary directory which only runs on a Unix Domain Socket
@@ -18,8 +19,11 @@ export class Postgres {
 
   /**
    * The constructor for starting a fresh postgres database
+   *
+   * @private TODO(jaredponn): we don't support adding any options at the
+   * moment
    */
-  public static async new(_options): Promise<Postgres> {
+  public static async new(_options?: object): Promise<Postgres> {
     const cwd = await fs.mkdtemp(path.join(os.tmpdir(), `postgres-`));
 
     {
@@ -209,47 +213,4 @@ export class Postgres {
     this.unixSocketDirectory = unixSocketDirectory;
     this.childProcess = childProcess;
   }
-}
-
-/**
- * Helps to wait for when things are ready
- * @internal
- */
-async function poll<A>(action: () => Promise<A | undefined>): Promise<A> {
-  // NOTE(jaredponn): 2^13 = 8192 is about 8 seconds
-  const MAX_RETRIES = 13;
-  let DELAY = 2;
-
-  await timers.setTimeout(DELAY);
-
-  let result = await action();
-
-  for (let i = 0; i < MAX_RETRIES && result === undefined; ++i) {
-    await timers.setTimeout(DELAY *= 2);
-    result = await action();
-  }
-
-  if (result === undefined) {
-    throw new Error(`polling timed out`);
-  }
-
-  return result;
-}
-
-/**
- * Escapes a shell argument to be used safely within a Bourne shell
- */
-function escapeShellArg(arg: string): string {
-  return `'${arg.replaceAll(/'/g, `'\\''`)}'`;
-}
-
-function processFailedMessage(
-  childProcess: ChildProcess,
-  childStdout: string,
-  childStderr: string,
-): string {
-  return `${childProcess.spawnfile} failed with exit code ${childProcess.exitCode}\n` +
-    `COMMAND:\n${childProcess.spawnargs.map(escapeShellArg).join(` `)}\n` +
-    `STDOUT:\n${childStdout}\n` +
-    `STDERR:\n${childStderr}`;
 }
