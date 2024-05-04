@@ -5,6 +5,7 @@
   "bin": {
     "dens-pdns-backend-cli": "./bin/dens-pdns-backend-cli.mjs"
   },
+  "type": "module",
   "scripts": {
     "build": "npx tsc -b src/lib",
     "test": "npx tsc -b src/tests && node --test"

@@ -18,7 +18,7 @@ import * as net from "node:net";
 
 import { default as logger } from "./logger.js";
 import { maxRequestLength, socketPath, socketTimeout } from "./constants.js";
-import { default as pool } from "./postgres.js";
+import * as db from "./postgres.js";
 
 /**
  * Unix domain socket server
@@ -153,38 +153,9 @@ export async function app(req: Query): Promise<Reply> {
       const qname: string = req.parameters["qname"].slice(0, -1).toLowerCase();
       const zoneId: number = req.parameters["zone-id"];
 
-      const response: {
-        result: {
-          qtype: string;
-          qname: string;
-          content: string;
-          ttl: number;
-          domain_id?: number;
-        }[];
-      } = { result: [] };
-
-      const results = await pool.query(
-        `SELECT dens_rrs.type AS qtype, dens_set_utxos.name AS qname, dens_rrs.content AS content, dens_rrs.ttl AS ttl, dens_set_utxos.id AS domain_id 
-         FROM dens_rrs JOIN dens_rrs_utxos ON dens_rrs.tx_out_ref_id = dens_rrs_utxos.tx_out_ref_id
-                       JOIN dens_set_utxos ON dens_rrs.name = dens_set_utxos.name
-         WHERE dens_is_valid_name(dens_set_utxos.name)
-            AND dens_rrs.type = CAST($1 AS bytea)
-            AND dens_set_utxos.name = CAST($2 AS bytea)
-            AND (CAST($3 AS bigint) = -1 OR CAST($3 AS bigint) = dens_set_utxos.id)`,
-        [Buffer.from(qtype), Buffer.from(qname), BigInt(zoneId)],
-      );
-
-      for (const row of results.rows) {
-        response.result.push(
-          {
-            qtype: Buffer.from(row["qtype"]).toString(),
-            qname: Buffer.from(row["qname"]).toString(),
-            content: Buffer.from(row["content"]).toString(),
-            ttl: row["ttl"],
-            domain_id: row["domain_id"],
-          },
-        );
-      }
+      const response: Reply = {
+        result: await db.queryLookup(qtype, qname, zoneId),
+      };
 
       return response;
     }
