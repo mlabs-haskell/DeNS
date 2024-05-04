@@ -12,17 +12,9 @@ import * as CSL from "@emurgo/cardano-serialization-lib-nodejs";
 // Scripts
 
 
-const unit = L.toHex(L.C.PlutusData.new_constr_plutus_data(L.C.ConstrPlutusData.new(L.C.BigNum.zero(),L.C.PlutusList.new())).to_bytes());
-console.log('unit: \n' + JSON.stringify(unit,null,4));
-// throw new Error('UNIT DATA:\n' + JSON.stringify(unitData,null,0))
-
-//const initialSetInsert: L.Data = Utils.toCslPlutusData(IsPlutusData[SetInsert].toData({name: 'Insert', fields: Utils.mkDensKey("")})).to_hex();
-
 const initSetInsert = () => {
-  const innerKey = Utils.toCslPlutusData(IsPlutusData[DensKey].toData(Utils.mkDensKey("")));
-  let list = CSL.PlutusList.new();
-  list.add(innerKey)
-  return CSL.PlutusData.new_list(list);
+  const setInsert: SetInsert = {setInsert: Utils.mkDensKey("")};
+  return Utils.toCslPlutusData(IsPlutusData[SetInsert].toData(setInsert));
 }
 
 export const mkProtocolOneShot = async (lucid: L.Lucid): Promise<L.OutRef> => {
@@ -56,7 +48,7 @@ export const initializeDeNS = async (
   const utils = new L.Utils(lucid);
   console.log('b')
   const initialSetDatumPD = IsPlutusData[SetDatum].toData(Utils.initialSetDatum);
-  console.log('c')
+  console.log('initial set datum: ' + JSON.stringify(initialSetDatumPD,null,4));
   const initialSetDatumCSL = (Utils.toCslPlutusData(initialSetDatumPD)).to_hex();
   console.log('d')
   const initialSetDatumDatum: L.OutputData = { inline: initialSetDatumCSL };
@@ -99,14 +91,14 @@ export const initializeDeNS = async (
     .mintAssets(oneProtocolToken, L.Data.void())
     // TODO(jaredponn): Note for Sean. I commented all of the following out
     // just to make sure minting the protocol works.
-    // .attachMintingPolicy(params.setElemIDPolicy)
-    // .mintAssets(oneSetElemToken,initSetInsert().to_hex())
-    // .attachSpendingValidator(params.setValidator)
-    // .payToAddressWithData(
-    //   setValidatorAddr,
-    //   initialSetDatumDatum,
-    //   oneSetElemToken,
-    // )
+    .attachMintingPolicy(params.setElemIDPolicy)
+    .mintAssets(oneSetElemToken,initSetInsert().to_hex())
+    .attachSpendingValidator(params.setValidator)
+    .payToAddressWithData(
+      setValidatorAddr,
+      initialSetDatumDatum,
+      oneSetElemToken,
+     )
     .payToAddressWithData(setValidatorAddr, protocolDatum, oneProtocolToken)
     .collectFrom([oneShotUtxo]);
 };
@@ -117,21 +109,23 @@ export const registerDomain = async (
   domain: string,
   path: string
 ): Promise<L.Tx> => {
+  const trace = (msg : string) => {console.log('registerDomain ' + msg)};
+  trace('A')
   const builder = new L.Tx(lucid);
   const utils = new L.Utils(lucid);
-
+  trace('B')
   const oneSetElemToken = {
     [utils.mintingPolicyToId(params.setElemIDPolicy)]: BigInt(1),
   };
-
+  trace('C')
   const setDatumResponse = await Utils.findOldSetDatum(lucid,path,domain);
-
+  trace('D')
   const oldSetDatum = setDatumResponse.setDatum;
   const oldSetDatumUtxo = setDatumResponse.setDatumUTxO;
-
+  trace('E')
   const k: DensKey = oldSetDatum.key;
   const nxt: DensKey = oldSetDatum.next;
-
+  trace('F')
   const sdl: SetDatum = {key: k,
                          next: {densName: Buffer.from(domain), densClass: BigInt(0)},
                          ownerApproval: Utils.emptyCS
@@ -141,19 +135,19 @@ export const registerDomain = async (
                          ownerApproval: Utils.emptyCS
                         };
 
-
+  trace('G')
   const newSetDatumL: L.OutputData = {inline: Utils.toCslPlutusData(IsPlutusData[SetDatum].toData(sdl)).to_hex()};
   const newSetDatumR: L.OutputData = {inline: Utils.toCslPlutusData(IsPlutusData[SetDatum].toData(sdr)).to_hex()};
-
+  trace('H')
   const elemIDPolicy = utils.mintingPolicyToId(params.elemIDPolicy);
   const elemIDAssetClass: L.Unit = elemIDPolicy + L.fromText(domain);
-
+  trace('I')
   const oneElemIDToken = { [elemIDAssetClass]: BigInt(1) };
-
+  trace('J')
   const protocolOut = await Utils.findProtocolOut(lucid,path);
-
+  trace('K')
   const setValidatorAddr = utils.validatorToAddress(params.setValidator);
-
+  trace('L')
   return builder // TODO: null redeemer
     .attachMintingPolicy(params.setElemIDPolicy)
     .mintAssets(oneSetElemToken)

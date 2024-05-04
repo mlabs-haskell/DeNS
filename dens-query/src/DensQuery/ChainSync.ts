@@ -78,6 +78,7 @@ export async function rollForwardDb(
           }
 
           const plaPlutusData = hexPlutusDataToPlaPlutusData(txOut.datum);
+          console.log('plaPlutusData: ' + JSON.stringify(plaPlutusData,null,4));
 
           // Most of the actions relating to dens require us knowing
           // the tokens at the UTxO
@@ -141,7 +142,7 @@ export async function rollForwardDb(
               throw err;
             } else {
               logger.warn(
-                `Error when parsing datum at ${
+                `(RR) Error when parsing datum at ${
                   JSON.stringify(txOutRef, (_, value) =>
                     typeof value === "bigint" ? value.toString() : value)
                 } ${err}`,
@@ -186,7 +187,7 @@ export async function rollForwardDb(
               throw err;
             } else {
               logger.warn(
-                `Error when parsing datum at ${
+                `(SetElem) Error when parsing datum at ${
                   JSON.stringify(txOutRef, (_, value) =>
                     typeof value === "bigint" ? value.toString() : value)
                 } ${err}`,

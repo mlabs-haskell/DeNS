@@ -39,6 +39,14 @@ test.describe("Runtime services can be initialized", async () => {
     const initTxHash = await Tx.signAndSubmitTx(lucid,initializeDeNSTx);
 
     console.log('initialize dens tx hash:\n  ' +  initTxHash);
+
+    await new Promise(r => setTimeout(r,10000));
+
+    const registerDomainTx = await Tx.registerDomain(lucid,params,'www.google.com',socketPath);
+
+    const registerDomainTxHash = await Tx.signAndSubmitTx(lucid,registerDomainTx);
+
+    console.log('register domain tx hash:\n' + registerDomainTxHash)
   });
 
 

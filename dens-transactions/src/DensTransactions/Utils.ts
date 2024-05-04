@@ -17,6 +17,10 @@ import protocolMPEnvelope from "./scripts/mkProtocolMintingPolicy.json" with {ty
 import recordEnvelope from "./scripts/mkRecordValidator.json" with {type: "json"};
 import setValEnvelope from "./scripts/mkSetValidator.json" with {type: "json"};
 
+BigInt.prototype["toJSON"] = function () {
+  return this.toString();
+};
+
 export const mkParams  = async (lucid: L.Lucid, ref: L.OutRef, path: string): Promise<DeNSParams> => {
   const utils = new L.Utils(lucid);
 
@@ -31,6 +35,8 @@ export const mkParams  = async (lucid: L.Lucid, ref: L.OutRef, path: string): Pr
   }
 
   const protocolCS = utils.validatorToScriptHash(protocolPolicy);
+
+  await setProtocolNFT(path,protocolCS);
 
   const setValidator: L.SpendingValidator = {
     type: "PlutusV2",
@@ -92,7 +98,6 @@ export const unsafeCurrSymb = (x: string) => {
   return fromJust(currencySymbolFromBytes(Buffer.from(x)))
 }
 
-
 export const emptyCS = unsafeCurrSymb("");
 
 export const findProtocolOut: (lucid: L.Lucid, path: string) => Promise<L.UTxO> = async (lucid: L.Lucid, path: string) => {
@@ -152,7 +157,19 @@ export const findOldSetDatum: (lucid: L.Lucid, path: string, domain: string) => 
         json: {name: hexDomain},
         headers: {'Content-Type': 'application/json'},
         enableUnixSockets: true
-    }).json();
+    }).json().catch
+    (err =>  {
+        // Patch the exception s.t. we can see the response body in the generated error message
+        if (err instanceof HTTPError) {
+            const body = JSON.stringify(err.response.body, null, 4)
+            if (err.message === undefined)
+                throw new Error(body)
+            else
+                throw new Error(`${err.message}\n` + body)
+        }
+        throw err
+        }
+    );
 
 
     const setDatumResponse = data as SetDatumResponse;
