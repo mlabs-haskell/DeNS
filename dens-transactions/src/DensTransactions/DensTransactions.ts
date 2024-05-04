@@ -81,25 +81,22 @@ export const initializeDeNS = async (
   const setValidatorAddr = utils.validatorToAddress(params.setValidator);
   console.log('m')
 
-  oneSetElemToken;
-  setValidatorAddr;
-  initialSetDatumDatum;
-
   // TODO: Figure out how to make a unit datum
   return builder
     .attachMintingPolicy(params.protocolPolicy)
     .mintAssets(oneProtocolToken, L.Data.void())
-    // TODO(jaredponn): Note for Sean. I commented all of the following out
-    // just to make sure minting the protocol works.
     .attachMintingPolicy(params.setElemIDPolicy)
     .mintAssets(oneSetElemToken,initSetInsert().to_hex())
-    .attachSpendingValidator(params.setValidator)
+    // WARNING(jaredponn): we MUST put the protocol datum as a tx output BEFORE
+    // ALL OTHER TX OUTPUTS. This is because of the way the query layer works.
+    // There is a way to "fix" this, but that'd make a good separate project --
+    // A Framework for Efficient Databases of subsets of UTxOs for Cardano.
+    .payToAddressWithData(setValidatorAddr, protocolDatum, oneProtocolToken)
     .payToAddressWithData(
       setValidatorAddr,
       initialSetDatumDatum,
       oneSetElemToken,
      )
-    .payToAddressWithData(setValidatorAddr, protocolDatum, oneProtocolToken)
     .collectFrom([oneShotUtxo]);
 };
 
