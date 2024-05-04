@@ -36,6 +36,11 @@ export async function rollForwardDb(
       `slot` in block ? block.slot : "<no slot>"
     }`,
   );
+  logger.info(
+    `Current Protocol AssetClass: ("${
+      Buffer.from(protocolNft[0]).toString("hex")
+    }", "${Buffer.from(protocolNft[1]).toString("hex")}")`,
+  );
 
   // These block types contain useful tx information for DeNS
   if (block.type === "bft" || block.type === "praos") {
@@ -71,6 +76,13 @@ export async function rollForwardDb(
           const txOut: OgmiosSchema.TransactionOutput = tx.outputs[i]!;
           const txOutRef = { txOutRefId: txId, txOutRefIdx: BigInt(i) };
 
+          // Add the TxOutRef
+
+          // TODO(jaredponn): we always add a TxOutRef, but we don't _always_
+          // need to add it and we really can be more precise in the sense that
+          // we should _only_ add a TxOutRef if it is a dens UTxO
+          await client.insertTxOutRef(txOutRef);
+
           // All of the actions relating to the DeNS protocol require
           // the UTxO to contain an inline datum
           if (txOut.datum === undefined) {
@@ -78,7 +90,11 @@ export async function rollForwardDb(
           }
 
           const plaPlutusData = hexPlutusDataToPlaPlutusData(txOut.datum);
-          console.log('plaPlutusData: ' + JSON.stringify(plaPlutusData,null,4));
+          logger.info(
+            `Considering PlutusData:\n${
+              JSON.stringify(plaPlutusData, stringifyReplacer)
+            }`,
+          );
 
           // Most of the actions relating to dens require us knowing
           // the tokens at the UTxO
@@ -107,9 +123,18 @@ export async function rollForwardDb(
               const protocol = LbrPlutusV1.IsPlutusData[LbfDens.Protocol]
                 .fromData(plaPlutusData);
               await client.insertProtocol({ txOutRef, protocol });
+              logger.info(
+                `Inserted protocol datum as follows\n ${
+                  JSON.stringify(protocol, stringifyReplacer)
+                }`,
+              );
             } catch (err) {
               if (err instanceof PlaPd.IsPlutusDataError) {
-                logger.warn(`Failed to decode Protocol's datum ${err}`);
+                logger.warn(
+                  `Failed to decode Protocol's datum ${err}.\nDATUM:\n ${
+                    JSON.stringify(plaPlutusData, stringifyReplacer)
+                  } `,
+                );
               } else {
                 throw err;
               }
@@ -143,9 +168,10 @@ export async function rollForwardDb(
             } else {
               logger.warn(
                 `(RR) Error when parsing datum at ${
-                  JSON.stringify(txOutRef, (_, value) =>
-                    typeof value === "bigint" ? value.toString() : value)
-                } ${err}`,
+                  JSON.stringify(txOutRef, stringifyReplacer)
+                } ${err}\nDATUM:\n ${
+                  JSON.stringify(plaPlutusData, stringifyReplacer)
+                }`,
               );
             }
           }
@@ -188,9 +214,10 @@ export async function rollForwardDb(
             } else {
               logger.warn(
                 `(SetElem) Error when parsing datum at ${
-                  JSON.stringify(txOutRef, (_, value) =>
-                    typeof value === "bigint" ? value.toString() : value)
-                } ${err}`,
+                  JSON.stringify(txOutRef, stringifyReplacer)
+                } ${err}\nDATUM:\n ${
+                  JSON.stringify(plaPlutusData, stringifyReplacer)
+                }`,
               );
             }
           }
@@ -313,9 +340,13 @@ export async function runChainSync(
   logger.info(`Started synchronizing with Ogmios via ${ogmiosConfig.url}`);
   const client = new ChainSync(ogmiosConfig);
 
+  await db.densWithDbClient((dbClient) => {
+    return dbClient.setProtocolNft(protocolNft);
+  });
+
   while (1) {
     protocolNft = await db.densWithDbClient((dbClient) => {
-      return dbClient.setProtocolNft(protocolNft);
+      return dbClient.syncProtocolNft(protocolNft);
     });
 
     const recentPoints: (OgmiosSchema.Point | "origin")[] = await db
@@ -658,4 +689,19 @@ export function elementIdTokenName(
   cslDataHash.free();
 
   return Prelude.fromJust(PlaV1.tokenNameFromBytes(result));
+}
+
+/**
+ * A "replacer" for `JSON.stringify` which:
+ *  - allows printing of big ints
+ *  - prints byte arrays in the hexadecimal representation
+ */
+function stringifyReplacer(_key: unknown, value: unknown): unknown {
+  if (typeof value === "bigint") {
+    return value.toString();
+  } else if (value instanceof Uint8Array) {
+    return Buffer.from(value).toString("hex");
+  } else {
+    return value;
+  }
 }

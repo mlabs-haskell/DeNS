@@ -176,7 +176,7 @@ class DensDbClient {
                      FROM dens_protocol_utxos
                      WHERE set_elem_minting_policy IN 
                         ( SELECT currency_symbol 
-                          FROM UNNEST($1::bytea[],$2::bytea[]) as asset_classes_at_the_utxo(currency_symbol,token_name)
+                          FROM UNNEST($1::bytea[],$2::bytea[]) AS asset_classes_at_the_utxo(currency_symbol,token_name)
                         )
                      LIMIT 1
                     )`,
@@ -525,7 +525,36 @@ class DensDbClient {
       ];
     } else {
       throw new Error(
-        `setProtocolNft: internal error returned too many rows.`,
+        `setProtocolNft: didn't return exactly one row.`,
+      );
+    }
+  }
+
+  /**
+   * Syncs the current protocol NFT with the protocol NFT in the database --
+   * see the postgres function for details.
+   */
+  async syncProtocolNft(
+    assetClass: PlaV1.AssetClass,
+  ): Promise<PlaV1.AssetClass> {
+    const [currencySymbol, tokenName] = assetClass;
+    const res = await this.query(
+      {
+        text:
+          `SELECT * FROM (VALUES ((sync_protocol_nft($1, $2)).*) ) AS t (pk, currency_symbol, token_name)`,
+        values: [currencySymbol, tokenName],
+      },
+    );
+
+    if (res.rows.length === 1) {
+      const row = res.rows[0];
+      return [
+        Uint8Array.from(row.currency_symbol) as unknown as CurrencySymbol,
+        Uint8Array.from(row.token_name) as unknown as TokenName,
+      ];
+    } else {
+      throw new Error(
+        `syncProtocolNft: internal error didn't return exactly one row.`,
       );
     }
   }
