@@ -676,8 +676,7 @@ SELECT create_table_undo_update('dens_protocol_utxos');
 
 -- If the provided asset class (currency symbol / token name) matches the
 -- existing asset class in the `+dens_protocol_nft+` table, do nothing.
--- Otherwise, overwrite the existing `+dens_protocol_nft+` and clear the entire
--- database.
+-- Otherwise, overwrite the existing `+dens_protocol_nft+`
 CREATE OR REPLACE FUNCTION dens_set_protocol_nft(currency_symbol bytea, token_name bytea)
 RETURNS dens_protocol_nft AS
 $body$
@@ -703,10 +702,36 @@ $body$
             RETURN new_protocol_nft;
         END IF;
 
-        -- Clear all tables
-        TRUNCATE blocks * RESTART IDENTITY CASCADE;
-
         RETURN new_protocol_nft;
+    END
+$body$
+LANGUAGE plpgsql;
+
+-- Resets the database if the current protocol NFT stored in the database
+-- differs from the provided NFT, and returns the current protocol NFT stored
+-- in the database
+CREATE OR REPLACE FUNCTION dens_sync_protocol_nft(currency_symbol bytea, token_name bytea)
+RETURNS dens_protocol_nft AS
+$body$
+    DECLARE
+        current_protocol_nft dens_protocol_nft;
+    BEGIN
+        SELECT * INTO current_protocol_nft FROM dens_protocol_nft;
+
+
+        IF current_protocol_nft IS NULL THEN
+            -- Clear all tables if there is no current protocol NFT
+            TRUNCATE blocks * RESTART IDENTITY CASCADE;
+            RETURN ROW(true, currency_symbol,token_name);
+        END IF;
+
+        -- If the current protocol NFT matches the provided NFT, we're good, so do nothing and return
+        IF current_protocol_nft.currency_symbol = currency_symbol AND current_protocol_nft.token_name = token_name THEN
+            RETURN current_protocol_nft;
+        END IF;
+
+        TRUNCATE blocks * RESTART IDENTITY CASCADE;
+        RETURN current_protocol_nft;
     END
 $body$
 LANGUAGE plpgsql;
