@@ -161,7 +161,7 @@ export class Postgres {
                 processFailedMessage(
                   createUser,
                   createUserStdOut.join(""),
-                  createUserStdOut.join(""),
+                  createUserStdErr.join(""),
                 ),
               ),
             );
@@ -199,7 +199,7 @@ export class Postgres {
                 processFailedMessage(
                   createDb,
                   createDbStdOut.join(""),
-                  createDbStdOut.join(""),
+                  createDbStdErr.join(""),
                 ),
               ),
             );

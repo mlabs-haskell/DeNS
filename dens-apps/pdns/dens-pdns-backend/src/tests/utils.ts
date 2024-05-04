@@ -1,4 +1,5 @@
 import * as timers from "node:timers/promises";
+import { ChildProcess } from "node:child_process";
 
 /**
  * Waits until a condition is ready. This is useful to know when certain
