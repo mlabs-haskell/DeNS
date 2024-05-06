@@ -226,7 +226,7 @@ export const initialSetDatum: SetDatum = {
 
 export const mkLBScriptHash = (script: L.SpendingValidator) => {
   const hash = L.C.PlutusScript.from_bytes(
-          L.fromHex(L.applyDoubleCborEncoding(script.script)),
+          L.fromHex(script.script),
         )
           .hash(L.C.ScriptHashNamespace.PlutusV2)
           .to_bytes();

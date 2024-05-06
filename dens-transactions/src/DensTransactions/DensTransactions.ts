@@ -32,7 +32,7 @@ export const mkProtocolOneShot = async (lucid: L.Lucid): Promise<L.OutRef> => {
   await new Promise(r => setTimeout(r, 10000));
   const walletUTXOs = await lucid.wallet.getUtxos();
 
-  const utxoWithHash = walletUTXOs.find(x => x.txHash == hash);
+  const utxoWithHash = walletUTXOs.find(x => x.txHash === hash);
 
   return {txHash: hash, outputIndex: utxoWithHash.outputIndex}
 }
