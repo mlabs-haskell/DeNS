@@ -23,7 +23,7 @@ import * as db from "./postgres.js";
 /**
  * Unix domain socket server
  */
-const server = net.createServer((c) => {
+export const server = net.createServer((c) => {
   logger.info(`Client connected`);
 
   c.setTimeout(socketTimeout);
@@ -44,6 +44,10 @@ const server = net.createServer((c) => {
   // time, we skip this and pray that any bad JSON is an "incomplete" JSON
   // object.
   // See <https://github.com/PowerDNS/pdns/blob/5e386641f208cf843e40094269e12de4e84170c5/modules/remotebackend/unixconnector.cc#L139-L158>.
+  //
+  // Also, funny enough, this "awful approach" is the same approach that PowerDNS does when it receives data. See
+  // <https://github.com/PowerDNS/pdns/blob/f64c2cc0b92ac1d17fa60d2506f0e232a447e468/modules/remotebackend/unixconnector.cc#L83-L106>
+  // So we can one up them and use a proper push parser :^). We love dumpster fire n^2 algorithms :^)
   let chunks: string = ``;
   c.on("data", async (chunk) => {
     chunks += chunk;
@@ -65,7 +69,13 @@ const server = net.createServer((c) => {
         return;
       }
 
-      c.end(JSON.stringify(result as Reply));
+      logger.info(`Request: ${chunks}`);
+      logger.info(`Response: ${JSON.stringify(result as Reply)}`);
+
+      chunks = ``; // set the chunks to empty s.t. we can process further JSON rpc requests
+      c.write(JSON.stringify(result as Reply));
+      // TODO(jaredponn): when do we close the connection?
+      // c.end();
     } catch (err) {
       if (err instanceof SyntaxError) {
         return;
@@ -168,6 +178,12 @@ export async function app(req: Query): Promise<Reply> {
   }
 }
 
-server.listen(socketPath, () => {
-  logger.info(`Listening on ${socketPath}...`);
+// Await for the server to be ready to make testing easier e.g. one can just
+// import this module and be certain that "everything is setup properly"
+await new Promise<void>((resolve, reject) => {
+  server.on("error", reject);
+  server.listen(socketPath, () => {
+    logger.info(`Listening on ${socketPath}...`);
+    resolve();
+  });
 });

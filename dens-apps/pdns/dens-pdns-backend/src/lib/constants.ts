@@ -4,8 +4,19 @@
  * Note that the postgres backend also requires some environment variables --
  * see `./postgres.ts`
  */
-
-export const socketPath = process.env["SOCKET_PATH"];
+export const socketPath: string = await new Promise<string>(
+  (resolve, reject) => {
+    const tmp: undefined | string = process.env["SOCKET_PATH"];
+    if (tmp === undefined) {
+      return reject(
+        new Error(
+          `Environment variable \`SOCKET_PATH\` must be set for the Unix Domain Socket`,
+        ),
+      );
+    }
+    return resolve(tmp);
+  },
+);
 
 /**
  * Number of ms to timeout clients
