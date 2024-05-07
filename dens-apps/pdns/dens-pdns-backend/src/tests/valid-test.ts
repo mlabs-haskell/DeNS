@@ -1,10 +1,14 @@
+// Test imports
 import { postgres, serverSocketPath } from "./dev-env.js";
+import { mkPdnsConf, Pdns } from "./pdns.js";
+import * as gen from "./gen.js";
+
+// Project imports
 import { server } from "../lib/index.js";
 import { default as pool } from "../lib/postgres.js";
 import * as db from "../lib/postgres.js";
 
-import { mkPdnsConf, Pdns } from "./pdns.js";
-
+// Node imports
 import * as test from "node:test";
 import * as fs from "node:fs/promises";
 import * as assert from "node:assert";
@@ -81,5 +85,125 @@ await test.describe(`Basic querying tests`, async (_context) => {
       }
       throw err;
     }
+  });
+
+  const block = gen.nextBlock();
+
+  const taylorSwiftDotComNameUtxo = gen.freshTxOutRef();
+  const taylorSwiftDotComElemIdUtxo = gen.freshTxOutRef();
+  const taylorSwiftDotComName: Buffer = Buffer.from(`taylorswift.com`);
+  const taylorSwiftDotComAssetClassPointer: [Buffer, Buffer] = [
+    gen.freshCurrencySymbol(),
+    gen.freshTokenName(),
+  ];
+  const taylorSwiftDotComARr: {
+    qtype: string;
+    qname: string;
+    content: string;
+    ttl: number;
+  } = {
+    qtype: `A`,
+    qname: taylorSwiftDotComName.toString(),
+    content: `45.60.107.223`,
+    ttl: 3000,
+  };
+  const taylorSwiftDotComSoaRr: {
+    qtype: string;
+    qname: string;
+    content: string;
+    ttl: number;
+  } = {
+    qtype: `SOA`,
+    qname: taylorSwiftDotComName.toString(),
+    content:
+      `ns-1139.awsdns-14.org. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400`,
+    ttl: 3000,
+  };
+
+  await test.test(`Adding data`, async (t) => {
+    t.diagnostic(`Adding block..`);
+    await pool.query(
+      `INSERT INTO blocks(block_slot, block_id) VALUES($1, $2)`,
+      [block.blockSlot, block.blockId],
+    );
+    t.diagnostic(`Adding tx out refs..`);
+    await pool.query(
+      `INSERT INTO tx_out_refs(tx_out_ref_id, tx_out_ref_idx, block_slot, block_id) VALUES($1, $2, $3, $4)`,
+      [
+        taylorSwiftDotComNameUtxo.txOutRefId,
+        taylorSwiftDotComNameUtxo.txOutRefIdx,
+        block.blockSlot,
+        block.blockId,
+      ],
+    );
+    await pool.query(
+      `INSERT INTO tx_out_refs(tx_out_ref_id, tx_out_ref_idx, block_slot, block_id) VALUES($1, $2, $3, $4)`,
+      [
+        taylorSwiftDotComElemIdUtxo.txOutRefId,
+        taylorSwiftDotComElemIdUtxo.txOutRefIdx,
+        block.blockSlot,
+        block.blockId,
+      ],
+    );
+
+    t.diagnostic(`Adding set element taylorswift.com..`);
+    await pool.query(
+      `INSERT INTO dens_set_utxos(name, pointer, tx_out_ref_id, tx_out_ref_idx) VALUES($1, CAST(ROW($2, $3) AS asset_class), $4, $5)`,
+      [
+        taylorSwiftDotComName,
+        taylorSwiftDotComAssetClassPointer[0],
+        taylorSwiftDotComAssetClassPointer[1],
+        taylorSwiftDotComNameUtxo.txOutRefId,
+        taylorSwiftDotComNameUtxo.txOutRefIdx,
+      ],
+    );
+
+    t.diagnostic(`Adding the ElemID for taylorswift.com.`);
+    await pool.query(
+      `INSERT INTO dens_elem_ids(tx_out_ref_id, tx_out_ref_idx, asset_class) VALUES($1, $2, CAST(ROW($3, $4) AS asset_class))`,
+      [
+        taylorSwiftDotComElemIdUtxo.txOutRefId,
+        taylorSwiftDotComElemIdUtxo.txOutRefIdx,
+        taylorSwiftDotComAssetClassPointer[0],
+        taylorSwiftDotComAssetClassPointer[1],
+      ],
+    );
+
+    t.diagnostic(`Adding A record and SOA record for taylorswift.com`);
+    await pool.query(
+      `INSERT INTO dens_rrs(type, ttl, content, dens_elem_id) ` +
+        `SELECT $1, $2, $3, id FROM dens_elem_ids WHERE tx_out_ref_id = $4 AND tx_out_ref_idx = $5`,
+      [
+        taylorSwiftDotComARr.qtype,
+        taylorSwiftDotComARr.ttl,
+        taylorSwiftDotComARr.content,
+        taylorSwiftDotComElemIdUtxo.txOutRefId,
+        taylorSwiftDotComElemIdUtxo.txOutRefIdx,
+      ],
+    );
+    await pool.query(
+      `INSERT INTO dens_rrs(type, ttl, content, dens_elem_id) ` +
+        `SELECT $1, $2, $3, id FROM dens_elem_ids WHERE tx_out_ref_id = $4 AND tx_out_ref_idx = $5`,
+      [
+        taylorSwiftDotComSoaRr.qtype,
+        taylorSwiftDotComSoaRr.ttl,
+        taylorSwiftDotComSoaRr.content,
+        taylorSwiftDotComElemIdUtxo.txOutRefId,
+        taylorSwiftDotComElemIdUtxo.txOutRefIdx,
+      ],
+    );
+  });
+
+  await test.test(`Looking up the SOA RR should return the same SOA RR`, async (_t) => {
+    const result = await db.queryLookup(`SOA`, `taylorswift.com`, -1);
+    assert.deepStrictEqual(
+      result.map((row) => (delete (row as Partial<typeof row>).domain_id, row)),
+      [taylorSwiftDotComSoaRr],
+    );
+  });
+
+  await test.test(`Looking up A RR for taylorswift.com should work`, async (_t) => {
+    const result = await resolver!.resolve4(`taylorswift.com`);
+    assert.deepStrictEqual(result, [taylorSwiftDotComARr.content]);
   });
 });

@@ -69,7 +69,7 @@ export const server = net.createServer((c) => {
         return;
       }
 
-      logger.info(`Request: ${chunks}`);
+      logger.info(`Request: ${JSON.stringify(req)}`);
       logger.info(`Response: ${JSON.stringify(result as Reply)}`);
 
       chunks = ``; // set the chunks to empty s.t. we can process further JSON rpc requests
@@ -157,7 +157,7 @@ export async function app(req: Query): Promise<Reply> {
       }
 
       const qtype: string = req.parameters["qtype"];
-      // remove the trailing dot. I think we should normalize this to
+      // Remove the trailing dot. Also, I think we should normalize this to
       // lowercase? Not sure if PowerDNS does this for us -- I may be
       // misrecalling / conjuring a false memory.
       const qname: string = req.parameters["qname"].slice(0, -1).toLowerCase();
@@ -167,6 +167,13 @@ export async function app(req: Query): Promise<Reply> {
         result: await db.queryLookup(qtype, qname, zoneId),
       };
 
+      return response;
+    }
+
+    case `getAllDomainMetadata`: {
+      const response: Reply = {
+        result: [],
+      };
       return response;
     }
 

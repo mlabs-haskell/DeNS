@@ -110,6 +110,17 @@ remote-connection-string=${options.remoteConnectionString}
 
 # https://doc.powerdns.com/authoritative/backends/remote.html#getalldomains
 zone-cache-refresh-interval=0
+
+### Disable all forms of caching for testing.
+
+# https://doc.powerdns.com/authoritative/settings.html#cache-ttl
+cache-ttl=0
+
+# https://doc.powerdns.com/authoritative/settings.html#cache-ttl
+negquery-cache-ttl=0
+
+# https://doc.powerdns.com/authoritative/settings.html#query-cache-ttl
+query-cache-ttl=0
 `;
   return tmp;
 }
