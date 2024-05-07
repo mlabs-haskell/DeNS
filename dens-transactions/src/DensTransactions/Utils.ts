@@ -80,7 +80,7 @@ export const mkDensKey = (domain: string): DensKey => {
 }
 
 type ProtocolResponseBody = {
-    txOutRef: {txOutRef: string, txOutRefIx: number},
+    txOutRef: {transaction_id: string, index: number},
     protocol: {
         elementIdMintingPolicy: string,
         setElemMintingPolicy: string,
@@ -124,10 +124,12 @@ export const findProtocolOut: (lucid: L.Lucid, path: string) => Promise<L.UTxO> 
 
     const protocolResponse = data  as ProtocolResponse;
 
-    const txOutRef = protocolResponse.fields[0].txOutRef.txOutRef;
-    const txOutRefIx = protocolResponse.fields[0].txOutRef.txOutRefIx;
+    const txOutRef = protocolResponse.fields[0].txOutRef.transaction_id;
+    const txOutRefIx = protocolResponse.fields[0].txOutRef.index;
 
-    const utxos = await lucid.utxosByOutRef([{txHash: txOutRef, outputIndex: txOutRefIx}])
+    const utxos = await lucid.provider.getUtxosByOutRef([{txHash: txOutRef, outputIndex: txOutRefIx}]);
+
+    console.log('protocol response utxos: ' + JSON.stringify(utxos,null,4));
 
     return utxos[0]
 };
@@ -142,8 +144,8 @@ type SetDatumResponseBody = {
       token_name: string
      },
     txOutRef: {
-      txOutRef: string,
-      txOutRefIx: number
+      transaction_id: string,
+      index: number
     }
   }
 
@@ -174,10 +176,14 @@ export const findOldSetDatum: (lucid: L.Lucid, path: string, domain: string) => 
 
     const setDatumResponse = data as SetDatumResponse;
 
-    const txOutRef = setDatumResponse.fields[0].txOutRef.txOutRef;
-    const txOutRefIx = setDatumResponse.fields[0].txOutRef.txOutRefIx;
+    console.log('findOldSetDatum: ' + JSON.stringify(setDatumResponse,null,4));
 
-    const utxos = await lucid.utxosByOutRef([{txHash: txOutRef, outputIndex: txOutRefIx}])
+    console.log('responseField0: ' + JSON.stringify(setDatumResponse.fields[0].txOutRef))
+
+    const txOutRef = setDatumResponse.fields[0].txOutRef.transaction_id;
+    const txOutRefIx = setDatumResponse.fields[0].txOutRef.index;
+
+    const utxos = await lucid.provider.getUtxosByOutRef([{txHash: txOutRef, outputIndex: txOutRefIx}])
 
     const setDatumUtxo = utxos[0];
 

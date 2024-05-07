@@ -276,7 +276,9 @@ export class OgmiosOnly implements Provider {
   }
 
   async getUtxosByOutRef(outRefs: Array<OutRef>): Promise<UTxO[]> {
+    console.log('getUtxosByOutRef: outRefs: ' + JSON.stringify(outRefs,null,4))
     const outputRefs = {outputReferences: outRefs.map(x => {return {transaction: {id: x.txHash}, index: x.outputIndex}})}
+    console.log('getUtxosByOutRef: outRefs (ogmios fmt)' + JSON.stringify(outputRefs,null,4))
     const cxt = await mkOgmiosCxt(this.ogmiosUrl,this.ogmiosPort);
     const txs = await TX.utxo(cxt,outputRefs);
     return txs.map(x => toLucidUtxo(x))
