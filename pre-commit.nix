@@ -46,7 +46,7 @@
           exclude = "*.md";
         };
 
-        hlint.hintFile = ./.hlint.yaml;
+        hlint.hintFile = ./hlint.yaml;
 
       };
     };
