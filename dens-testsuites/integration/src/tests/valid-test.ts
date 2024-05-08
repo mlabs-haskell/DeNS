@@ -47,6 +47,26 @@ test.describe("Runtime services can be initialized", async () => {
     const registerDomainTxHash = await Tx.signAndSubmitTx(lucid,registerDomainTx);
 
     console.log('register domain tx hash:\n' + registerDomainTxHash)
+
+    // idk if we need to wait for the server to pick up on changes but it likely can't hurt
+    await new Promise(r => setTimeout(r,2000));
+    const userAddress = await lucid.wallet.address();
+
+    const updateRecordTx = await Tx.updateRecord(
+      lucid,
+      params,
+      userAddress,
+      'www.google.com',
+      Tx.mkRecordDatum(
+        'www.google.com',
+        [Tx.mkARecord('101.101.101.101',1000)]
+      ),
+      socketPath
+    )
+
+    const updateRecordTxHash = await Tx.signAndSubmitTx(lucid,updateRecordTx)
+
+    console.log('updateRecordTxHash: ' + updateRecordTxHash)
   });
 
 

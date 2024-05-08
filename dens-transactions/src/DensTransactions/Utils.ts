@@ -3,6 +3,10 @@ import * as L from "lucid-cardano";
 import {
   DensKey,
   SetDatum,
+  DensRr,
+  DensValue,
+  RecordDatum,
+  RData
 } from "lbf-dens/LambdaBuffers/Dens.mjs";
 import { IsPlutusData } from "lbr-plutus/PlutusData.js";
 import * as Pla from "plutus-ledger-api/PlutusData.js";
@@ -127,13 +131,14 @@ export const findProtocolOut: (lucid: L.Lucid, path: string) => Promise<L.UTxO> 
     const txOutRef = protocolResponse.fields[0].txOutRef.transaction_id;
     const txOutRefIx = protocolResponse.fields[0].txOutRef.index;
 
-    const utxos = await lucid.provider.getUtxosByOutRef([{txHash: txOutRef, outputIndex: txOutRefIx}]);
+    const utxos = await lucid.provider.getUtxosByOutRef(
+      [{txHash: txOutRef, outputIndex: txOutRefIx}]
+    );
 
     console.log('protocol response utxos: ' + JSON.stringify(utxos,null,4));
 
     return utxos[0]
 };
-
 
 type SetDatumQueryResult = {setDatumUTxO: L.UTxO, setDatum: SetDatum}
 
@@ -172,7 +177,6 @@ export const findOldSetDatum: (lucid: L.Lucid, path: string, domain: string) => 
         throw err
         }
     );
-
 
     const setDatumResponse = data as SetDatumResponse;
 
@@ -220,8 +224,6 @@ export type DeNSParams = {
   elemIDPolicy: L.MintingPolicy;
   protocolPolicy: L.MintingPolicy;
 };
-
-
 
 // Hopefully I'm getting the encoding right...
 export const initialSetDatum: SetDatum = {
@@ -382,4 +384,61 @@ function cslPlutusListToPlaPdList(list: L.C.PlutusList): Pla.PlutusData[] {
     result.push(toPlaPlutusData(list.get(i)));
   }
   return result;
+}
+
+export function elementIdTokenName(
+  name: string,
+): string {
+  const key = mkDensKey(name);
+  const cslPd = toCslPlutusData(IsPlutusData[DensKey].toData(key));
+  const cslDataHash = csl.hash_plutus_data(cslPd);
+
+  const result = cslDataHash.to_hex();
+  return result
+}
+
+/**
+ *  Utilities for constructin Dens Records
+ *
+ **/
+export const  mkRecordDatum = (
+  domain: string,
+  records: Array<DensRr>
+): RecordDatum => {
+  return {
+    recordClass: BigInt(0),
+    recordName:  Buffer.from(domain),
+    recordOwner: fromJust(PlaV1.pubKeyHashFromBytes(Buffer.from('1234567890123456789012345678'))),
+    recordValue: records
+  }
+}
+
+export const mkARecord = (record: string, ttl: number): DensRr => {
+  return {
+    ttl: BigInt(ttl),
+    rData: {
+      name: 'A',
+      fields: Buffer.from(record)
+    }
+  }
+}
+
+export const mkAAAARecord = (record: string, ttl: number): DensRr => {
+  return {
+    ttl: BigInt(ttl),
+    rData: {
+      name: 'AAAA',
+      fields: Buffer.from(record)
+    }
+  }
+}
+
+export const mkSOARecord = (record: string, ttl: number): DensRr => {
+  return {
+    ttl: BigInt(ttl),
+    rData: {
+      name: 'SOA',
+      fields: Buffer.from(record)
+    }
+  }
 }

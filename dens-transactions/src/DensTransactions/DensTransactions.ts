@@ -76,7 +76,6 @@ export const initializeDeNS = async (
 
   const setValidatorAddr = utils.validatorToAddress(params.setValidator);
 
-
   // TODO: Figure out how to make a unit datum
   return builder
     .attachMintingPolicy(params.protocolPolicy)
@@ -140,7 +139,8 @@ export const registerDomain = async (
   const newSetDatumR: L.OutputData = {inline: Utils.toCslPlutusData(IsPlutusData[SetDatum].toData(sdr)).to_hex()};
   trace('H')
   const elemIDPolicy = utils.mintingPolicyToId(params.elemIDPolicy);
-  const elemIDAssetClass: L.Unit = elemIDPolicy + L.fromText(domain);
+  const elemIDTokenName = Utils.elementIdTokenName(domain);
+  const elemIDAssetClass: L.Unit = elemIDPolicy + elemIDTokenName;
   trace('I')
   const oneElemIDToken = { [elemIDAssetClass]: BigInt(1) };
   trace('J')
@@ -153,13 +153,13 @@ export const registerDomain = async (
   console.log('setInsertData: ' + JSON.stringify(setInsertData,null,4));
   console.log('registerDomain protocolOut:\n' + JSON.stringify(protocolOut,null,4));
   console.log('registerDomain oldSetDatumUtxo:\n' + JSON.stringify(oldSetDatumUtxo,null,4));
-  return builder // TODO: null redeemer
+  return builder
     .attachMintingPolicy(params.setElemIDPolicy)
     .mintAssets(oneSetElemToken,setInsertData.to_hex())
     .attachMintingPolicy(params.elemIDPolicy)
     .mintAssets(oneElemIDToken,L.Data.void())
     .readFrom([protocolOut])
-    .collectFrom([oldSetDatumUtxo])
+    .collectFrom([oldSetDatumUtxo],setInsertData.to_hex())
     .attachSpendingValidator(params.setValidator)
     .payToAddressWithData(setValidatorAddr, newSetDatumL, oneSetElemToken)
     .payToAddressWithData(setValidatorAddr, newSetDatumR, oneSetElemToken);
@@ -179,7 +179,8 @@ export const updateRecord = async (
   const recValidatorAddr = utils.validatorToAddress(params.recordValidator);
 
   const elemIDPolicy = utils.mintingPolicyToId(params.elemIDPolicy);
-  const elemIDAssetClass: L.Unit = elemIDPolicy + L.fromText(domain);
+  const elemIDTokenName = Utils.elementIdTokenName(domain);
+  const elemIDAssetClass: L.Unit = elemIDPolicy + elemIDTokenName;
 
   const elemIDToken = { [elemIDAssetClass]: BigInt(1) };
 
@@ -192,7 +193,7 @@ export const updateRecord = async (
   };
 
   return builder
-    .attachSpendingValidator(params.recordValidator)
+    // .attachSpendingValidator(params.recordValidator)
     .readFrom([protocolOut])
     .collectFrom([elemIDUTxO])
     .payToAddressWithData(recValidatorAddr, recordDatum, {
