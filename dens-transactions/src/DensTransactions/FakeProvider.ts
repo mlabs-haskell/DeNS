@@ -27,6 +27,7 @@ import * as PP from "@cardano-ogmios/client/dist/LedgerStateQuery/query/protocol
 import * as TX from "@cardano-ogmios/client/dist/LedgerStateQuery/query/utxo.js";
 import * as Submit from "@cardano-ogmios/client/dist/TransactionSubmission/submitTransaction/index.js";
 import * as Schema from "@cardano-ogmios/schema";
+import { logger } from "./Logger.js";
 
 // For some dumb reason the ogmios schema's `Utxo` type is an array of this record. Need to refer to the type of elements of that array
 export type OgmiosUtxo = {
@@ -66,7 +67,7 @@ const pretty = (x: any) => {
 };
 
 export const toLucidScript = (ogScript: Schema.Script): Script => {
-  console.log("ogmios script: " + pretty(ogScript));
+  logger.silly("ogmios script: " + pretty(ogScript));
   if (ogScript.language === "native") {
     throw new Error("do not think we need to support native scripts?");
   } else if (ogScript.language === "plutus:v1") {
@@ -79,7 +80,7 @@ export const toLucidScript = (ogScript: Schema.Script): Script => {
 };
 
 export const toLucidUtxo = (utxo: OgmiosUtxo): UTxO => {
-  console.log("ogmios utxo: \n" + pretty(utxo));
+  logger.silly("ogmios utxo: \n" + pretty(utxo));
   const core: UTxO = {
     address: utxo.address,
     txHash: utxo.transaction.id,
@@ -102,14 +103,15 @@ export const toLucidUtxo = (utxo: OgmiosUtxo): UTxO => {
 type Lovelace = { lovelace: string };
 
 const wsErr: OGM.WebSocketErrorHandler = (e: Error) => {
-  console.log("Websocket error:");
-  console.error(JSON.stringify(e, null, 4));
+  logger.error(`Websocket error: ${JSON.stringify(e, null, 4)}`);
 };
 
 const wsClose: OGM.WebSocketCloseHandler = (code, reason) => {
-  console.log("Websocket close");
-  console.error(JSON.stringify(code, null, 4));
-  console.error(JSON.stringify(reason, null, 4));
+  logger.info(
+    `Websocket close with exit code ${
+      JSON.stringify(code, null, 4)
+    } and reason ${JSON.stringify(reason, null, 4)}`,
+  );
 };
 
 export const mkOgmiosCxt = (
@@ -202,7 +204,7 @@ export class OgmiosOnly implements Provider {
     const cxt = await mkOgmiosCxt(this.ogmiosUrl, this.ogmiosPort);
     const params = await PP.protocolParameters(cxt);
 
-    console.log("Protocol parameters: \n" + pretty(params));
+    logger.debug("Protocol parameters: \n" + pretty(params));
 
     // deno-lint-ignore no-explicit-any
     const costModels: any = {};
@@ -290,7 +292,7 @@ export class OgmiosOnly implements Provider {
   }
 
   async getUtxosByOutRef(outRefs: Array<OutRef>): Promise<UTxO[]> {
-    console.log(
+    logger.debug(
       "getUtxosByOutRef: outRefs: " + JSON.stringify(outRefs, null, 4),
     );
     const outputRefs = {
@@ -298,7 +300,7 @@ export class OgmiosOnly implements Provider {
         return { transaction: { id: x.txHash }, index: x.outputIndex };
       }),
     };
-    console.log(
+    logger.debug(
       "getUtxosByOutRef: outRefs (ogmios fmt)" +
         JSON.stringify(outputRefs, null, 4),
     );

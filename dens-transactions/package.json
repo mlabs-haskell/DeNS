@@ -43,6 +43,7 @@
     "lucid-cardano": "^0.10.7",
     "node-fetch": "^3.3.2",
     "plutus-ledger-api": "file:.extra-dependencies/plutus-ledger-api",
-    "prelude": "file:.extra-dependencies/prelude"
+    "prelude": "file:.extra-dependencies/prelude",
+    "winston": "^3.13.0"
   }
 }

@@ -31,6 +31,7 @@ import recordEnvelope from "./scripts/mkRecordValidator.json" with {
 import setValEnvelope from "./scripts/mkSetValidator.json" with {
   type: "json",
 };
+import { logger } from "./Logger.js";
 
 BigInt.prototype["toJSON"] = function () {
   return this.toString();
@@ -131,7 +132,7 @@ export const findProtocolOut: (
   lucid: L.Lucid,
   path: string,
 ) => Promise<L.UTxO> = async (lucid: L.Lucid, path: string) => {
-  console.log("findProtocolOut");
+  logger.debug("findProtocolOut");
   const data = await got("http://unix:" + path + ":/api/query-protocol-utxo", {
     method: "post",
     headers: { "Content-Type": "application/json" },
@@ -149,7 +150,7 @@ export const findProtocolOut: (
     }
     throw err;
   });
-  console.log("protocol response data: " + JSON.stringify(data, null, 4));
+  logger.debug("protocol response data: " + JSON.stringify(data, null, 4));
 
   const protocolResponse = data as ProtocolResponse;
 
@@ -160,7 +161,7 @@ export const findProtocolOut: (
     [{ txHash: txOutRef, outputIndex: txOutRefIx }],
   );
 
-  console.log("protocol response utxos: " + JSON.stringify(utxos, null, 4));
+  logger.debug("protocol response utxos: " + JSON.stringify(utxos, null, 4));
 
   return utxos[0];
 };
@@ -215,9 +216,9 @@ export const findOldSetDatum: (
 
   const setDatumResponse = data as SetDatumResponse;
 
-  console.log("findOldSetDatum: " + JSON.stringify(setDatumResponse, null, 4));
+  logger.debug("findOldSetDatum: " + JSON.stringify(setDatumResponse, null, 4));
 
-  console.log(
+  logger.debug(
     "responseField0: " + JSON.stringify(setDatumResponse.fields[0].txOutRef),
   );
 
@@ -248,7 +249,7 @@ export const setProtocolNFT = async (path: string, protocolCS: string) => {
     enableUnixSockets: true,
   }).json();
 
-  console.log("set protocol nft response:\n" + JSON.stringify(data, null, 4));
+  logger.debug("set protocol nft response:\n" + JSON.stringify(data, null, 4));
 };
 
 // TODO: Figure out if lucid exposes any utilities for filtering wallet UTxOs.

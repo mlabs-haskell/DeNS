@@ -26,7 +26,8 @@
     "lucid-cardano": "^0.10.7",
     "plutus-ledger-api": "file:.extra-dependencies/plutus-ledger-api",
     "prelude": "file:.extra-dependencies/prelude",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "winston": "^3.13.0"
   },
   "devDependencies": {
     "@types/node": "^20.12.7"

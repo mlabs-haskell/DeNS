@@ -8,7 +8,7 @@ import {
 } from "lbf-dens/LambdaBuffers/Dens.mjs";
 import { IsPlutusData } from "lbr-plutus/PlutusData.js";
 import * as Utils from "./Utils.js";
-// Scripts
+import { logger } from "./Logger.js";
 
 const initSetInsert = () => {
   const setInsert: SetInsert = { setInsert: Utils.mkDensKey("") };
@@ -46,8 +46,8 @@ export const initializeDeNS = async (
   const initialSetDatumPD = IsPlutusData[SetDatum].toData(
     Utils.initialSetDatum,
   );
-  console.log(
-    "initial set datum: " + JSON.stringify(initialSetDatumPD, null, 4),
+  logger.info(
+    "Initial set datum: " + JSON.stringify(initialSetDatumPD, null, 4),
   );
   const initialSetDatumCSL = (Utils.toCslPlutusData(initialSetDatumPD))
     .to_hex();
@@ -107,7 +107,7 @@ export const registerDomain = async (
   path: string,
 ): Promise<L.Tx> => {
   const trace = (msg: string) => {
-    console.log("registerDomain " + msg);
+    logger.debug("registerDomain " + msg);
   };
   trace("A");
   const builder = new L.Tx(lucid);
@@ -167,11 +167,11 @@ export const registerDomain = async (
   const setInsertData = Utils.toCslPlutusData(
     IsPlutusData[SetInsert].toData(setInsertLB),
   );
-  console.log("setInsertData: " + JSON.stringify(setInsertData, null, 4));
-  console.log(
+  logger.info("setInsertData: " + JSON.stringify(setInsertData, null, 4));
+  logger.info(
     "registerDomain protocolOut:\n" + JSON.stringify(protocolOut, null, 4),
   );
-  console.log(
+  logger.info(
     "registerDomain oldSetDatumUtxo:\n" +
       JSON.stringify(oldSetDatumUtxo, null, 4),
   );
