@@ -33,7 +33,8 @@ import setValEnvelope from "./scripts/mkSetValidator.json" with {
 };
 import { logger } from "./Logger.js";
 
-BigInt.prototype["toJSON"] = function () {
+// deno-lint-ignore no-explicit-any
+(BigInt as unknown as any).prototype["toJSON"] = function () {
   return this.toString();
 };
 
