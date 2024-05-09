@@ -2,17 +2,17 @@ import test from "node:test";
 import { Services } from "../lib/services.js";
 import * as L from "lucid-cardano";
 import * as CSL from "@emurgo/cardano-serialization-lib-nodejs";
-import * as Tx from "../../.extra-dependencies/dens-transactions/dist/DensTransactions/index.js";
+import * as Tx from "dens-transactions/index.js";
 
-test.describe("Runtime services can be initialized", async () => {
+test.describe("Happy path test for transactions", async () => {
   let services: Services | undefined;
   await test.before(async () => {
     services = await Services.spawn();
   });
 
-  test.it("offchain", async () => {
-    console.log("ogmios url: " + services!.ogmios.host);
-    console.log("ogmios port: " + services!.ogmios.port);
+  test.it("Offchain tx submission", async (t) => {
+    t.diagnostic("Ogmios url: " + services!.ogmios.host);
+    t.diagnostic("Ogmios port: " + services!.ogmios.port);
 
     const socketPath = services!.densQuery.socketPath;
 
@@ -24,16 +24,19 @@ test.describe("Runtime services can be initialized", async () => {
 
     const lucidNoWallet = await L.Lucid.new(fakeProvider);
 
-    console.log(
-      "priv key bytes: \n " +
-        JSON.stringify(services!.cardano.walletKeyPairs[0]!.signingKey),
+    t.diagnostic(
+      `Private key bytes: ${
+        Buffer.from(services!.cardano.walletKeyPairs[0]!.signingKey).toString(
+          "hex",
+        )
+      }`,
     );
 
     const userPrivKey = CSL.PrivateKey.from_normal_bytes(
       services!.cardano.walletKeyPairs[0]!.signingKey,
     );
 
-    console.log("user priv key: " + JSON.stringify(userPrivKey));
+    t.diagnostic(`User private key: ${userPrivKey.to_hex()}`);
 
     const lucid = lucidNoWallet.selectWalletFromPrivateKey(
       userPrivKey.to_bech32(),
@@ -43,7 +46,8 @@ test.describe("Runtime services can be initialized", async () => {
 
     const params = await Tx.mkParams(lucid, oneShotRef, socketPath);
 
-    console.log("scripts: \n" + JSON.stringify(params, null, 4));
+    t.diagnostic("Scripts:");
+    t.diagnostic(JSON.stringify(params, null, 4));
 
     const initializeDeNSTx = await Tx.initializeDeNS(
       lucid,
@@ -54,7 +58,8 @@ test.describe("Runtime services can be initialized", async () => {
 
     const initTxHash = await Tx.signAndSubmitTx(lucid, initializeDeNSTx);
 
-    console.log("initialize dens tx hash:\n  " + initTxHash);
+    t.diagnostic("Initialize dens tx hash:");
+    t.diagnostic(initTxHash);
 
     await new Promise((r) => setTimeout(r, 10000));
 
@@ -70,7 +75,7 @@ test.describe("Runtime services can be initialized", async () => {
       registerDomainTx,
     );
 
-    console.log("register domain tx hash:\n" + registerDomainTxHash);
+    t.diagnostic("Register domain tx hash: " + registerDomainTxHash);
 
     // idk if we need to wait for the server to pick up on changes but it likely can't hurt
     await new Promise((r) => setTimeout(r, 2000));
@@ -90,7 +95,7 @@ test.describe("Runtime services can be initialized", async () => {
 
     const updateRecordTxHash = await Tx.signAndSubmitTx(lucid, updateRecordTx);
 
-    console.log("updateRecordTxHash: " + updateRecordTxHash);
+    t.diagnostic("UpdateRecordTxHash: " + updateRecordTxHash);
   });
 
   await test.after(async () => {
