@@ -74,6 +74,9 @@ CREATE TABLE IF NOT EXISTS tx_out_refs (
 -----------------------------------------------------------------------------
 -- Linked list set data structure
 CREATE TABLE IF NOT EXISTS dens_set_utxos (
+    -- Unique identifier for the names
+    id bigserial UNIQUE,
+
     -- name for the DNS record that is owned
     name bytea UNIQUE,
 
@@ -208,7 +211,7 @@ CREATE TABLE IF NOT EXISTS dens_protocol_utxos (
 -- But, to simplify the schema, we only allow at most one dens_protocol_nft to
 -- exist, and hence we don't write this foreign key dependency explicitly in
 -- the tables.
--- See `+set_protocol_nft+` for details.
+-- See `+dens_set_protocol_nft+` for details.
 CREATE TABLE IF NOT EXISTS dens_protocol_nft(
     at_most_one boolean PRIMARY KEY DEFAULT TRUE,
     currency_symbol bytea NOT NULL,
@@ -674,7 +677,7 @@ SELECT create_table_undo_update('dens_protocol_utxos');
 -- If the provided asset class (currency symbol / token name) matches the
 -- existing asset class in the `+dens_protocol_nft+` table, do nothing.
 -- Otherwise, overwrite the existing `+dens_protocol_nft+`
-CREATE OR REPLACE FUNCTION set_protocol_nft(currency_symbol bytea, token_name bytea)
+CREATE OR REPLACE FUNCTION dens_set_protocol_nft(currency_symbol bytea, token_name bytea)
 RETURNS dens_protocol_nft AS
 $body$
     DECLARE
@@ -684,7 +687,7 @@ $body$
         SELECT * INTO old_protocol_nft FROM dens_protocol_nft;
 
         INSERT INTO dens_protocol_nft(currency_symbol, token_name)
-        VALUES(set_protocol_nft.currency_symbol, set_protocol_nft.token_name)
+        VALUES(dens_set_protocol_nft.currency_symbol, dens_set_protocol_nft.token_name)
         ON CONFLICT (at_most_one) DO UPDATE
             SET currency_symbol = EXCLUDED.currency_symbol,
                 token_name = EXCLUDED.token_name;
@@ -707,7 +710,7 @@ LANGUAGE plpgsql;
 -- Resets the database if the current protocol NFT stored in the database
 -- differs from the provided NFT, and returns the current protocol NFT stored
 -- in the database
-CREATE OR REPLACE FUNCTION sync_protocol_nft(currency_symbol bytea, token_name bytea)
+CREATE OR REPLACE FUNCTION dens_sync_protocol_nft(currency_symbol bytea, token_name bytea)
 RETURNS dens_protocol_nft AS
 $body$
     DECLARE
@@ -739,7 +742,7 @@ LANGUAGE plpgsql;
 -- find the first common point. This requires a somewhat tricky interactions
 -- between ogmios / postgres; and it's unclear if this would actually be better
 -- at all.
-CREATE OR REPLACE FUNCTION recent_points()
+CREATE OR REPLACE FUNCTION dens_recent_points()
 RETURNS SETOF blocks AS
 $body$
     BEGIN
@@ -750,4 +753,22 @@ $body$
             LIMIT 64;
     END
 $body$ 
+LANGUAGE plpgsql;
+
+-- Tests if the provided name is valid. See Section 3.5 of
+-- <https://datatracker.ietf.org/doc/html/rfc1034>.
+-- Moreover, differing from the specification, we only allow names to be lower
+-- case.
+--
+-- For compatibility with DNS backends like PowerDNS, we must ensure:
+--      - names are NEVER terminated with a trailing `.`,
+--      - with the exception of the root zone, which must have the name of `.`
+-- See <https://doc.powerdns.com/authoritative/backends/generic-sql.html#:~:text=The%20generic%20SQL%20backends%20(like,needed%20to%20cover%20all%20needs.>
+CREATE OR REPLACE FUNCTION dens_is_valid_name(name bytea)
+RETURNS boolean AS 
+$body$
+    BEGIN
+        RETURN encode(name, 'escape') SIMILAR TO '.|(([a-z]([-a-z0-9]*[a-z0-9])?)(.([a-z]([-a-z0-9]*[a-z0-9])?))*)';
+    END
+$body$
 LANGUAGE plpgsql;

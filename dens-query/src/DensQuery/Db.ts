@@ -330,7 +330,7 @@ class DensDbClient {
                SELECT name,$3::bytea,$4::bigint
                FROM dens_set_utxos
                WHERE (currency_symbol,token_name) IN (SELECT * FROM UNNEST($1::bytea[],$2::bytea[]) as asset_classes_at_the_utxo(currency_symbol,token_name))
-                    AND (encode(name, 'escape') SIMILAR TO '.|(([a-z]([-a-z0-9]*[a-z0-9])?)(.([a-z]([-a-z0-9]*[a-z0-9])?))*)')
+                    AND (dens_is_valid_name(name))
                ON CONFLICT DO NOTHING
                     `,
         // Note that we ONLY add records which match the domains in
@@ -338,12 +338,6 @@ class DensDbClient {
         // <https://datatracker.ietf.org/doc/html/rfc1034> AND are
         // lower case (this is to ensure adversaries can't add
         // random RRs to someone elses things.
-        //
-        // For compatibility with DNS backends like PowerDNS, we must ensure:
-        //      - names are NEVER terminated with a trailing `.`,
-        //      - with the exception of the root zone, which must have the name of `.`
-        // See <https://doc.powerdns.com/authoritative/backends/generic-sql.html#:~:text=The%20generic%20SQL%20backends%20(like,needed%20to%20cover%20all%20needs.>
-        //
         values: [
           transposedAssetClassesAtTheUtxo[0].map((bs) =>
             Buffer.from(bs.buffer)
@@ -512,7 +506,7 @@ class DensDbClient {
     const res = await this.query(
       {
         text:
-          `SELECT * FROM (VALUES ((set_protocol_nft($1, $2)).*) ) AS t (pk, currency_symbol, token_name)`,
+          `SELECT * FROM (VALUES ((dens_set_protocol_nft($1, $2)).*) ) AS t (pk, currency_symbol, token_name)`,
         values: [currencySymbol, tokenName],
       },
     );
@@ -541,7 +535,7 @@ class DensDbClient {
     const res = await this.query(
       {
         text:
-          `SELECT * FROM (VALUES ((sync_protocol_nft($1, $2)).*) ) AS t (pk, currency_symbol, token_name)`,
+          `SELECT * FROM (VALUES ((dens_sync_protocol_nft($1, $2)).*) ) AS t (pk, currency_symbol, token_name)`,
         values: [currencySymbol, tokenName],
       },
     );
@@ -562,7 +556,7 @@ class DensDbClient {
   async recentPoints(): Promise<Point[]> {
     const res = await this.query(
       {
-        text: `SELECT block_slot, block_id FROM recent_points()`,
+        text: `SELECT block_slot, block_id FROM dens_recent_points()`,
         values: [],
       },
     );

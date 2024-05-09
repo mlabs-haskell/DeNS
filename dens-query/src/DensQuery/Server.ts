@@ -103,7 +103,7 @@ export function runServer(
     if (lkup === undefined) {
       res.status(500);
       const resJson = LbrPrelude
-        .Json[LbDensServer.QueryDensSetInsertionUtxoResponse].toJson(
+        .Json[LbDensServer.QueryDensProtocolUtxoResponse].toJson(
           {
             name: `Failed`,
             fields: { error: `Failed to find protocol UTxO.` },
