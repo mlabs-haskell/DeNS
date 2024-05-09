@@ -5,7 +5,6 @@
  * @module
  */
 
-// https://www.rfc-editor.org/rfc/rfc6335.html
 import * as child_process from "node:child_process";
 import type { ChildProcess } from "node:child_process";
 import process from "node:process";
@@ -232,7 +231,7 @@ async function spawnDensQuery(
   const config: Config = {
     ogmios: { url: `ws://${ogmios.host}:${ogmios.port}` },
     database: {
-      socket: { name: 'UnixDomain', fields: { path: database.socketPath} },
+      socket: { name: `UnixDomain`, fields: { path: database.socketPath } },
       user: densUserName,
       password: ``,
       database: densDatabase,
@@ -274,7 +273,6 @@ async function spawnDensQuery(
     }
     throw new Error(`dens-query-cli failed with exit code ${code}`);
   });
-
 
   // FIXME(jaredponn): we wait 15 seconds to let initialize. Change this to poll
   // dens-query until it replies
