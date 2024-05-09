@@ -2,220 +2,265 @@ import * as L from "lucid-cardano";
 
 import {
   DensKey,
-  SetDatum,
   DensRr,
-  DensValue,
   RecordDatum,
-  RData
+  SetDatum,
 } from "lbf-dens/LambdaBuffers/Dens.mjs";
 import { IsPlutusData } from "lbr-plutus/PlutusData.js";
 import * as Pla from "plutus-ledger-api/PlutusData.js";
 import * as PlaV1 from "plutus-ledger-api/V1.js";
 import * as csl from "@emurgo/cardano-serialization-lib-nodejs";
 import { fromJust } from "prelude";
-import { currencySymbolFromBytes, scriptHashFromBytes } from "plutus-ledger-api/V1.js";
-import { got, Options, HTTPError } from 'got';
-import elemIdMPEnvelope from "./scripts/mkElemIDMintingPolicy.json" with {type: "json"};
-import setElemMPEnvelope from "./scripts/mkSetElemMintingPolicy.json" with {type: "json"};
-import protocolMPEnvelope from "./scripts/mkProtocolMintingPolicy.json" with {type: "json"};
-import recordEnvelope from "./scripts/mkRecordValidator.json" with {type: "json"};
-import setValEnvelope from "./scripts/mkSetValidator.json" with {type: "json"};
+import {
+  currencySymbolFromBytes,
+  scriptHashFromBytes,
+} from "plutus-ledger-api/V1.js";
+import { got, HTTPError } from "got";
+import elemIdMPEnvelope from "./scripts/mkElemIDMintingPolicy.json" with {
+  type: "json",
+};
+import setElemMPEnvelope from "./scripts/mkSetElemMintingPolicy.json" with {
+  type: "json",
+};
+import protocolMPEnvelope from "./scripts/mkProtocolMintingPolicy.json" with {
+  type: "json",
+};
+import recordEnvelope from "./scripts/mkRecordValidator.json" with {
+  type: "json",
+};
+import setValEnvelope from "./scripts/mkSetValidator.json" with {
+  type: "json",
+};
 
 BigInt.prototype["toJSON"] = function () {
   return this.toString();
 };
 
-export const mkParams  = async (lucid: L.Lucid, ref: L.OutRef, path: string): Promise<DeNSParams> => {
+export const mkParams = async (
+  lucid: L.Lucid,
+  ref: L.OutRef,
+  path: string,
+): Promise<DeNSParams> => {
   const utils = new L.Utils(lucid);
 
-  const outRef: PlaV1.TxOutRef = { txOutRefId: fromJust(PlaV1.txIdFromBytes(Buffer.from(ref.txHash, 'hex')))
-                     , txOutRefIdx: BigInt(ref.outputIndex) }
+  const outRef: PlaV1.TxOutRef = {
+    txOutRefId: fromJust(PlaV1.txIdFromBytes(Buffer.from(ref.txHash, "hex"))),
+    txOutRefIdx: BigInt(ref.outputIndex),
+  };
 
   const protocolPolicy: L.MintingPolicy = {
     type: "PlutusV2",
-    script: L.applyParamsToScript(protocolMPEnvelope.rawHex,
-                                    [plaPdToLucidPd(PlaV1.isPlutusDataTxOutRef.toData(outRef))]
-                                 )
-  }
+    script: L.applyParamsToScript(protocolMPEnvelope.rawHex, [
+      plaPdToLucidPd(PlaV1.isPlutusDataTxOutRef.toData(outRef)),
+    ]),
+  };
 
   const protocolCS = utils.validatorToScriptHash(protocolPolicy);
 
-  await setProtocolNFT(path,protocolCS);
+  await setProtocolNFT(path, protocolCS);
 
   const setValidator: L.SpendingValidator = {
     type: "PlutusV2",
-    script: L.applyParamsToScript(setValEnvelope.rawHex,[protocolCS])
-  }
+    script: L.applyParamsToScript(setValEnvelope.rawHex, [protocolCS]),
+  };
 
   const recordValidator: L.SpendingValidator = {
     type: "PlutusV2",
-    script: L.applyParamsToScript(recordEnvelope.rawHex,[protocolCS])
-  }
+    script: L.applyParamsToScript(recordEnvelope.rawHex, [protocolCS]),
+  };
 
   const setElemIDPolicy: L.MintingPolicy = {
     type: "PlutusV2",
-    script: L.applyParamsToScript(setElemMPEnvelope.rawHex,[protocolCS])
-  }
+    script: L.applyParamsToScript(setElemMPEnvelope.rawHex, [protocolCS]),
+  };
 
   const elemIDPolicy: L.MintingPolicy = {
     type: "PlutusV2",
-    script: L.applyParamsToScript(elemIdMPEnvelope.rawHex,[protocolCS])
-  }
+    script: L.applyParamsToScript(elemIdMPEnvelope.rawHex, [protocolCS]),
+  };
   return {
     setValidator: setValidator,
     recordValidator: recordValidator,
     setElemIDPolicy: setElemIDPolicy,
     elemIDPolicy: elemIDPolicy,
-    protocolPolicy: protocolPolicy
-  }
-}
+    protocolPolicy: protocolPolicy,
+  };
+};
 
-export const signAndSubmitTx = async (lucid: L.Lucid, tx: L.Tx) => {
-  const complete = await tx.complete().catch(e => {throw new Error('Error when completing tx:\n' + e)});
-   const signed =  complete.sign();
-   const readyToSubmit = await signed.complete().catch(e => {throw new Error('Error when completing signed tx:\n' + e)});
+export const signAndSubmitTx = async (_lucid: L.Lucid, tx: L.Tx) => {
+  const complete = await tx.complete().catch((e) => {
+    throw new Error("Error when completing tx:\n" + e);
+  });
+  const signed = complete.sign();
+  const readyToSubmit = await signed.complete().catch((e) => {
+    throw new Error("Error when completing signed tx:\n" + e);
+  });
 
-   const hash = await readyToSubmit.submit().catch(e => {throw new Error('Error when submitting tx:\n' + e)});
-   return hash
-}
+  const hash = await readyToSubmit.submit().catch((e) => {
+    throw new Error("Error when submitting tx:\n" + e);
+  });
+  return hash;
+};
 
 export const mkDensKey = (domain: string): DensKey => {
-  return  {densName: Buffer.from(domain), densClass: BigInt(0)}
-}
+  return { densName: Buffer.from(domain), densClass: BigInt(0) };
+};
 
 type ProtocolResponseBody = {
-    txOutRef: {transaction_id: string, index: number},
-    protocol: {
-        elementIdMintingPolicy: string,
-        setElemMintingPolicy: string,
-        setValidator: string,
-        recordsValidator: string
-    }
-}
+  txOutRef: { transaction_id: string; index: number };
+  protocol: {
+    elementIdMintingPolicy: string;
+    setElemMintingPolicy: string;
+    setValidator: string;
+    recordsValidator: string;
+  };
+};
 
 type ProtocolResponse = {
-    name: string,
-    fields: Array<ProtocolResponseBody>
-}
+  name: string;
+  fields: Array<ProtocolResponseBody>;
+};
 
 export const unsafeCurrSymb = (x: string) => {
-  return fromJust(currencySymbolFromBytes(Buffer.from(x)))
-}
+  return fromJust(currencySymbolFromBytes(Buffer.from(x)));
+};
 
 export const emptyCS = unsafeCurrSymb("");
 
-export const findProtocolOut: (lucid: L.Lucid, path: string) => Promise<L.UTxO> = async (lucid: L.Lucid, path: string) => {
-    console.log('findProtocolOut');
-    const data = await got('http://unix:' + path + ':/api/query-protocol-utxo', {
-        method: 'post',
-        headers: {'Content-Type': 'application/json'},
-        json: {},
-        enableUnixSockets: true
-    }).json().catch
-    (err =>  {
-        // Patch the exception s.t. we can see the response body in the generated error message
-        if (err instanceof HTTPError) {
-            const body = JSON.stringify(err.response.body, null, 4)
-            if (err.message === undefined)
-                throw new Error(body)
-            else
-                throw new Error(`${err.message}\n` + body)
-        }
-        throw err
-        }
-    );
-    console.log('protocol response data: ' + JSON.stringify(data,null,4));
+export const findProtocolOut: (
+  lucid: L.Lucid,
+  path: string,
+) => Promise<L.UTxO> = async (lucid: L.Lucid, path: string) => {
+  console.log("findProtocolOut");
+  const data = await got("http://unix:" + path + ":/api/query-protocol-utxo", {
+    method: "post",
+    headers: { "Content-Type": "application/json" },
+    json: {},
+    enableUnixSockets: true,
+  }).json().catch((err) => {
+    // Patch the exception s.t. we can see the response body in the generated error message
+    if (err instanceof HTTPError) {
+      const body = JSON.stringify(err.response.body, null, 4);
+      if (err.message === undefined) {
+        throw new Error(body);
+      } else {
+        throw new Error(`${err.message}\n` + body);
+      }
+    }
+    throw err;
+  });
+  console.log("protocol response data: " + JSON.stringify(data, null, 4));
 
-    const protocolResponse = data  as ProtocolResponse;
+  const protocolResponse = data as ProtocolResponse;
 
-    const txOutRef = protocolResponse.fields[0].txOutRef.transaction_id;
-    const txOutRefIx = protocolResponse.fields[0].txOutRef.index;
+  const txOutRef = protocolResponse.fields[0].txOutRef.transaction_id;
+  const txOutRefIx = protocolResponse.fields[0].txOutRef.index;
 
-    const utxos = await lucid.provider.getUtxosByOutRef(
-      [{txHash: txOutRef, outputIndex: txOutRefIx}]
-    );
+  const utxos = await lucid.provider.getUtxosByOutRef(
+    [{ txHash: txOutRef, outputIndex: txOutRefIx }],
+  );
 
-    console.log('protocol response utxos: ' + JSON.stringify(utxos,null,4));
+  console.log("protocol response utxos: " + JSON.stringify(utxos, null, 4));
 
-    return utxos[0]
+  return utxos[0];
 };
 
-type SetDatumQueryResult = {setDatumUTxO: L.UTxO, setDatum: SetDatum}
+type SetDatumQueryResult = { setDatumUTxO: L.UTxO; setDatum: SetDatum };
 
 type SetDatumResponseBody = {
-    name: string,
-    pointer: {
-      currency_symbol: string,
-      token_name: string
-     },
-    txOutRef: {
-      transaction_id: string,
-      index: number
+  name: string;
+  pointer: {
+    currency_symbol: string;
+    token_name: string;
+  };
+  txOutRef: {
+    transaction_id: string;
+    index: number;
+  };
+};
+
+type SetDatumResponse = { name: string; fields: Array<SetDatumResponseBody> };
+
+export const findOldSetDatum: (
+  lucid: L.Lucid,
+  path: string,
+  domain: string,
+) => Promise<SetDatumQueryResult> = async (
+  lucid: L.Lucid,
+  path: string,
+  domain: string,
+) => {
+  const hexDomain = Buffer.from(domain).toString("hex");
+
+  const data = await got(
+    "http://unix:" + path + ":/api/query-set-insertion-utxo",
+    {
+      method: "post",
+      json: { name: hexDomain },
+      headers: { "Content-Type": "application/json" },
+      enableUnixSockets: true,
+    },
+  ).json().catch((err) => {
+    // Patch the exception s.t. we can see the response body in the generated error message
+    if (err instanceof HTTPError) {
+      const body = JSON.stringify(err.response.body, null, 4);
+      if (err.message === undefined) {
+        throw new Error(body);
+      } else {
+        throw new Error(`${err.message}\n` + body);
+      }
     }
-  }
+    throw err;
+  });
 
-type SetDatumResponse = {name: string, fields: Array<SetDatumResponseBody>}
+  const setDatumResponse = data as SetDatumResponse;
 
-export const findOldSetDatum: (lucid: L.Lucid, path: string, domain: string) => Promise<SetDatumQueryResult> = async (lucid: L.Lucid, path: string, domain: string) => {
-    const hexDomain = Buffer.from(domain).toString('hex');
+  console.log("findOldSetDatum: " + JSON.stringify(setDatumResponse, null, 4));
 
-    const data = await got('http://unix:' + path + ':/api/query-set-insertion-utxo', {
-        method: 'post',
-        json: {name: hexDomain},
-        headers: {'Content-Type': 'application/json'},
-        enableUnixSockets: true
-    }).json().catch
-    (err =>  {
-        // Patch the exception s.t. we can see the response body in the generated error message
-        if (err instanceof HTTPError) {
-            const body = JSON.stringify(err.response.body, null, 4)
-            if (err.message === undefined)
-                throw new Error(body)
-            else
-                throw new Error(`${err.message}\n` + body)
-        }
-        throw err
-        }
-    );
+  console.log(
+    "responseField0: " + JSON.stringify(setDatumResponse.fields[0].txOutRef),
+  );
 
-    const setDatumResponse = data as SetDatumResponse;
+  const txOutRef = setDatumResponse.fields[0].txOutRef.transaction_id;
+  const txOutRefIx = setDatumResponse.fields[0].txOutRef.index;
 
-    console.log('findOldSetDatum: ' + JSON.stringify(setDatumResponse,null,4));
+  const utxos = await lucid.provider.getUtxosByOutRef([{
+    txHash: txOutRef,
+    outputIndex: txOutRefIx,
+  }]);
 
-    console.log('responseField0: ' + JSON.stringify(setDatumResponse.fields[0].txOutRef))
+  const setDatumUtxo = utxos[0];
 
-    const txOutRef = setDatumResponse.fields[0].txOutRef.transaction_id;
-    const txOutRefIx = setDatumResponse.fields[0].txOutRef.index;
+  const setDatum = IsPlutusData[SetDatum].fromData(
+    toPlaPlutusData(L.C.PlutusData.from_bytes(L.fromHex(setDatumUtxo.datum))),
+  );
 
-    const utxos = await lucid.provider.getUtxosByOutRef([{txHash: txOutRef, outputIndex: txOutRefIx}])
-
-    const setDatumUtxo = utxos[0];
-
-    const setDatum = IsPlutusData[SetDatum].fromData(toPlaPlutusData(L.C.PlutusData.from_bytes(L.fromHex(setDatumUtxo.datum))));
-
-    return {setDatumUTxO: setDatumUtxo, setDatum: setDatum}
+  return { setDatumUTxO: setDatumUtxo, setDatum: setDatum };
 };
 
 export const setProtocolNFT = async (path: string, protocolCS: string) => {
-  const body = {protocolNft: {currency_symbol: protocolCS, token_name: ""}};
+  const body = { protocolNft: { currency_symbol: protocolCS, token_name: "" } };
 
-  const data = await got('http://unix:' + path + ":/api/set-protocol-nft",{
-    method: 'post',
+  const data = await got("http://unix:" + path + ":/api/set-protocol-nft", {
+    method: "post",
     json: body,
-    headers: {'Content-Type': 'application/json'},
-    enableUnixSockets: true
+    headers: { "Content-Type": "application/json" },
+    enableUnixSockets: true,
   }).json();
 
-  console.log('set protocol nft response:\n' + JSON.stringify(data,null,4));
-}
+  console.log("set protocol nft response:\n" + JSON.stringify(data, null, 4));
+};
 
 // TODO: Figure out if lucid exposes any utilities for filtering wallet UTxOs.
-export const findElemIDUTxO = async (assetClass: string, lucid: L.Lucid): Promise<L.UTxO> => {
-    const walletUtxos = await lucid.wallet.getUtxos();
+export const findElemIDUTxO = async (
+  assetClass: string,
+  lucid: L.Lucid,
+): Promise<L.UTxO> => {
+  const walletUtxos = await lucid.wallet.getUtxos();
 
-    // TODO: Comically unsafe, do better error handling
-    return walletUtxos.filter(x => x.assets[assetClass] >= 1)[0]
-}
+  // TODO: Comically unsafe, do better error handling
+  return walletUtxos.filter((x) => x.assets[assetClass] >= 1)[0];
+};
 
 export type DeNSParams = {
   setValidator: L.SpendingValidator;
@@ -228,16 +273,18 @@ export type DeNSParams = {
 // Hopefully I'm getting the encoding right...
 export const initialSetDatum: SetDatum = {
   key: mkDensKey(""),
-  next: mkDensKey("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"),
-  ownerApproval: emptyCS
-}
+  next: mkDensKey(
+    "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+  ),
+  ownerApproval: emptyCS,
+};
 
 export const mkLBScriptHash = (script: L.SpendingValidator) => {
   const hash = L.C.PlutusScript.from_bytes(
-          L.fromHex(script.script),
-        )
-          .hash(L.C.ScriptHashNamespace.PlutusV2)
-          .to_bytes();
+    L.fromHex(script.script),
+  )
+    .hash(L.C.ScriptHashNamespace.PlutusV2)
+    .to_bytes();
   return fromJust(
     scriptHashFromBytes(hash),
   );
@@ -250,38 +297,43 @@ export const mkLBScriptHash = (script: L.SpendingValidator) => {
  * @private TODO(jaredponn): this needs the inverse function + testing.
  */
 export function plaPdToLucidPd(plutusData: Pla.PlutusData): L.Data {
-    switch (plutusData.name) {
-        case `Integer`: {
-            return plutusData.fields
-        }
-        case `Bytes`: {
-            return Buffer.from(plutusData.fields).toString('hex')
-        }
-        case `List`: {
-            return plaPdListToLucidPdList( plutusData.fields)
-        }
-        case `Constr`: {
-            return new L.Constr(Number(plutusData.fields[0]), plaPdListToLucidPdList(plutusData.fields[1]))
-        }
-        case `Map`: {
-            const result:Map<L.Data,L.Data> = new Map();
-
-            for (const [k,v] of plutusData.fields)
-                result.set(plaPdToLucidPd(k), plaPdToLucidPd(v))
-
-            return result;
-        }
+  switch (plutusData.name) {
+    case `Integer`: {
+      return plutusData.fields;
     }
+    case `Bytes`: {
+      return Buffer.from(plutusData.fields).toString("hex");
+    }
+    case `List`: {
+      return plaPdListToLucidPdList(plutusData.fields);
+    }
+    case `Constr`: {
+      return new L.Constr(
+        Number(plutusData.fields[0]),
+        plaPdListToLucidPdList(plutusData.fields[1]),
+      );
+    }
+    case `Map`: {
+      const result: Map<L.Data, L.Data> = new Map();
+
+      for (const [k, v] of plutusData.fields) {
+        result.set(plaPdToLucidPd(k), plaPdToLucidPd(v));
+      }
+
+      return result;
+    }
+  }
 }
 
 /**
  * @internal
  */
-function plaPdListToLucidPdList (plutusDatas: Pla.PlutusData[]): L.Data[] {
-            const result: L.Data[] = []
-            for (const x of plutusDatas)
-                result.push(plaPdToLucidPd(x))
-            return result
+function plaPdListToLucidPdList(listOfPlutusData: Pla.PlutusData[]): L.Data[] {
+  const result: L.Data[] = [];
+  for (const x of listOfPlutusData) {
+    result.push(plaPdToLucidPd(x));
+  }
+  return result;
 }
 
 export function toCslPlutusData(
@@ -394,51 +446,52 @@ export function elementIdTokenName(
   const cslDataHash = csl.hash_plutus_data(cslPd);
 
   const result = cslDataHash.to_hex();
-  return result
+  return result;
 }
 
 /**
  *  Utilities for constructin Dens Records
- *
- **/
-export const  mkRecordDatum = (
+ */
+export const mkRecordDatum = (
   domain: string,
-  records: Array<DensRr>
+  records: Array<DensRr>,
 ): RecordDatum => {
   return {
     recordClass: BigInt(0),
-    recordName:  Buffer.from(domain),
-    recordOwner: fromJust(PlaV1.pubKeyHashFromBytes(Buffer.from('1234567890123456789012345678'))),
-    recordValue: records
-  }
-}
+    recordName: Buffer.from(domain),
+    recordOwner: fromJust(
+      PlaV1.pubKeyHashFromBytes(Buffer.from("1234567890123456789012345678")),
+    ),
+    recordValue: records,
+  };
+};
 
 export const mkARecord = (record: string, ttl: number): DensRr => {
   return {
     ttl: BigInt(ttl),
     rData: {
-      name: 'A',
-      fields: Buffer.from(record)
-    }
-  }
-}
+      name: "A",
+      fields: Buffer.from(record),
+    },
+  };
+};
 
 export const mkAAAARecord = (record: string, ttl: number): DensRr => {
   return {
     ttl: BigInt(ttl),
     rData: {
-      name: 'AAAA',
-      fields: Buffer.from(record)
-    }
-  }
-}
+      name: "AAAA",
+      fields: Buffer.from(record),
+    },
+  };
+};
 
 export const mkSOARecord = (record: string, ttl: number): DensRr => {
   return {
     ttl: BigInt(ttl),
     rData: {
-      name: 'SOA',
-      fields: Buffer.from(record)
-    }
-  }
-}
+      name: "SOA",
+      fields: Buffer.from(record),
+    },
+  };
+};

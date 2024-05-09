@@ -4,50 +4,53 @@ import {
   Protocol,
   RecordDatum,
   SetDatum,
-  SetInsert
+  SetInsert,
 } from "lbf-dens/LambdaBuffers/Dens.mjs";
 import { IsPlutusData } from "lbr-plutus/PlutusData.js";
-import * as Utils  from "./Utils.js"
-import * as CSL from "@emurgo/cardano-serialization-lib-nodejs";
+import * as Utils from "./Utils.js";
 // Scripts
 
-
 const initSetInsert = () => {
-  const setInsert: SetInsert = {setInsert: Utils.mkDensKey("")};
+  const setInsert: SetInsert = { setInsert: Utils.mkDensKey("") };
   return Utils.toCslPlutusData(IsPlutusData[SetInsert].toData(setInsert));
-}
+};
 
 export const mkProtocolOneShot = async (lucid: L.Lucid): Promise<L.OutRef> => {
   const builder = new L.Tx(lucid);
   const myAddr = await lucid.wallet.address();
 
-  const tx = builder.payToAddress(myAddr,{lovelace: BigInt(1)})
+  const tx = builder.payToAddress(myAddr, { lovelace: BigInt(1) });
 
   const complete = await tx.complete();
-  const signed =  complete.sign();
+  const signed = complete.sign();
 
   const readyToSubmit = await signed.complete();
   const hash = await readyToSubmit.submit();
 
-  await new Promise(r => setTimeout(r, 10000));
+  await new Promise((r) => setTimeout(r, 10000));
   const walletUTXOs = await lucid.wallet.getUtxos();
 
-  const utxoWithHash = walletUTXOs.find(x => x.txHash === hash);
+  const utxoWithHash = walletUTXOs.find((x) => x.txHash === hash);
 
-  return {txHash: hash, outputIndex: utxoWithHash.outputIndex}
-}
+  return { txHash: hash, outputIndex: utxoWithHash.outputIndex };
+};
 
 export const initializeDeNS = async (
   lucid: L.Lucid,
   params: Utils.DeNSParams,
-  path: string,
-  oneShotOutRef: L.OutRef
+  _path: string,
+  oneShotOutRef: L.OutRef,
 ): Promise<L.Tx> => {
   const builder = new L.Tx(lucid);
   const utils = new L.Utils(lucid);
-  const initialSetDatumPD = IsPlutusData[SetDatum].toData(Utils.initialSetDatum);
-  console.log('initial set datum: ' + JSON.stringify(initialSetDatumPD,null,4));
-  const initialSetDatumCSL = (Utils.toCslPlutusData(initialSetDatumPD)).to_hex();
+  const initialSetDatumPD = IsPlutusData[SetDatum].toData(
+    Utils.initialSetDatum,
+  );
+  console.log(
+    "initial set datum: " + JSON.stringify(initialSetDatumPD, null, 4),
+  );
+  const initialSetDatumCSL = (Utils.toCslPlutusData(initialSetDatumPD))
+    .to_hex();
   const initialSetDatumDatum: L.OutputData = { inline: initialSetDatumCSL };
   const protocolDatumRaw: Protocol = {
     elementIdMintingPolicy: Utils.mkLBScriptHash(params.elemIDPolicy),
@@ -57,7 +60,9 @@ export const initializeDeNS = async (
   };
 
   const protocolDatum: L.OutputData = {
-    inline: Utils.toCslPlutusData(IsPlutusData[Protocol].toData(protocolDatumRaw))
+    inline: Utils.toCslPlutusData(
+      IsPlutusData[Protocol].toData(protocolDatumRaw),
+    )
       .to_hex(),
   };
 
@@ -81,7 +86,7 @@ export const initializeDeNS = async (
     .attachMintingPolicy(params.protocolPolicy)
     .mintAssets(oneProtocolToken, L.Data.void())
     .attachMintingPolicy(params.setElemIDPolicy)
-    .mintAssets(oneSetElemToken,initSetInsert().to_hex())
+    .mintAssets(oneSetElemToken, initSetInsert().to_hex())
     // WARNING(jaredponn): we MUST put the protocol datum as a tx output BEFORE
     // ALL OTHER TX OUTPUTS. This is because of the way the query layer works.
     // There is a way to "fix" this, but that'd make a good separate project --
@@ -91,7 +96,7 @@ export const initializeDeNS = async (
       setValidatorAddr,
       initialSetDatumDatum,
       oneSetElemToken,
-     )
+    )
     .collectFrom([oneShotUtxo]);
 };
 
@@ -99,67 +104,84 @@ export const registerDomain = async (
   lucid: L.Lucid,
   params: Utils.DeNSParams,
   domain: string,
-  path: string
+  path: string,
 ): Promise<L.Tx> => {
-  const trace = (msg : string) => {console.log('registerDomain ' + msg)};
-  trace('A')
+  const trace = (msg: string) => {
+    console.log("registerDomain " + msg);
+  };
+  trace("A");
   const builder = new L.Tx(lucid);
   const utils = new L.Utils(lucid);
-  trace('B')
+  trace("B");
   const oneSetElemToken = {
     [utils.mintingPolicyToId(params.setElemIDPolicy)]: BigInt(1),
   };
-  trace('C')
-  const setDatumResponse = await Utils.findOldSetDatum(lucid,path,domain);
-  trace('D')
+  trace("C");
+  const setDatumResponse = await Utils.findOldSetDatum(lucid, path, domain);
+  trace("D");
   const oldSetDatum = setDatumResponse.setDatum;
   const oldSetDatumUtxo = setDatumResponse.setDatumUTxO;
-  trace('E')
+  trace("E");
   const k: DensKey = oldSetDatum.key;
-  trace('oldSetDatum.key: ' + JSON.stringify(k,null,4));
+  trace("oldSetDatum.key: " + JSON.stringify(k, null, 4));
   const nxt: DensKey = oldSetDatum.next;
-  trace ('oldSetDatum.nxt: ' + JSON.stringify(nxt,null,4));
-  trace('F')
-  trace('oldSetDatumUtxo:\n' + JSON.stringify(oldSetDatumUtxo,null,4))
-  const sdl: SetDatum = {key: k,
-                         next: {densName: Buffer.from(domain), densClass: BigInt(0)},
-                         ownerApproval: Utils.emptyCS
-                        };
-  const sdr: SetDatum = {key: {densName: Buffer.from(domain), densClass: BigInt(0)},
-                         next: nxt,
-                         ownerApproval: Utils.emptyCS
-                        };
-  trace('SDL: ' + JSON.stringify(sdl,null,4));
-  trace('SDR: ' + JSON.stringify(sdr,null,4));
+  trace("oldSetDatum.nxt: " + JSON.stringify(nxt, null, 4));
+  trace("F");
+  trace("oldSetDatumUtxo:\n" + JSON.stringify(oldSetDatumUtxo, null, 4));
+  const sdl: SetDatum = {
+    key: k,
+    next: { densName: Buffer.from(domain), densClass: BigInt(0) },
+    ownerApproval: Utils.emptyCS,
+  };
+  const sdr: SetDatum = {
+    key: { densName: Buffer.from(domain), densClass: BigInt(0) },
+    next: nxt,
+    ownerApproval: Utils.emptyCS,
+  };
+  trace("SDL: " + JSON.stringify(sdl, null, 4));
+  trace("SDR: " + JSON.stringify(sdr, null, 4));
 
-  trace('G')
+  trace("G");
 
-  trace('SDL Data: ' + JSON.stringify(IsPlutusData[SetDatum].toData(sdl),null,4));
-  const newSetDatumL: L.OutputData = {inline: Utils.toCslPlutusData(IsPlutusData[SetDatum].toData(sdl)).to_hex()};
-  const newSetDatumR: L.OutputData = {inline: Utils.toCslPlutusData(IsPlutusData[SetDatum].toData(sdr)).to_hex()};
-  trace('H')
+  trace(
+    "SDL Data: " + JSON.stringify(IsPlutusData[SetDatum].toData(sdl), null, 4),
+  );
+  const newSetDatumL: L.OutputData = {
+    inline: Utils.toCslPlutusData(IsPlutusData[SetDatum].toData(sdl)).to_hex(),
+  };
+  const newSetDatumR: L.OutputData = {
+    inline: Utils.toCslPlutusData(IsPlutusData[SetDatum].toData(sdr)).to_hex(),
+  };
+  trace("H");
   const elemIDPolicy = utils.mintingPolicyToId(params.elemIDPolicy);
   const elemIDTokenName = Utils.elementIdTokenName(domain);
   const elemIDAssetClass: L.Unit = elemIDPolicy + elemIDTokenName;
-  trace('I')
+  trace("I");
   const oneElemIDToken = { [elemIDAssetClass]: BigInt(1) };
-  trace('J')
-  const protocolOut = await Utils.findProtocolOut(lucid,path);
-  trace('K')
+  trace("J");
+  const protocolOut = await Utils.findProtocolOut(lucid, path);
+  trace("K");
   const setValidatorAddr = utils.validatorToAddress(params.setValidator);
-  trace('L')
-  const setInsertLB : SetInsert = {setInsert: Utils.mkDensKey(domain)};
-  const setInsertData = Utils.toCslPlutusData(IsPlutusData[SetInsert].toData(setInsertLB));
-  console.log('setInsertData: ' + JSON.stringify(setInsertData,null,4));
-  console.log('registerDomain protocolOut:\n' + JSON.stringify(protocolOut,null,4));
-  console.log('registerDomain oldSetDatumUtxo:\n' + JSON.stringify(oldSetDatumUtxo,null,4));
+  trace("L");
+  const setInsertLB: SetInsert = { setInsert: Utils.mkDensKey(domain) };
+  const setInsertData = Utils.toCslPlutusData(
+    IsPlutusData[SetInsert].toData(setInsertLB),
+  );
+  console.log("setInsertData: " + JSON.stringify(setInsertData, null, 4));
+  console.log(
+    "registerDomain protocolOut:\n" + JSON.stringify(protocolOut, null, 4),
+  );
+  console.log(
+    "registerDomain oldSetDatumUtxo:\n" +
+      JSON.stringify(oldSetDatumUtxo, null, 4),
+  );
   return builder
     .attachMintingPolicy(params.setElemIDPolicy)
-    .mintAssets(oneSetElemToken,setInsertData.to_hex())
+    .mintAssets(oneSetElemToken, setInsertData.to_hex())
     .attachMintingPolicy(params.elemIDPolicy)
-    .mintAssets(oneElemIDToken,L.Data.void())
+    .mintAssets(oneElemIDToken, L.Data.void())
     .readFrom([protocolOut])
-    .collectFrom([oldSetDatumUtxo],setInsertData.to_hex())
+    .collectFrom([oldSetDatumUtxo], setInsertData.to_hex())
     .attachSpendingValidator(params.setValidator)
     .payToAddressWithData(setValidatorAddr, newSetDatumL, oneSetElemToken)
     .payToAddressWithData(setValidatorAddr, newSetDatumR, oneSetElemToken);
@@ -171,7 +193,7 @@ export const updateRecord = async (
   user: L.Address,
   domain: string,
   record: RecordDatum,
-  path: string
+  path: string,
 ) => {
   const builder = new L.Tx(lucid);
   const utils = new L.Utils(lucid);
@@ -184,12 +206,16 @@ export const updateRecord = async (
 
   const elemIDToken = { [elemIDAssetClass]: BigInt(1) };
 
-  const protocolOut = await Utils.findProtocolOut(lucid,path);
+  const protocolOut = await Utils.findProtocolOut(lucid, path);
 
-  const elemIDUTxO: L.UTxO = await Utils.findElemIDUTxO(elemIDAssetClass,lucid);
+  const elemIDUTxO: L.UTxO = await Utils.findElemIDUTxO(
+    elemIDAssetClass,
+    lucid,
+  );
 
   const recordDatum: L.OutputData = {
-    inline: Utils.toCslPlutusData(IsPlutusData[RecordDatum].toData(record)).to_hex(),
+    inline: Utils.toCslPlutusData(IsPlutusData[RecordDatum].toData(record))
+      .to_hex(),
   };
 
   return builder
@@ -201,4 +227,3 @@ export const updateRecord = async (
     })
     .payToAddress(user, elemIDToken);
 };
-
