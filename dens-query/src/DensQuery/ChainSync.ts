@@ -1,8 +1,5 @@
 /**
  * Functionality for syncing with the chain via ogmios.
- *
- * @private
- * Mostly taken from: {@link https://ogmios.dev/mini-protocols/local-chain-sync/ }
  */
 import * as OgmiosSchema from "@cardano-ogmios/schema";
 
@@ -36,7 +33,7 @@ export async function rollForwardDb(
       `slot` in block ? block.slot : "<no slot>"
     }`,
   );
-  logger.info(
+  logger.verbose(
     `Current Protocol AssetClass: ("${
       Buffer.from(protocolNft[0]).toString("hex")
     }", "${Buffer.from(protocolNft[1]).toString("hex")}")`,
@@ -66,15 +63,23 @@ export async function rollForwardDb(
 
         // 1.
         for (const txIn of tx.inputs) {
-          await client.deleteTxOutRef(
-            ogmiosTransactionOutputReferenceToPlaTxOutRef(txIn),
+          const txOutRef = ogmiosTransactionOutputReferenceToPlaTxOutRef(txIn);
+          logger.verbose(
+            `Consuming TxOutRef: ${
+              JSON.stringify(txOutRef, stringifyReplacer)
+            }`,
           );
+          await client.deleteTxOutRef(txOutRef);
         }
 
         // 2.
         for (let i = 0; i < tx.outputs.length; ++i) {
           const txOut: OgmiosSchema.TransactionOutput = tx.outputs[i]!;
           const txOutRef = { txOutRefId: txId, txOutRefIdx: BigInt(i) };
+
+          logger.verbose(
+            `Adding TxOutRef: ${JSON.stringify(txOutRef, stringifyReplacer)}`,
+          );
 
           // Add the TxOutRef
 
