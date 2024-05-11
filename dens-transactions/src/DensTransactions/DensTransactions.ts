@@ -4,41 +4,30 @@ import {
   Protocol,
   RecordDatum,
   SetDatum,
-  SetInsert,
+  SetInsert
 } from "lbf-dens/LambdaBuffers/Dens.mjs";
 import { IsPlutusData } from "lbr-plutus/PlutusData.js";
 import * as Utils from "./Utils.js";
 import { logger } from "./Logger.js";
+import { UnixDomainOrInternetDomain } from "lbf-dens-db/LambdaBuffers/Dens/Config.mjs";
 
 const initSetInsert = () => {
   const setInsert: SetInsert = { setInsert: Utils.mkDensKey("") };
   return Utils.toCslPlutusData(IsPlutusData[SetInsert].toData(setInsert));
-};
+}
 
-export const mkProtocolOneShot = async (lucid: L.Lucid): Promise<L.OutRef> => {
-  const builder = new L.Tx(lucid);
-  const myAddr = await lucid.wallet.address();
-
-  const tx = builder.payToAddress(myAddr, { lovelace: BigInt(1) });
-
-  const complete = await tx.complete();
-  const signed = complete.sign();
-
-  const readyToSubmit = await signed.complete();
-  const hash = await readyToSubmit.submit();
-
-  await new Promise((r) => setTimeout(r, 10000));
+export const getProtocolOneShot = async (lucid: L.Lucid): Promise<L.OutRef> => {
   const walletUTXOs = await lucid.wallet.getUtxos();
 
-  const utxoWithHash = walletUTXOs.find((x) => x.txHash === hash);
+  const headUTXO = walletUTXOs[0];
 
-  return { txHash: hash, outputIndex: utxoWithHash.outputIndex };
-};
+  return {txHash: headUTXO.txHash, outputIndex: headUTXO.outputIndex}
+}
+
 
 export const initializeDeNS = async (
   lucid: L.Lucid,
   params: Utils.DeNSParams,
-  _path: string,
   oneShotOutRef: L.OutRef,
 ): Promise<L.Tx> => {
   const builder = new L.Tx(lucid);
@@ -104,7 +93,7 @@ export const registerDomain = async (
   lucid: L.Lucid,
   params: Utils.DeNSParams,
   domain: string,
-  path: string,
+  path: UnixDomainOrInternetDomain,
 ): Promise<L.Tx> => {
   const trace = (msg: string) => {
     logger.debug("registerDomain " + msg);
@@ -193,7 +182,7 @@ export const updateRecord = async (
   user: L.Address,
   domain: string,
   record: RecordDatum,
-  path: string,
+  path: UnixDomainOrInternetDomain,
 ) => {
   const builder = new L.Tx(lucid);
   const utils = new L.Utils(lucid);

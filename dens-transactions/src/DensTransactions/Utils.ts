@@ -32,6 +32,8 @@ import setValEnvelope from "./scripts/mkSetValidator.json" with {
   type: "json",
 };
 import { logger } from "./Logger.js";
+import { UnixDomainOrInternetDomain } from "lbf-dens-db/LambdaBuffers/Dens/Config.mjs";
+
 
 // deno-lint-ignore no-explicit-any
 (BigInt as unknown as any).prototype["toJSON"] = function () {
@@ -41,7 +43,7 @@ import { logger } from "./Logger.js";
 export const mkParams = async (
   lucid: L.Lucid,
   ref: L.OutRef,
-  path: string,
+  path: UnixDomainOrInternetDomain,
 ): Promise<DeNSParams> => {
   const utils = new L.Utils(lucid);
 
@@ -89,7 +91,7 @@ export const mkParams = async (
   };
 };
 
-export const signAndSubmitTx = async (_lucid: L.Lucid, tx: L.Tx) => {
+export const signAndSubmitTx = async (tx: L.Tx) => {
   const complete = await tx.complete().catch((e) => {
     throw new Error("Error when completing tx:\n" + e);
   });
@@ -129,16 +131,33 @@ export const unsafeCurrSymb = (x: string) => {
 
 export const emptyCS = unsafeCurrSymb("");
 
+export const isUnixDomain = (domain: UnixDomainOrInternetDomain): boolean => {
+  return (domain.name === 'UnixDomain')
+}
+
+export const mkDomainPath = (domain: UnixDomainOrInternetDomain, endpoint: string): string => {
+  if (domain.name === 'UnixDomain') {
+    const path = domain.fields.path;
+    return ("http://unix:" + path + ":" + endpoint) // "/api/query-protocol-utxo")
+  } else {
+    const url = new URL(domain.fields.host);
+    url.port = domain.fields.port.toString();
+    return (url.toString() + endpoint)
+  }
+}
+
 export const findProtocolOut: (
   lucid: L.Lucid,
-  path: string,
-) => Promise<L.UTxO> = async (lucid: L.Lucid, path: string) => {
+  path: UnixDomainOrInternetDomain,
+) => Promise<L.UTxO> = async (lucid: L.Lucid, path: UnixDomainOrInternetDomain) => {
   logger.debug("findProtocolOut");
-  const data = await got("http://unix:" + path + ":/api/query-protocol-utxo", {
+  const endpoint =  "/api/query-protocol-utxo";
+  const domainPath = mkDomainPath(path,endpoint);
+  const data = await got(domainPath, {
     method: "post",
     headers: { "Content-Type": "application/json" },
     json: {},
-    enableUnixSockets: true,
+    enableUnixSockets: isUnixDomain(path),
   }).json().catch((err) => {
     // Patch the exception s.t. we can see the response body in the generated error message
     if (err instanceof HTTPError) {
@@ -185,22 +204,24 @@ type SetDatumResponse = { name: string; fields: Array<SetDatumResponseBody> };
 
 export const findOldSetDatum: (
   lucid: L.Lucid,
-  path: string,
+  path: UnixDomainOrInternetDomain,
   domain: string,
 ) => Promise<SetDatumQueryResult> = async (
   lucid: L.Lucid,
-  path: string,
+  path: UnixDomainOrInternetDomain,
   domain: string,
 ) => {
   const hexDomain = Buffer.from(domain).toString("hex");
+  const endpoint = "/api/query-set-insertion-utxo";
+  const domainPath = mkDomainPath(path,endpoint);
 
   const data = await got(
-    "http://unix:" + path + ":/api/query-set-insertion-utxo",
+    domainPath,
     {
       method: "post",
       json: { name: hexDomain },
       headers: { "Content-Type": "application/json" },
-      enableUnixSockets: true,
+      enableUnixSockets: isUnixDomain(path),
     },
   ).json().catch((err) => {
     // Patch the exception s.t. we can see the response body in the generated error message
@@ -240,14 +261,16 @@ export const findOldSetDatum: (
   return { setDatumUTxO: setDatumUtxo, setDatum: setDatum };
 };
 
-export const setProtocolNFT = async (path: string, protocolCS: string) => {
+export const setProtocolNFT = async (path: UnixDomainOrInternetDomain, protocolCS: string) => {
+  const endpoint = "/api/set-protocol-nft";
+  const domainPath = mkDomainPath(path,endpoint);
   const body = { protocolNft: { currency_symbol: protocolCS, token_name: "" } };
 
-  const data = await got("http://unix:" + path + ":/api/set-protocol-nft", {
+  const data = await got(domainPath, {
     method: "post",
     json: body,
     headers: { "Content-Type": "application/json" },
-    enableUnixSockets: true,
+    enableUnixSockets: isUnixDomain(path),
   }).json();
 
   logger.debug("set protocol nft response:\n" + JSON.stringify(data, null, 4));

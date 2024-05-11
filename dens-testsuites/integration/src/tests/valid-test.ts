@@ -3,6 +3,7 @@ import { Services } from "../lib/services.js";
 import * as L from "lucid-cardano";
 import * as CSL from "@emurgo/cardano-serialization-lib-nodejs";
 import * as Tx from "dens-transactions/index.js";
+import { UnixDomainOrInternetDomain } from "lbf-dens-db/LambdaBuffers/Dens/Config.mjs";
 
 test.describe("Happy path test for transactions", async () => {
   let services: Services | undefined;
@@ -14,7 +15,10 @@ test.describe("Happy path test for transactions", async () => {
     t.diagnostic("Ogmios url: " + services!.ogmios.host);
     t.diagnostic("Ogmios port: " + services!.ogmios.port);
 
-    const socketPath = services!.densQuery.socketPath;
+    const socketPath: UnixDomainOrInternetDomain = {name: 'UnixDomain',
+                        fields: {
+                          path: services!.densQuery.socketPath}
+                       };
 
     const fakeProvider = new Tx.OgmiosOnly(
       services!.ogmios.host,
@@ -42,7 +46,7 @@ test.describe("Happy path test for transactions", async () => {
       userPrivKey.to_bech32(),
     );
 
-    const oneShotRef = await Tx.mkProtocolOneShot(lucid);
+    const oneShotRef = await Tx.getProtocolOneShot(lucid);
 
     const params = await Tx.mkParams(lucid, oneShotRef, socketPath);
 
@@ -52,16 +56,15 @@ test.describe("Happy path test for transactions", async () => {
     const initializeDeNSTx = await Tx.initializeDeNS(
       lucid,
       params,
-      socketPath,
       oneShotRef,
     );
 
-    const initTxHash = await Tx.signAndSubmitTx(lucid, initializeDeNSTx);
+    const initTxHash = await Tx.signAndSubmitTx(initializeDeNSTx);
 
     t.diagnostic("Initialize dens tx hash:");
     t.diagnostic(initTxHash);
 
-    await new Promise((r) => setTimeout(r, 10000));
+    await lucid.awaitTx(initTxHash);
 
     const registerDomainTx = await Tx.registerDomain(
       lucid,
@@ -71,14 +74,13 @@ test.describe("Happy path test for transactions", async () => {
     );
 
     const registerDomainTxHash = await Tx.signAndSubmitTx(
-      lucid,
-      registerDomainTx,
+      registerDomainTx
     );
 
     t.diagnostic("Register domain tx hash: " + registerDomainTxHash);
 
     // idk if we need to wait for the server to pick up on changes but it likely can't hurt
-    await new Promise((r) => setTimeout(r, 2000));
+    await lucid.awaitTx(registerDomainTxHash);
     const userAddress = await lucid.wallet.address();
 
     const updateRecordTx = await Tx.updateRecord(
@@ -93,7 +95,9 @@ test.describe("Happy path test for transactions", async () => {
       socketPath,
     );
 
-    const updateRecordTxHash = await Tx.signAndSubmitTx(lucid, updateRecordTx);
+    const updateRecordTxHash = await Tx.signAndSubmitTx(updateRecordTx);
+
+    await lucid.awaitTx(updateRecordTxHash);
 
     t.diagnostic("UpdateRecordTxHash: " + updateRecordTxHash);
   });
