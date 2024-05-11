@@ -16,6 +16,286 @@ import { WebSocket } from "ws";
 import * as url from "node:url";
 
 /**
+ * Action to update the protocol UTxO when rolling forward
+ */
+export async function rollForwardProtocolUtxo(
+  client: Db.DensDbClient,
+  tx: Readonly<OgmiosSchema.Transaction>,
+) {
+  const txId: PlaV1.TxId = ogmiosTransactionToPlaTxId(tx);
+  const protocolNft = await client.selectProtocolNft();
+  const isProtocolUtxo = (txOut: OgmiosSchema.TransactionOutput) => {
+    const amount = txOut.value?.[Buffer.from(protocolNft[0]).toString("hex")]
+      ?.[Buffer.from(protocolNft[1]).toString("hex")];
+
+    if (amount === undefined) {
+      return false;
+    }
+    return amount > 0n;
+  };
+
+  for (let i = 0; i < tx.outputs.length; ++i) {
+    const txOut: OgmiosSchema.TransactionOutput = tx.outputs[i]!;
+    const txOutRef = { txOutRefId: txId, txOutRefIdx: BigInt(i) };
+
+    if (!isProtocolUtxo(txOut)) {
+      continue;
+    }
+
+    if (txOut.datum === undefined) {
+      continue;
+    }
+
+    const plaPlutusData = hexPlutusDataToPlaPlutusData(txOut.datum);
+
+    try {
+      const protocol = LbrPlutusV1.IsPlutusData[LbfDens.Protocol]
+        .fromData(plaPlutusData);
+
+      await client.insertTxOutRef(txOutRef);
+      await client.insertProtocol({ txOutRef, protocol });
+
+      logger.info(
+        `Inserted protocol datum as follows\n ${
+          JSON.stringify(protocol, stringifyReplacer)
+        }`,
+      );
+    } catch (err) {
+      if (err instanceof PlaPd.IsPlutusDataError) {
+        logger.warn(
+          `Failed to decode Protocol's datum ${err}.\nDATUM:\n ${
+            JSON.stringify(plaPlutusData, stringifyReplacer)
+          } `,
+        );
+      } else {
+        throw err;
+      }
+    }
+  }
+}
+
+export async function rollForwardDeleteTxInputs(
+  client: Db.DensDbClient,
+  tx: Readonly<OgmiosSchema.Transaction>,
+) {
+  for (const txIn of tx.inputs) {
+    const txOutRef = ogmiosTransactionOutputReferenceToPlaTxOutRef(txIn);
+    logger.verbose(
+      `Consuming TxOutRef: ${JSON.stringify(txOutRef, stringifyReplacer)}`,
+    );
+    await client.deleteTxOutRef(txOutRef);
+  }
+}
+
+/**
+ * Action to update the the DeNS set elements
+ */
+export async function rollForwardInsertDensSetElement(
+  client: Db.DensDbClient,
+  tx: OgmiosSchema.Transaction,
+) {
+  const txId: PlaV1.TxId = ogmiosTransactionToPlaTxId(tx);
+  const protocol = (await client.selectProtocol())?.protocol;
+
+  if (protocol === undefined) {
+    return;
+  }
+
+  /*
+   * We identify whether this transaction affects the dens set by testing if
+   * it mints the SetElemId token.
+   */
+
+  const hasSetElemId = (assets: Readonly<OgmiosSchema.Assets>) => {
+    // TODO(jaredponn): document that this always has the empty token name
+    const setElemIdCurrencySymbolHex = Buffer.from(
+      protocol.setElemMintingPolicy,
+    ).toString("hex");
+    const setElemAmount = assets?.[setElemIdCurrencySymbolHex]?.[""];
+    return setElemAmount !== undefined && setElemAmount > 0n;
+  };
+
+  {
+    const minted = tx.mint;
+
+    if (minted === undefined) {
+      return;
+    }
+
+    if (!hasSetElemId(minted)) {
+      return;
+    }
+  }
+
+  logger.info(
+    `(SetElem) Transaction id ${
+      JSON.stringify(txId, stringifyReplacer)
+    } is DeNS Set Element transaction.`,
+  );
+
+  /*
+   * Find the UTxOs which are related to the set element id
+   */
+  const outputs: [OgmiosSchema.TransactionOutput, PlaV1.TxOutRef][] = [];
+  for (let i = 0; i < tx.outputs.length; ++i) {
+    const txOut = tx.outputs[i]!;
+    const txOutRef = { txOutRefId: txId, txOutRefIdx: BigInt(i) };
+    if (hasSetElemId(txOut.value)) {
+      outputs.push([txOut, txOutRef]);
+    }
+  }
+
+  if (outputs.length !== 2) {
+    logger.warn(
+      `(SetElem) invalid transaction too many outputs with Set Elem assets -- most likely a bug in the onchain code`,
+    );
+    return;
+  }
+
+  /*
+   * Update the UTxOs / add them in
+   */
+
+  for (const [txOut, txOutRef] of outputs) {
+    const datum = txOut.datum;
+
+    if (datum === undefined) {
+      logger.warn(
+        `(SetElem) invalid transaction output ${
+          JSON.stringify(txOutRef, stringifyReplacer)
+        } missing datum. Most likely a bug in the onchain code.`,
+      );
+      continue;
+    }
+
+    const plaPlutusData = hexPlutusDataToPlaPlutusData(datum);
+    try {
+      const setDatum = LbrPlutusV1.IsPlutusData[LbfDens.SetDatum]
+        .fromData(plaPlutusData);
+
+      await client.insertTxOutRef(txOutRef);
+      await client.upsertDensSetUtxo(
+        {
+          name: setDatum.key.densName,
+          pointer: [
+            protocol.elementIdMintingPolicy as unknown as PlaV1.CurrencySymbol,
+            elementIdTokenName(setDatum.key),
+          ],
+          txOutRef,
+        },
+      );
+    } catch (err) {
+      if (!(err instanceof PlaPd.IsPlutusDataError)) {
+        throw err;
+      } else {
+        logger.warn(
+          `(SetElem) invalid SetElem datum at ${
+            JSON.stringify(txOutRef, stringifyReplacer)
+          } ${err}\nDATUM:\n ${
+            JSON.stringify(plaPlutusData, stringifyReplacer)
+          }`,
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Roll forward action for things relating to an element id
+ */
+export async function rollForwardElemId(
+  client: Db.DensDbClient,
+  tx: Readonly<OgmiosSchema.Transaction>,
+) {
+  const protocol = (await client.selectProtocol())?.protocol;
+
+  if (protocol === undefined) {
+    return;
+  }
+
+  // First, we remove all the tx out refs that are consumed.. This will
+  // cascade to delete the associated RRs since we want the most recent RRs
+  for (const txInput of tx.inputs) {
+    client.deleteDensElemIdTxOutRef(
+      ogmiosTransactionOutputReferenceToPlaTxOutRef(txInput),
+    );
+  }
+
+  // Then, we collect all the RRs in the transaction outputs..
+  // As a harmless bug, we include all RRs that have a sensible datum when in
+  // reality, we really _should_ only include the RRs with a certain address
+  const rrs: [PlaV1.TxOutRef, LbfDens.DensRr][] = [];
+  for (let i = 0; i < tx.outputs.length; ++i) {
+    const txId: PlaV1.TxId = ogmiosTransactionToPlaTxId(tx);
+    const txOut = tx.outputs[i]!;
+    const txOutRef = { txOutRefId: txId, txOutRefIdx: BigInt(i) };
+
+    if (txOut.datum === undefined) {
+      continue;
+    }
+
+    const plaPlutusData = hexPlutusDataToPlaPlutusData(txOut.datum);
+
+    try {
+      const recordDatum = LbrPlutusV1.IsPlutusData[LbfDens.RecordDatum]
+        .fromData(plaPlutusData);
+
+      rrs.concat(recordDatum.recordValue.map((x) => [txOutRef, x]));
+    } catch (err) {
+      if (!(err instanceof PlaPd.IsPlutusDataError)) {
+        throw err;
+      }
+    }
+  }
+
+  const elemIdCurrencySymbol = protocol
+    .elementIdMintingPolicy as unknown as PlaV1.CurrencySymbol;
+  const getElemIdTokens = (value: OgmiosSchema.Value): PlaV1.TokenName[] => {
+    const elemIdCurrencySymbolHex = Buffer.from(elemIdCurrencySymbol).toString(
+      "hex",
+    );
+
+    const elemIdTns = value[elemIdCurrencySymbolHex];
+
+    if (elemIdTns === undefined) {
+      return [];
+    }
+
+    const result: PlaV1.TokenName[] = [];
+    for (const [k, v] of Object.entries(elemIdTns)) {
+      if (v > 0n) {
+        result.push(
+          Uint8Array.from(Buffer.from(k, "hex")) as unknown as PlaV1.TokenName,
+        );
+      }
+    }
+    return result;
+  };
+
+  // TODO(jaredponn): probably can better async here
+  for (let i = 0; i < tx.outputs.length; ++i) {
+    const txId: PlaV1.TxId = ogmiosTransactionToPlaTxId(tx);
+    const txOut = tx.outputs[i]!;
+    const txOutRef = { txOutRefId: txId, txOutRefIdx: BigInt(i) };
+
+    const elemIdTns = getElemIdTokens(txOut.value);
+
+    for (const tn of elemIdTns) {
+      const elemAssetClass: PlaV1.AssetClass = [elemIdCurrencySymbol, tn];
+
+      await client.insertDensElemIdUtxo(elemAssetClass, txOutRef);
+
+      for (const [_rrTxOutRef, rr] of rrs) {
+        await client.insertDensRr(
+          { elemTxOutRef: txOutRef, elemAssetClass },
+          rr,
+        );
+      }
+    }
+  }
+}
+
+/**
  * {@link rollForwardDb} rolls the database forwards via
  *
  *  - removing the UTxOs consumed by transactions in the provided block
@@ -50,188 +330,25 @@ export async function rollForwardDb(
 
     // Process all the transactions / add them in the database.
     // The steps are as follows.
-    // 1. Add the current block (point)
-    // 2. Remove all tx inputs from the dens UTxO set
-    // 3. Add tx outputs to the dens UTxO set as required.
     await db.densWithDbClient(async (client) => {
+      // TODO(jaredponn): we really want REPEATABLE READ isolation level.
+      // Doesn't seem like much of a bug for now -- there really _should_ only
+      // be one writer at a time.
       await client.insertPoint(point);
 
       for (const tx of txs) {
-        const txId = Prelude.fromJust(
-          PlaV1.txIdFromBytes(Uint8Array.from(Buffer.from(tx.id, "hex"))),
-        );
+        // NOTE(jaredponn): the order of these actions are important and
+        // dependent on specifics of the protocol
+        rollForwardProtocolUtxo(client, tx);
+        rollForwardInsertDensSetElement(client, tx);
+        rollForwardElemId(client, tx);
 
-        // 1.
-        for (const txIn of tx.inputs) {
-          const txOutRef = ogmiosTransactionOutputReferenceToPlaTxOutRef(txIn);
-          logger.verbose(
-            `Consuming TxOutRef: ${
-              JSON.stringify(txOutRef, stringifyReplacer)
-            }`,
-          );
-          await client.deleteTxOutRef(txOutRef);
-        }
-
-        // 2.
-        for (let i = 0; i < tx.outputs.length; ++i) {
-          const txOut: OgmiosSchema.TransactionOutput = tx.outputs[i]!;
-          const txOutRef = { txOutRefId: txId, txOutRefIdx: BigInt(i) };
-
-          logger.verbose(
-            `Adding TxOutRef: ${JSON.stringify(txOutRef, stringifyReplacer)}`,
-          );
-
-          // Add the TxOutRef
-
-          // TODO(jaredponn): we always add a TxOutRef, but we don't _always_
-          // need to add it and we really can be more precise in the sense that
-          // we should _only_ add a TxOutRef if it is a dens UTxO
-          await client.insertTxOutRef(txOutRef);
-
-          // All of the actions relating to the DeNS protocol require
-          // the UTxO to contain an inline datum
-          if (txOut.datum === undefined) {
-            continue;
-          }
-
-          const plaPlutusData = hexPlutusDataToPlaPlutusData(txOut.datum);
-          logger.info(
-            `Considering PlutusData:\n${
-              JSON.stringify(plaPlutusData, stringifyReplacer)
-            }`,
-          );
-
-          // Most of the actions relating to dens require us knowing
-          // the tokens at the UTxO
-          const csAndTns = ogmiosValueFlattenPositiveAmounts(txOut.value);
-
-          /**
-           * Attempt to update the Protocol UTxO
-           */
-          const isProtocolUtxo = ((protCurrencySymbol, protTokenName) => {
-            if (txOut.value[protCurrencySymbol] === undefined) {
-              return false;
-            }
-
-            if (txOut.value[protCurrencySymbol]![protTokenName] === undefined) {
-              return false;
-            }
-
-            return txOut.value[protCurrencySymbol]![protTokenName]! > 0n;
-          })(
-            Buffer.from(protocolNft[0].buffer).toString("hex"),
-            Buffer.from(protocolNft[1].buffer).toString("hex"),
-          );
-
-          if (isProtocolUtxo) {
-            try {
-              const protocol = LbrPlutusV1.IsPlutusData[LbfDens.Protocol]
-                .fromData(plaPlutusData);
-              await client.insertProtocol({ txOutRef, protocol });
-              logger.info(
-                `Inserted protocol datum as follows\n ${
-                  JSON.stringify(protocol, stringifyReplacer)
-                }`,
-              );
-            } catch (err) {
-              if (err instanceof PlaPd.IsPlutusDataError) {
-                logger.warn(
-                  `Failed to decode Protocol's datum ${err}.\nDATUM:\n ${
-                    JSON.stringify(plaPlutusData, stringifyReplacer)
-                  } `,
-                );
-              } else {
-                throw err;
-              }
-            }
-          }
-
-          /**
-           * Attempt to insert an RR
-           */
-          try {
-            const recordDatum = LbrPlutusV1.IsPlutusData[LbfDens.RecordDatum]
-              .fromData(plaPlutusData);
-
-            // Add the UTxO to the database
-            const addToDbTask = client.insertDensRrsUtxo(
-              csAndTns,
-              {
-                // NOTE(jaredponn): the name isn't used in the insertion (it
-                // will be looked up based on the DensSet element)
-                name: undefined as unknown as Uint8Array,
-                rrs: recordDatum.recordValue,
-                txOutRef,
-              },
-            );
-
-            // NOTE(jaredponn): perhaps in the future, this step will be a bit more featureful
-            await Promise.all([addToDbTask]);
-          } catch (err) {
-            if (!(err instanceof PlaPd.IsPlutusDataError)) {
-              throw err;
-            } else {
-              logger.warn(
-                `(RR) Error when parsing datum at ${
-                  JSON.stringify(txOutRef, stringifyReplacer)
-                } ${err}\nDATUM:\n ${
-                  JSON.stringify(plaPlutusData, stringifyReplacer)
-                }`,
-              );
-            }
-          }
-
-          /**
-           * Attempt to insert a DeNS set element
-           */
-          try {
-            const protocolUtxo = await client.selectProtocol();
-            const setDatum = LbrPlutusV1.IsPlutusData[LbfDens.SetDatum]
-              .fromData(plaPlutusData);
-
-            const name = setDatum.key.densName;
-
-            if (protocolUtxo !== undefined) {
-              const { protocol } = protocolUtxo;
-
-              const dnsClass = setDatum.key.densClass;
-              const tokenName = elementIdTokenName(name, dnsClass);
-
-              await client.insertDensSetUtxo(
-                csAndTns,
-                {
-                  name,
-                  pointer: [
-                    Prelude.fromJust(
-                      PlaV1.currencySymbolFromBytes(
-                        protocol.elementIdMintingPolicy,
-                      ),
-                    ),
-                    tokenName,
-                  ],
-                  txOutRef,
-                },
-              );
-            }
-          } catch (err) {
-            if (!(err instanceof PlaPd.IsPlutusDataError)) {
-              throw err;
-            } else {
-              logger.warn(
-                `(SetElem) Error when parsing datum at ${
-                  JSON.stringify(txOutRef, stringifyReplacer)
-                } ${err}\nDATUM:\n ${
-                  JSON.stringify(plaPlutusData, stringifyReplacer)
-                }`,
-              );
-            }
-          }
-        }
-        // TODO(jaredponn): we really should scan through other outputs like
-        // the collateralReturn output.
-        // But! The offchain code really shouldn't generate a useful DeNS
-        // output as a collateralReturn output
+        rollForwardDeleteTxInputs(client, tx);
       }
+      // TODO(jaredponn): we really should scan through other outputs like
+      // the collateralReturn output.
+      // But! The offchain code really shouldn't generate a useful DeNS
+      // output as a collateralReturn output
     });
   }
 }
@@ -675,25 +792,27 @@ export function ogmiosValueFlattenPositiveAmounts(
  *  So, we can use this for our purposes.
  */
 export function elementIdTokenName(
-  name: Uint8Array,
-  dnsClass: bigint,
+  densKey: LbfDens.DensKey,
 ): PlaV1.TokenName {
-  const nameAndClassTuple: PlaPd.PlutusData = {
-    name: `Constr`,
-    fields: [1n, [{ name: `Integer`, fields: dnsClass }, {
-      name: `Bytes`,
-      fields: name,
-    }]],
-  };
-
-  const cslPd = plaPlutusDataToCslPlutusData(nameAndClassTuple);
+  const cslPd = plaPlutusDataToCslPlutusData(
+    LbrPlutusV1.IsPlutusData[LbfDens.DensKey].toData(densKey),
+  );
   const cslDataHash = csl.hash_plutus_data(cslPd);
-  const result = cslDataHash.to_bytes();
+
+  const result = Buffer.from(cslDataHash.to_hex(), "hex");
 
   cslPd.free();
   cslDataHash.free();
 
-  return Prelude.fromJust(PlaV1.tokenNameFromBytes(result));
+  return Uint8Array.from(result) as PlaV1.TokenName;
+}
+
+export function ogmiosTransactionToPlaTxId(
+  tx: OgmiosSchema.Transaction,
+): PlaV1.TxId {
+  return Prelude.fromJust(
+    PlaV1.txIdFromBytes(Uint8Array.from(Buffer.from(tx.id, "hex"))),
+  );
 }
 
 /**

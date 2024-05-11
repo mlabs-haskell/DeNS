@@ -1,13 +1,10 @@
 // This file includes tests which go back and forth from the backing db
 // postgres to dens-query
 import { it } from "node:test";
-import * as fc from "fast-check";
 import * as assert from "node:assert/strict";
 import * as DbTestUtils from "./DbTestUtils.js";
 import * as Samples from "./Samples.js";
-import * as Prelude from "prelude";
 import * as Db from "../DensQuery/Db.js";
-import * as PlaV1 from "plutus-ledger-api/V1.js";
 
 // NOTE(jaredponn): Why aren't we doing top level `describe`s?
 //
@@ -130,13 +127,7 @@ it("Database basic tests", async () => {
             emptySetElem.txOutRef,
           );
 
-          await client.insertDensSetUtxo(
-            [[
-              Prelude.fromJust(
-                PlaV1.currencySymbolFromBytes(protocol.setElemMintingPolicy),
-              ),
-              PlaV1.adaToken,
-            ]],
+          await client.upsertDensSetUtxo(
             emptySetElem,
           );
         });
@@ -161,13 +152,7 @@ it("Database basic tests", async () => {
             `Expected taylorswift.com to NOT be already inserted`,
           );
 
-          await client.insertDensSetUtxo(
-            [[
-              Prelude.fromJust(
-                PlaV1.currencySymbolFromBytes(protocol.setElemMintingPolicy),
-              ),
-              PlaV1.adaToken,
-            ]],
+          await client.upsertDensSetUtxo(
             taylorSwiftDotComSetElem,
           );
         });
@@ -226,13 +211,7 @@ it("Database basic tests", async () => {
             googleDotComSetElem.txOutRef,
           );
 
-          await client.insertDensSetUtxo(
-            [[
-              Prelude.fromJust(
-                PlaV1.currencySymbolFromBytes(protocol.setElemMintingPolicy),
-              ),
-              PlaV1.adaToken,
-            ]],
+          await client.upsertDensSetUtxo(
             googleDotComSetElem,
           );
         });
@@ -254,36 +233,46 @@ it("Database basic tests", async () => {
         const taylorSwiftDotComRrsUtxo2 = Samples.fcGenerate(
           Samples.fcTxOutRef(),
         );
-        await it(`Adding rrs to taylorswift.com`, async () => {
-          // Insert the first RR
+        const taylorSwiftDotComElemIdUtxo = Samples.fcGenerate(
+          Samples.fcTxOutRef(),
+        );
+        await it(`Adding rrs to taylorswift.com`, async (t) => {
+          t.diagnostic(`Adding elemId for taylorswift.com`);
+          await client.insertTxOutRef(taylorSwiftDotComElemIdUtxo);
+          await client.insertDensElemIdUtxo(
+            taylorSwiftDotComSetElem.pointer,
+            taylorSwiftDotComElemIdUtxo,
+          );
+
+          t.diagnostic(`Adding first RR`);
           await client.insertTxOutRef(taylorSwiftDotComRrsUtxo1);
 
-          const taylorSwiftRrs1 = {
-            name: taylorSwiftDotComSetElem.name,
-            rrs: Samples.fcGenerate(fc.array(Samples.fcDensRr())),
-            txOutRef: taylorSwiftDotComRrsUtxo1,
-          };
-          await client.insertDensRrsUtxo(
-            [taylorSwiftDotComSetElem.pointer],
-            taylorSwiftRrs1,
+          const taylorSwiftRr1 = Samples.fcGenerate(Samples.fcDensRr());
+
+          await client.insertDensRr(
+            {
+              elemTxOutRef: taylorSwiftDotComElemIdUtxo,
+              elemAssetClass: taylorSwiftDotComSetElem.pointer,
+            },
+            taylorSwiftRr1,
           );
           const res1 = await client.selectNamesRrs(
             taylorSwiftDotComSetElem.name,
           );
-          assert.deepStrictEqual(res1, taylorSwiftRrs1.rrs);
+          assert.deepStrictEqual(res1, [taylorSwiftRr1]);
 
           // Insert the second RR
+          const taylorSwiftRr2 = Samples.fcGenerate(Samples.fcDensRr());
 
           await client.insertTxOutRef(taylorSwiftDotComRrsUtxo2);
 
-          const taylorSwiftRrs2 = {
-            name: taylorSwiftDotComSetElem.name,
-            rrs: Samples.fcGenerate(fc.array(Samples.fcDensRr())),
-            txOutRef: taylorSwiftDotComRrsUtxo2,
-          };
-          await client.insertDensRrsUtxo(
-            [taylorSwiftDotComSetElem.pointer],
-            taylorSwiftRrs2,
+          t.diagnostic(`Adding second RR`);
+          await client.insertDensRr(
+            {
+              elemTxOutRef: taylorSwiftDotComElemIdUtxo,
+              elemAssetClass: taylorSwiftDotComSetElem.pointer,
+            },
+            taylorSwiftRr2,
           );
           const res2 = await client.selectNamesRrs(
             taylorSwiftDotComSetElem.name,
@@ -293,7 +282,7 @@ it("Database basic tests", async () => {
           // isn't necessarily well defined.
           assert.deepStrictEqual(
             res2,
-            taylorSwiftRrs1.rrs.concat(taylorSwiftRrs2.rrs),
+            [taylorSwiftRr1, taylorSwiftRr2],
           );
         });
 
