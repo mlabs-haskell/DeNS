@@ -18,7 +18,6 @@ import {
   Unit,
   UTxO,
 } from "lucid-cardano";
-3;
 
 import { C } from "lucid-cardano";
 
