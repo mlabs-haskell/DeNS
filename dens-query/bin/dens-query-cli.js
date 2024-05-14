@@ -1,3 +1,2 @@
-#!/usr/bin/env node
-
-import "../dist/DensQuery/Cli.js";
+#!/usr/bin/env node 
+import "../dist/DensQuery/App.js";

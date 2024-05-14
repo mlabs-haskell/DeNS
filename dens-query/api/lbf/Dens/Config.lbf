@@ -1,0 +1,67 @@
+-- Dens.Config contains all the protocol configurations for `dens-query`
+-- (ogmios, db connections, etc.)
+--
+-- = References 
+--  * [[[bsdipc]]] An Introductory 4.3 BSD Interprocess Communication Tutorial
+module Dens.Config
+
+import Prelude
+import Plutus.V1 (AssetClass)
+
+-- See <<bsdipc>>
+record UnixDomain = { path: Text }
+
+derive Eq UnixDomain
+derive Json UnixDomain
+
+-- See <<bsdipc>>
+record InternetDomain =
+    { host: Text
+    , port: Integer
+    }
+derive Eq InternetDomain
+derive Json InternetDomain
+
+-- See <<bsdipc>>
+sum UnixDomainOrInternetDomain
+    = UnixDomain UnixDomain
+    | InternetDomain InternetDomain
+
+derive Eq UnixDomainOrInternetDomain
+derive Json UnixDomainOrInternetDomain
+
+-- Configuration for running ogmios
+record Url = {url: Text}
+derive Eq Url
+derive Json Url
+
+prod OgmiosConfig = (Url)
+    
+derive Eq OgmiosConfig
+derive Json OgmiosConfig
+
+-- Configuration for connecting to the DB
+record DbConfig =
+    { socket: UnixDomainOrInternetDomain
+    , user: Text
+    , password: Text
+    , database: Text
+    }
+derive Eq DbConfig
+derive Json DbConfig
+
+
+-- Configuration for the backend server
+prod ServerConfig = UnixDomainOrInternetDomain
+derive Eq ServerConfig
+derive Json ServerConfig
+
+-- Complete configuration for dens-query.
+record Config =
+    { ogmios : OgmiosConfig
+    , database: DbConfig
+    , server: ServerConfig
+    , protocolNft: AssetClass
+    }
+derive Eq Config
+derive Json Config

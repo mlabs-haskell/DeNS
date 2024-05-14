@@ -12,6 +12,7 @@
     {
       packages = {
         lbf-dens-plutarch = inputs.lambda-buffers.lib.${system}.lbfPlutarch lbf-dens-args;
+        lbf-dens-typescript = inputs.lambda-buffers.lib.${system}.lbfPlutusTypescript lbf-dens-args;
       };
     };
 }

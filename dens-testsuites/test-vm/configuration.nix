@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 {
   boot.loader = {
     systemd-boot.enable = true;
@@ -37,7 +37,7 @@
           # This allows ssh in the vm via port 6969
           # with something like
           # ```
-          # ssh -p 6969 alice@127.0.0.1
+          # ssh -p 6969 dens@127.0.0.1
           # ```
           from = "host";
           guest.port = 22;
@@ -47,9 +47,9 @@
   };
 
   ######################
-  # Create a user named `alice` w/o a password
+  # Create a user named `dens` w/o a password
   ######################
-  users.users.alice = {
+  users.users.dens = {
     isNormalUser = true;
     extraGroups = [ "wheel" ]; # Enable `sudo` for the user.
     packages = with pkgs; [
@@ -78,9 +78,34 @@
       # Enable postgres
       postgresql = {
         enable = true;
-        enableTCPIP = true;
         port = 5432;
+        ensureDatabases = [ "dens" ];
+        settings = {
+          # Listen on all addresses
+          listen_addresses = lib.mkForce "*";
+        };
+        ensureUsers =
+          [
+            {
+              name = "dens";
+              ensureDBOwnership = true;
+              ensureClauses = {
+                login = true;
+                createdb = true;
+              };
+            }
+          ];
+        # # https://www.postgresql.org/docs/current/auth-pg-hba-conf.html
+        authentication = pkgs.lib.mkOverride 10
+          ''
+            # Allow anyone (yes anyone!) to connect to the database
+            # TYPE  DATABASE        USER            ADDRESS                 METHOD
+            local   all             all                                     trust
+            host    all             all             0.0.0.0/0               trust
+            host    all             all             ::0/0                   trust
+          '';
       };
+
 
       # Enable the cardano node
       cardano-node = {

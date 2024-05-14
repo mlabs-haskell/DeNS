@@ -1,32 +1,35 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.follows = "lambda-buffers/nixpkgs";
 
     # Module system for flakes
-    flake-parts.url = "github:hercules-ci/flake-parts";
+    flake-parts.follows = "lambda-buffers/flake-parts";
 
     # Code quality things
-    pre-commit-hooks-nix.url = "github:cachix/pre-commit-hooks.nix";
-    pre-commit-hooks-nix.inputs.nixpkgs.follows = "nixpkgs";
-    hci-effects.url = "github:hercules-ci/hercules-ci-effects";
+    pre-commit-hooks-nix.follows = "lambda-buffers/pre-commit-hooks";
+    hci-effects.follows = "lambda-buffers/hci-effects";
 
     # flake-lang.nix: Tools for creating project flakes
     flake-lang.follows = "lambda-buffers/flake-lang";
 
     # LambdaBuffers: Toolkit for generating types and their semantics
     lambda-buffers = {
-      url = "github:mlabs-haskell/lambda-buffers?ref=jared/copy-instead-of-symlink-for-haskell-nix";
+      url = "github:mlabs-haskell/lambda-buffers";
     };
 
     # Plutarch
     plutarch.follows = "lambda-buffers/plutarch";
 
     # ogmios: Websockets for interacting with the cardano-node
-    ogmios.url = "github:mlabs-haskell/ogmios-nixos";
+    plutip.url = "github:mlabs-haskell/plutip/1bf0b547cd3689c727586abb8385c008fb2a3d1c";
+    ogmios.url = "github:mlabs-haskell/ogmios-nixos/78e829e9ebd50c5891024dcd1004c2ac51facd80";
 
     # cardano-node:
-    cardano-node.url = "github:input-output-hk/cardano-node/8.7.3";
+    cardano-node.url = "github:input-output-hk/cardano-node";
 
+    # TypeScript libraries
+    prelude-typescript.follows = "lambda-buffers/prelude-typescript";
+    plutus-ledger-api-typescript.follows = "lambda-buffers/plutus-ledger-api-typescript";
   };
 
   outputs = inputs@{ flake-parts, ... }:

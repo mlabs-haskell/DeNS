@@ -1,0 +1,14 @@
+== Database Schema
+
+NOTE: Readers may skip this section.
+
+DeNS query uses PostgreSQL with many PostgreSQL specific extensions.
+In particular, the PostgreSQL specific extensions were used to respond to blockchain rollbacks 
+where the blockchain will rollback to a particular block 
+requiring the protocol to undo all the changes from the present to the block to rollback to.
+
+.Database schema source code
+[source,plpgsql]
+```
+include::{apidir}/postgres/dens.sql[]
+```

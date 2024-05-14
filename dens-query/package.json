@@ -12,7 +12,8 @@
   "scripts": {
     "build": "npx tsc -b src/DensQuery",
     "test": "npx tsc -b src/Tests && node --test",
-    "docs": "npx typedoc"
+    "doc-typedoc": "npx typedoc",
+    "doc-manual": "asciidoctor ./doc/MANUAL.adoc -o index.html"
   },
   "author": "DeNS Team",
   "license": "ISC",
@@ -21,9 +22,30 @@
     "./.extra-dependencies/**/*"
   ],
   "devDependencies": {
+    "@types/express": "^4.17.21",
     "@types/node": "^20.8.10",
+    "@types/pg": "^8.11.0",
+    "@types/ws": "^8.5.10",
     "fast-check": "^3.14.0",
+    "pure-rand": "^6.0.4",
     "typedoc": "^0.25.4",
     "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@cardano-ogmios/schema": "^6.0.3",
+    "@emurgo/cardano-serialization-lib-nodejs": "^11.5.0",
+    "express": "^4.19.2",
+    "lbf-dens": "file:.extra-dependencies/lbf-dens",
+    "lbf-dens-db": "file:.extra-dependencies/lbf-dens-db",
+    "lbf-plutus": "file:.extra-dependencies/lbf-plutus",
+    "lbf-prelude": "file:.extra-dependencies/lbf-prelude",
+    "lbr-plutus": "file:.extra-dependencies/lbr-plutus",
+    "lbr-prelude": "file:.extra-dependencies/lbr-prelude",
+    "pg": "^8.11.3",
+    "plutus-ledger-api": "file:.extra-dependencies/plutus-ledger-api",
+    "prelude": "file:.extra-dependencies/prelude",
+    "raw-body": "^2.5.2",
+    "winston": "^3.11.0",
+    "ws": "^8.16.0"
   }
 }
