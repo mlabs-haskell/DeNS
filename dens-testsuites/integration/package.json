@@ -1,0 +1,31 @@
+{
+  "name": "dens-integration",
+  "version": "1.0.0",
+  "description": "Integration testsuite for DeNS",
+  "type": "module",
+  "bin": {
+    "dens-integration-cli": "./bin/dens-integration-cli.js"
+  },
+  "scripts": {
+    "build": "npx tsc -b src/",
+    "test": "npm run build && node --test"
+  },
+  "author": "DeNS team",
+  "license": "ISC",
+  "dependencies": {
+    "@emurgo/cardano-serialization-lib-nodejs": "^11.5.0",
+    "chalk": "^4.0.0",
+    "lbf-dens": "file:.extra-dependencies/lbf-dens",
+    "lbf-dens-db": "file:.extra-dependencies/lbf-dens-db",
+    "lbf-plutus": "file:.extra-dependencies/lbf-plutus",
+    "lbf-prelude": "file:.extra-dependencies/lbf-prelude",
+    "lbr-plutus": "file:.extra-dependencies/lbr-plutus",
+    "lbr-prelude": "file:.extra-dependencies/lbr-prelude",
+    "plutus-ledger-api": "file:.extra-dependencies/plutus-ledger-api",
+    "prelude": "file:.extra-dependencies/prelude",
+    "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7"
+  }
+}
