@@ -77,8 +77,8 @@ derive PlutusData SetDatum
 -- Note(jaredponn) probably in the future we'll need to allow doing more than
 -- just insertions (e.g leasing will require a bit more), so we make this a
 -- sumtype
-sum SetInsert 
-    = Insert DensKey
+record SetInsert
+    = { setInsert: DensKey }
 
 derive Eq SetInsert
 derive Json SetInsert

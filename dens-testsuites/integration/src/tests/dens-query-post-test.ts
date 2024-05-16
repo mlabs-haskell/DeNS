@@ -31,7 +31,6 @@ class HttpTester {
     data: string,
   ): Promise<http.IncomingMessage & { body: string }> {
     options.socketPath = this.socketPath;
-
     const task = new Promise<http.IncomingMessage & { body: string }>(
       (resolve, reject) => {
         const callback = (res: http.IncomingMessage) => {
@@ -110,15 +109,11 @@ test.describe(`Sending POST requests to the server`, async () => {
 
     const response = await httpTester!.send(options, data);
 
-    // TODO(jaredponn): figure out the story for invalid JSON parsing errors in
-    // dens-query sometime.
-    // ```
-    // assert.deepStrictEqual(
-    //     response.body,
-    //     `What should the expected value be?`,
-    //     `bad response body`
-    // );
-    // ```
+    assert.deepStrictEqual(
+      response.body,
+      `SyntaxError: Unexpected token h in JSON at position 2`,
+      `Invalid error message`,
+    );
 
     assert.notDeepStrictEqual(
       response.statusCode,
@@ -195,6 +190,36 @@ test.describe(`Sending POST requests to the server`, async () => {
     assert.deepStrictEqual(
       response.statusCode,
       200,
+      `bad status code`,
+    );
+  });
+
+  await test.it(`/api/query-protocol-utxo: no protocol utxo available yet `, async () => {
+    const data = JSON.stringify({});
+
+    const options = {
+      socketPath: services!.densQuery.socketPath,
+      path: `/api/query-protocol-utxo`,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(data),
+      },
+    };
+
+    const response = await httpTester!.send(options, data);
+
+    assert.deepStrictEqual(
+      LbrPrelude.Json[LbDensServer.QueryDensProtocolUtxoResponse].fromJson(
+        PJson.parseJson(response.body),
+      ),
+      { fields: { error: "Failed to find protocol UTxO." }, name: "Failed" },
+      `bad response body`,
+    );
+
+    assert.deepStrictEqual(
+      response.statusCode,
+      500,
       `bad status code`,
     );
   });
