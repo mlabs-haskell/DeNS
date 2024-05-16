@@ -15,10 +15,12 @@ test.describe("Happy path test for transactions", async () => {
     t.diagnostic("Ogmios url: " + services!.ogmios.host);
     t.diagnostic("Ogmios port: " + services!.ogmios.port);
 
-    const socketPath: UnixDomainOrInternetDomain = {name: 'UnixDomain',
-                        fields: {
-                          path: services!.densQuery.socketPath}
-                       };
+    const socketPath: UnixDomainOrInternetDomain = {
+      name: "UnixDomain",
+      fields: {
+        path: services!.densQuery.socketPath,
+      },
+    };
 
     const fakeProvider = new Tx.OgmiosOnly(
       services!.ogmios.host,
@@ -74,7 +76,7 @@ test.describe("Happy path test for transactions", async () => {
     );
 
     const registerDomainTxHash = await Tx.signAndSubmitTx(
-      registerDomainTx
+      registerDomainTx,
     );
 
     t.diagnostic("Register domain tx hash: " + registerDomainTxHash);

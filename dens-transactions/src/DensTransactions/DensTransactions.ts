@@ -4,7 +4,7 @@ import {
   Protocol,
   RecordDatum,
   SetDatum,
-  SetInsert
+  SetInsert,
 } from "lbf-dens/LambdaBuffers/Dens.mjs";
 import { IsPlutusData } from "lbr-plutus/PlutusData.js";
 import * as Utils from "./Utils.js";
@@ -14,16 +14,15 @@ import { UnixDomainOrInternetDomain } from "lbf-dens-db/LambdaBuffers/Dens/Confi
 const initSetInsert = () => {
   const setInsert: SetInsert = { setInsert: Utils.mkDensKey("") };
   return Utils.toCslPlutusData(IsPlutusData[SetInsert].toData(setInsert));
-}
+};
 
 export const getProtocolOneShot = async (lucid: L.Lucid): Promise<L.OutRef> => {
   const walletUTXOs = await lucid.wallet.getUtxos();
 
   const headUTXO = walletUTXOs[0];
 
-  return {txHash: headUTXO.txHash, outputIndex: headUTXO.outputIndex}
-}
-
+  return { txHash: headUTXO.txHash, outputIndex: headUTXO.outputIndex };
+};
 
 export const initializeDeNS = async (
   lucid: L.Lucid,

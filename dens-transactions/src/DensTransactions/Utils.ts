@@ -34,7 +34,6 @@ import setValEnvelope from "./scripts/mkSetValidator.json" with {
 import { logger } from "./Logger.js";
 import { UnixDomainOrInternetDomain } from "lbf-dens-db/LambdaBuffers/Dens/Config.mjs";
 
-
 // deno-lint-ignore no-explicit-any
 (BigInt as unknown as any).prototype["toJSON"] = function () {
   return this.toString();
@@ -132,27 +131,33 @@ export const unsafeCurrSymb = (x: string) => {
 export const emptyCS = unsafeCurrSymb("");
 
 export const isUnixDomain = (domain: UnixDomainOrInternetDomain): boolean => {
-  return (domain.name === 'UnixDomain')
-}
+  return (domain.name === "UnixDomain");
+};
 
-export const mkDomainPath = (domain: UnixDomainOrInternetDomain, endpoint: string): string => {
-  if (domain.name === 'UnixDomain') {
+export const mkDomainPath = (
+  domain: UnixDomainOrInternetDomain,
+  endpoint: string,
+): string => {
+  if (domain.name === "UnixDomain") {
     const path = domain.fields.path;
-    return ("http://unix:" + path + ":" + endpoint) // "/api/query-protocol-utxo")
+    return ("http://unix:" + path + ":" + endpoint); // "/api/query-protocol-utxo")
   } else {
     const url = new URL(domain.fields.host);
     url.port = domain.fields.port.toString();
-    return (url.toString() + endpoint)
+    return (url.toString() + endpoint);
   }
-}
+};
 
 export const findProtocolOut: (
   lucid: L.Lucid,
   path: UnixDomainOrInternetDomain,
-) => Promise<L.UTxO> = async (lucid: L.Lucid, path: UnixDomainOrInternetDomain) => {
+) => Promise<L.UTxO> = async (
+  lucid: L.Lucid,
+  path: UnixDomainOrInternetDomain,
+) => {
   logger.debug("findProtocolOut");
-  const endpoint =  "/api/query-protocol-utxo";
-  const domainPath = mkDomainPath(path,endpoint);
+  const endpoint = "/api/query-protocol-utxo";
+  const domainPath = mkDomainPath(path, endpoint);
   const data = await got(domainPath, {
     method: "post",
     headers: { "Content-Type": "application/json" },
@@ -213,7 +218,7 @@ export const findOldSetDatum: (
 ) => {
   const hexDomain = Buffer.from(domain).toString("hex");
   const endpoint = "/api/query-set-insertion-utxo";
-  const domainPath = mkDomainPath(path,endpoint);
+  const domainPath = mkDomainPath(path, endpoint);
 
   const data = await got(
     domainPath,
@@ -261,9 +266,12 @@ export const findOldSetDatum: (
   return { setDatumUTxO: setDatumUtxo, setDatum: setDatum };
 };
 
-export const setProtocolNFT = async (path: UnixDomainOrInternetDomain, protocolCS: string) => {
+export const setProtocolNFT = async (
+  path: UnixDomainOrInternetDomain,
+  protocolCS: string,
+) => {
   const endpoint = "/api/set-protocol-nft";
-  const domainPath = mkDomainPath(path,endpoint);
+  const domainPath = mkDomainPath(path, endpoint);
   const body = { protocolNft: { currency_symbol: protocolCS, token_name: "" } };
 
   const data = await got(domainPath, {
