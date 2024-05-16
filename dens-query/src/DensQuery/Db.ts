@@ -573,7 +573,8 @@ export class DensDbClient {
     const res = await this.query(
       {
         text:
-          `SELECT * FROM (VALUES ((dens_sync_protocol_nft($1, $2)).*) ) AS t (pk, currency_symbol, token_name)`,
+          `SELECT (asset_class).currency_symbol AS currency_symbol, (asset_class).token_name AS token_name ` +
+          `FROM (VALUES ((dens_sync_protocol_nft($1, $2)).*) ) AS t (pk, asset_class)`,
         values: [currencySymbol, tokenName],
       },
     );
