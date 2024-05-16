@@ -657,8 +657,23 @@ export function validateDensRr(rr: DensRr): string | undefined {
     }
 
     case `SOA`: {
-      // TODO(jaredponn): write a quick regex to validate this.
+      // TODO(jaredponn): write a quick regex to validate this. Urgh, I'm not
+      // actually sure what PowerDNS expects here -- to my knowledge, this
+      // isn't documented... So we write a quick regex in an attempt to
+      // 'generalize' what it looks like it wants.
+      // See {@link https://doc.powerdns.com/authoritative/appendices/types.html#soa}..
+      // See 3.3.13. of {@link https://www.ietf.org/rfc/rfc1035.txt}
+      // And, dens_is_valid_name in api/postgres/dens.sql
+      const soaRegex =
+        /^(?<primary>([a-z]([-a-z0-9]*[a-z0-9])?)(.([a-z]([-a-z0-9]*[a-z0-9])?))*) (?<hostname>([a-z]([-a-z0-9]*[a-z0-9])?)(.([a-z]([-a-z0-9]*[a-z0-9])?))*) (?<serial>[0-9]+) (?<refresh>[0-9]+) (?<retry>[0-9]+) (?<expire>[0-9]+) (?<minimum>[0-9]+)$/g;
       const soa = Buffer.from(Uint8Array.from(rdata.fields)).toString();
+
+      const matches = soa.match(soaRegex);
+
+      if (matches === null) {
+        return undefined;
+      }
+
       return soa;
     }
   }
