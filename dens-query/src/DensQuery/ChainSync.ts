@@ -56,7 +56,7 @@ export async function rollForwardProtocolUtxo(
       await client.insertProtocol({ txOutRef, protocol });
 
       logger.info(
-        `Inserted protocol datum as follows\n ${
+        `Inserted protocol datum as follows\n${
           JSON.stringify(protocol, stringifyReplacer)
         }`,
       );
@@ -95,7 +95,14 @@ export async function rollForwardInsertDensSetElement(
   tx: OgmiosSchema.Transaction,
 ) {
   const txId: PlaV1.TxId = ogmiosTransactionToPlaTxId(tx);
-  const protocol = (await client.selectProtocol())?.protocol;
+  const densProtocolUtxo = await client.selectProtocol();
+  const protocol = densProtocolUtxo?.protocol;
+
+  logger.debug(
+    `(SetElem) considering protocol ${
+      JSON.stringify(protocol, stringifyReplacer)
+    }.`,
+  );
 
   if (protocol === undefined) {
     return;
@@ -130,7 +137,9 @@ export async function rollForwardInsertDensSetElement(
   logger.info(
     `(SetElem) Transaction id ${
       JSON.stringify(txId, stringifyReplacer)
-    } is DeNS Set Element transaction.`,
+    } is DeNS Set Element transaction because it mints ${
+      JSON.stringify(protocol.setElemMintingPolicy, stringifyReplacer)
+    }`,
   );
 
   /*
@@ -145,9 +154,11 @@ export async function rollForwardInsertDensSetElement(
     }
   }
 
-  if (outputs.length !== 2) {
+  if (!(outputs.length <= 2)) {
     logger.warn(
-      `(SetElem) invalid transaction too many outputs with Set Elem assets -- most likely a bug in the onchain code`,
+      `(SetElem) invalid transaction too many outputs with Set Elem assets. Expected at most two outputs with a SetElem token but got ${outputs.length}. This is most likely a bug in the onchain code. The outputs found are as follows:\n${
+        JSON.stringify(outputs, stringifyReplacer)
+      }`,
     );
     return;
   }
@@ -209,6 +220,12 @@ export async function rollForwardElemId(
 ) {
   const protocol = (await client.selectProtocol())?.protocol;
 
+  logger.debug(
+    `(ElemId) considering protocol ${
+      JSON.stringify(protocol, stringifyReplacer)
+    }.`,
+  );
+
   if (protocol === undefined) {
     return;
   }
@@ -224,7 +241,7 @@ export async function rollForwardElemId(
   // Then, we collect all the RRs in the transaction outputs..
   // As a harmless bug, we include all RRs that have a sensible datum when in
   // reality, we really _should_ only include the RRs with a certain address
-  const rrs: [PlaV1.TxOutRef, LbfDens.DensRr][] = [];
+  let rrs: [PlaV1.TxOutRef, LbfDens.DensRr][] = [];
   for (let i = 0; i < tx.outputs.length; ++i) {
     const txId: PlaV1.TxId = ogmiosTransactionToPlaTxId(tx);
     const txOut = tx.outputs[i]!;
@@ -235,18 +252,31 @@ export async function rollForwardElemId(
     }
 
     const plaPlutusData = hexPlutusDataToPlaPlutusData(txOut.datum);
+    logger.debug(
+      `(ElemId) Attempting to parse datum as an RR: ${
+        JSON.stringify(plaPlutusData, stringifyReplacer)
+      }.`,
+    );
 
     try {
       const recordDatum = LbrPlutusV1.IsPlutusData[LbfDens.RecordDatum]
         .fromData(plaPlutusData);
 
-      rrs.concat(recordDatum.recordValue.map((x) => [txOutRef, x]));
+      const mapped: [PlaV1.TxOutRef, LbfDens.DensRr][] = recordDatum.recordValue
+        .map((x) => [txOutRef, x]);
+      rrs = rrs.concat(mapped);
     } catch (err) {
       if (!(err instanceof PlaPd.IsPlutusDataError)) {
         throw err;
       }
     }
   }
+
+  logger.info(
+    `(ElemId) outputs which contain RRs: ${
+      JSON.stringify(rrs, stringifyReplacer)
+    }.`,
+  );
 
   const elemIdCurrencySymbol = protocol
     .elementIdMintingPolicy as unknown as PlaV1.CurrencySymbol;
@@ -281,8 +311,17 @@ export async function rollForwardElemId(
     const elemIdTns = getElemIdTokens(txOut.value);
 
     for (const tn of elemIdTns) {
+      logger.info(
+        `(ElemId) transaction output ${
+          JSON.stringify(txOutRef, stringifyReplacer)
+        } contains ElemID asset class ${
+          JSON.stringify([elemIdCurrencySymbol, tn], stringifyReplacer)
+        }.`,
+      );
+
       const elemAssetClass: PlaV1.AssetClass = [elemIdCurrencySymbol, tn];
 
+      await client.insertTxOutRef(txOutRef);
       await client.insertDensElemIdUtxo(elemAssetClass, txOutRef);
 
       for (const [_rrTxOutRef, rr] of rrs) {
@@ -339,11 +378,11 @@ export async function rollForwardDb(
       for (const tx of txs) {
         // NOTE(jaredponn): the order of these actions are important and
         // dependent on specifics of the protocol
-        rollForwardProtocolUtxo(client, tx);
-        rollForwardInsertDensSetElement(client, tx);
-        rollForwardElemId(client, tx);
+        await rollForwardProtocolUtxo(client, tx);
+        await rollForwardInsertDensSetElement(client, tx);
+        await rollForwardElemId(client, tx);
 
-        rollForwardDeleteTxInputs(client, tx);
+        await rollForwardDeleteTxInputs(client, tx);
       }
       // TODO(jaredponn): we really should scan through other outputs like
       // the collateralReturn output.

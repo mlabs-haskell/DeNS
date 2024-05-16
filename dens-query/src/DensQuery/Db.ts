@@ -273,8 +273,7 @@ export class DensDbClient {
     const res: QueryResult = await this.query(
       {
         text:
-          `SELECT element_id_minting_policy, set_elem_minting_policy, set_validator, records_validator, tx_out_ref_id, tx_out_ref_idx
-                   FROM dens_protocol_utxos`,
+          `SELECT element_id_minting_policy, set_elem_minting_policy, set_validator, records_validator, tx_out_ref_id, tx_out_ref_idx FROM dens_protocol_utxos`,
         values: [],
       },
     );
@@ -395,16 +394,16 @@ export class DensDbClient {
     if (content === undefined) {
       logger.info(
         `Invalid RR from the tx with output with dens elem id ${
-          JSON.stringify(elemAssetClass)
+          JSON.stringify(elemAssetClass, stringifyReplacer)
         } identifed by ${
           JSON.stringify(
             elemTxOutRef,
-            (_, v) => typeof v === "bigint" ? v.toString() : v,
+            stringifyReplacer,
           )
         }: ${
           JSON.stringify(
             rr,
-            (_, v) => typeof v === "bigint" ? v.toString() : v,
+            stringifyReplacer,
           )
         }`,
       );
@@ -635,7 +634,7 @@ export function transposeAssetClasses(
  */
 export function validateDensRr(rr: DensRr): string | undefined {
   // See 4.1.3 of <https://www.ietf.org/rfc/rfc1035.txt>
-  if (!(0 <= rr.ttl && rr.ttl <= (2 ^ 32 - 1))) {
+  if (!(0 <= rr.ttl && rr.ttl <= (2 ** 32 - 1))) {
     return undefined;
   }
 
@@ -677,5 +676,20 @@ export function validateDensRr(rr: DensRr): string | undefined {
 
       return soa;
     }
+  }
+}
+
+/**
+ * A "replacer" for `JSON.stringify` which:
+ *  - allows printing of big ints
+ *  - prints byte arrays in the hexadecimal representation
+ */
+function stringifyReplacer(_key: unknown, value: unknown): unknown {
+  if (typeof value === "bigint") {
+    return value.toString();
+  } else if (value instanceof Uint8Array) {
+    return Buffer.from(value).toString("hex");
+  } else {
+    return value;
   }
 }
