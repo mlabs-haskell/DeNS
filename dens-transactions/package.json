@@ -31,9 +31,7 @@
     "@cardano-ogmios/client": "^6.2.0",
     "@cardano-ogmios/schema": "^6.2.0",
     "@emurgo/cardano-serialization-lib-nodejs": "^11.5.0",
-    "@sinclair/typebox": "^0.32.22",
     "command-line-args": "^5.2.1",
-    "express": "^4.19.2",
     "got": "^13.0.0",
     "lbf-dens": "file:.extra-dependencies/lbf-dens",
     "lbf-dens-db": "file:.extra-dependencies/lbf-dens-db",
@@ -42,7 +40,6 @@
     "lbr-plutus": "file:.extra-dependencies/lbr-plutus",
     "lbr-prelude": "file:.extra-dependencies/lbr-prelude",
     "lucid-cardano": "^0.10.7",
-    "node-fetch": "^3.3.2",
     "plutus-ledger-api": "file:.extra-dependencies/plutus-ledger-api",
     "prelude": "file:.extra-dependencies/prelude",
     "winston": "^3.13.0"
