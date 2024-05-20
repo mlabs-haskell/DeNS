@@ -1,3 +1,0 @@
-# DeNS
-
-Decentralized Name System
