@@ -442,6 +442,8 @@ Of course, we can write our own chain indexer, but it's probably better to build
 
 - [Interacting with ogmios](https://ogmios.dev/) which provides a convenient websockets to interact with the blockchain node, and we could update our database based on the information obtained by the websockets.
 
+<!--
+TODO(jaredponn): urgh, nix doesn't like mermaid fix this later..
 ```mermaid
 flowchart
     Cardano[Cardano node]-- Listens for events ---CardanoIndexer[Chain indexer] ;
@@ -449,6 +451,7 @@ flowchart
     CardanoIndexer-- Query UTxOs ---TXBuilder[Tx builder];
     Cardano-- Submit Txs ---TXBuilder;
 ```
+-->
 
 ### Providing DNS records
 
@@ -477,6 +480,8 @@ We will interact with the authoritative server via the REST-API which in particu
 Finally, the only question that remains is how updates from the blockchain should propagate to the authoritative server.
 We propose to piggyback back on top of the chain indexer from the previous section where we listen for the event of set changes, and on the occurrence of such event, we update the DNS records.
 
+<!--
+TODO(jaredponn): urgh, nix doesn't like mermaid fix this later..
 ```mermaid
 flowchart
     Cardano[Cardano node]-- Listens for events ---CardanoIndexer[Chain indexer] ;
@@ -485,3 +490,4 @@ flowchart
     CardanoIndexer-- Updates the DNS database from changes in the set ---DNS[DNS server];
     Cardano-- Submit Txs ---TXBuilder;
 ```
+-->
