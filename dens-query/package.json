@@ -13,7 +13,7 @@
     "build": "npx tsc -b src/DensQuery",
     "test": "npx tsc -b src/Tests && node --test",
     "doc-typedoc": "npx typedoc",
-    "doc-manual": "asciidoctor ./doc/MANUAL.adoc -o index.html"
+    "doc-manual": "asciidoctor ./doc/README.adoc -o index.html"
   },
   "author": "DeNS Team",
   "license": "ISC",

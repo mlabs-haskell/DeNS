@@ -1,8 +1,13 @@
-== HTTP API
++++
+title = "HTTP API"
+weight = 2
++++
+
+= HTTP API
 
 DeNS Query provides an HTTP interface for accessing the UTxOs stored in the database.
 
-=== Authentication
+== Authentication
 
 Some endpoints provided by DeNS Query are exposed internal functionalities to
 and are made available to facilitate testing and development.
@@ -25,10 +30,10 @@ Below is a list of these internal endpoints that should not be exposed in the pu
 * <<set-protocol-nft>>
 
 [#http-endpoints]
-=== HTTP Endpoints
+== HTTP Endpoints
 
 [#query-set-insertion-utxo]
-==== POST Query Set Insertion UTxO
+=== POST Query Set Insertion UTxO
 Method:: *POST*
 URL:: `/api/query-set-insertion-utxo`
 
@@ -76,7 +81,7 @@ Returns the UTxO to spend in order to purchase the given domain from the smart c
 <4> Hex encoded transaction hash
 <5> Integer index
 
-===== Errors
+==== Errors
 
 [caption=]
 |===
@@ -101,7 +106,7 @@ TODO(jaredponn): write me
 ```
 
 [#query-protocol-utxo]
-==== POST Protocol UTxO
+=== POST Protocol UTxO
 Method:: *POST*
 URL:: `/api/query-protocol-utxo`
 
@@ -149,7 +154,7 @@ Returns the UTxO which holds the Protocol type i.e., trusted information of the 
 <3> Integer index
 <4> JSON object of hex encoded script hashes (28 bytes)
 
-===== Errors
+==== Errors
 
 [caption=]
 |===
@@ -166,7 +171,7 @@ TODO(jaredponn): write me
 ```
 
 [#set-protocol-nft]
-==== POST Set Protocol NFT
+=== POST Set Protocol NFT
 Method:: *POST*
 URL:: `/api/set-protocol-nft`
 
@@ -211,6 +216,6 @@ setting the protocol NFT to a new protocol NFT therefore changes the instance of
 }
 ```
 
-=== LambdaBuffers
+== LambdaBuffers
 
 All datum described in the requests and responses in <<http-endpoints>> have an associated LambdaBuffers type with generated JSON parsers. Refer to the link:{apidir}/lbf/Dens/Server.lbf[.lbf schema file] for more details.

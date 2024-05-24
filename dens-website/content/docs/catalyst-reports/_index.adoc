@@ -1,0 +1,8 @@
++++
+title = "Catalyst reports"
+weight = 1000
++++
+
+This project was graciously funded by the Cardano Treasury in https://cardano.ideascale.com/c/idea/106044[Catalyst Fund 10].
+
+The following sections demonstrate evidence of achievement for the project's milestones.

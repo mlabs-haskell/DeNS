@@ -22,7 +22,7 @@
   perSystem = { config, ... }: {
     # TODO(jaredponn): we'll need to make a website of everything instead of
     # just one specific part.
-    hercules-ci.github-pages.settings.contents = config.packages.dens-query-manual;
+    hercules-ci.github-pages.settings.contents = config.packages.dens-website;
   };
 
   herculesCI.ciSystems = [ "x86_64-linux" ];

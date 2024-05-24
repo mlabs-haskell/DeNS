@@ -1,4 +1,7 @@
-# Design & Architecture
++++
+title = "Technical Specification"
+weight = 1
++++
 
 ## Requirements (Conceptual)
 

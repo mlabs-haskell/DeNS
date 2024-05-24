@@ -1,0 +1,40 @@
++++
+title = "Milestone 3"
+weight = 3
++++
+:toc:
+
+== Dens Query Layer Development
+[cols="1,3a"]
+|===
+
+// Milestone outputs
+^|Milestone Outputs
+|
+
+* A package that listens to Cardano transactions that are related to DeNS and populates a relational database. 
+This serves as the main query layer for other applications like DNS analytics (we expect this to be particularly useful for security-related applications) but also as the database from which traditional DNS service integration can take place.
+
+** The package which listens to Cardano transactions that are related to DeNS and populates a relational database can be found https://github.com/mlabs-haskell/DeNS/tree/main/dens-query[here].
+
+// Acceptance criteria
+
+^|Acceptance criteria
+|
+
+* The aforementioned package is able to populate a relational database of DNS records by querying/indexing testnet transactions. 
+
+** The aforementioned package is able to do this as demonstrated in the evidence of milestone completion below.
+
+// Evidence of milestone completion
+^|Evidence of milestone completion
+|
+* Links to PRs, issues and commits in the DeNS repository where the objectives of the milestone are achieved will be made available so that the Catalyst community and public can review the code.
+
+**  TODO(jaredponn)
+
+* Video demonstration of the use of the package that shows the successful operation of the query layer will be posted on YouTube. A link will be provided to the community in the DeNS repository.
+
+** TODO(jaredponn)
+
+|===

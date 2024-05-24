@@ -1,4 +1,9 @@
-== Database Schema
++++
+title = "Database Schema"
+weight = 3
++++
+
+= Database Schema
 
 NOTE: Readers may skip this section.
 
@@ -10,5 +15,5 @@ requiring the protocol to undo all the changes from the present to the block to 
 .Database schema source code
 [source,plpgsql]
 ```
-include::{apidir}/postgres/dens.sql[]
+include::../api/postgres/dens.sql[]
 ```
