@@ -2,6 +2,7 @@
 title = "Database Schema"
 weight = 3
 +++
+:toc:
 
 = Database Schema
 
