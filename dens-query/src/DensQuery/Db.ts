@@ -132,7 +132,7 @@ export class DensDb {
  * {@link DensDbClient} is a specific connection to the underlying database. In
  * particular, SQL transactions should all occur with the same client.
  */
-class DensDbClient {
+export class DensDbClient {
   #client: pg.ClientBase;
 
   constructor(client: pg.ClientBase) {
@@ -156,40 +156,40 @@ class DensDbClient {
   }
 
   /**
-   * {@link insertDensSetUtxo} inserts (or updates if it already exists) a
-   * {@link DensSetUtxo} in the database.
+   * {@link upsertDensSetUtxo} inserts (or updates the tx out refs of the name
+   * if it already exists) a {@link DensSetUtxo} in the database.
    */
-  async insertDensSetUtxo(
-    assetClassesAtTheUtxo: PlaV1.AssetClass[],
+  async upsertDensSetUtxo(
     { name, pointer, txOutRef }: DensSetUtxo,
   ) {
     const [currencySymbol, tokenName] = pointer;
-    const transposedAssetClassesAtTheUtxo: [CurrencySymbol[], TokenName[]] =
-      transposeAssetClasses(assetClassesAtTheUtxo);
     await this.query(
       {
-        // TODO(jaredponn): there's an easy optimization to not include the
-        // token names
-        text:
-          `INSERT INTO dens_set_utxos (name, currency_symbol, token_name, tx_out_ref_id, tx_out_ref_idx)
-                    (SELECT $3::bytea, $4::bytea, $5::bytea, $6::bytea, $7::bigint
-                     FROM dens_protocol_utxos
-                     WHERE set_elem_minting_policy IN 
-                        ( SELECT currency_symbol 
-                          FROM UNNEST($1::bytea[],$2::bytea[]) AS asset_classes_at_the_utxo(currency_symbol,token_name)
-                        )
-                     LIMIT 1
-                    )`,
+        text: `MERGE INTO dens_set_utxos ` +
+          `USING (VALUES(NULL)) AS foo ON name = $1 ` +
+          `WHEN MATCHED THEN UPDATE SET pointer = CAST(ROW($2, $3) AS asset_class), ` +
+          `tx_out_ref_id = $4, ` +
+          `tx_out_ref_idx = $5 ` +
+          `WHEN NOT MATCHED THEN INSERT(name, pointer, tx_out_ref_id, tx_out_ref_idx) ` +
+          `VALUES ($1, CAST(ROW($2, $3) AS asset_class), $4, $5)`,
+
+        // NOTE(jaredponn): Why don't we use upsert?
+        // We don't use a query as follows:
+        // ```
+        // `INSERT INTO dens_set_utxos (name, pointer, tx_out_ref_id, tx_out_ref_idx) ` +
+        // `VALUES ($1, CAST(ROW($2, $3) AS asset_class), $4, $5) ` +
+        // `ON CONFLICT (name) DO UPDATE SET tx_out_ref_id = EXCLUDED.tx_out_ref_id, tx_out_ref_idx = EXCLUDED.tx_out_ref_idx`,
+        // ```
+        // because it doesn't play nicely with undo logging i.e., in an
+        // "upsert", both the insert and update trigger
+        // would be fired which would "double delete" the key.
+        // We could fix this by checking if the row exists before adding the
+        // delete when adding the undo log, but then we'd
+        // lose concurrency guarantees
         values: [
-          transposedAssetClassesAtTheUtxo[0].map((bs) =>
-            Buffer.from(bs.buffer)
-          ),
-          transposedAssetClassesAtTheUtxo[1].map((bs) =>
-            Buffer.from(bs.buffer)
-          ),
           name,
-          currencySymbol,
-          tokenName,
+          Buffer.from(currencySymbol),
+          Buffer.from(tokenName),
           txOutRef.txOutRefId,
           txOutRef.txOutRefIdx,
         ],
@@ -223,8 +223,15 @@ class DensDbClient {
   ): Promise<void> {
     await this.query(
       {
-        text:
-          `INSERT INTO tx_out_refs VALUES ($1,$2, (get_most_recent_block()).*)`,
+        text: `MERGE INTO tx_out_refs ` +
+          `USING (VALUES (NULL)) AS foo ON tx_out_ref_id = $1 AND tx_out_ref_idx = $2 ` +
+          `WHEN NOT MATCHED THEN INSERT(tx_out_ref_id, tx_out_ref_idx, block_slot, block_id) ` +
+          `VALUES($1, $2, (get_most_recent_block()).*)`,
+        // NOTE(jaredponn): See NOTE(jaredponn): Why don't we use upsert?
+        // ```
+        // `INSERT INTO tx_out_refs VALUES ($1,$2, (get_most_recent_block()).*) ` +
+        // `ON CONFLICT DO NOTHING`,
+        // ```
         values: [txOutRefId, txOutRefIdx],
       },
     );
@@ -240,12 +247,33 @@ class DensDbClient {
     );
   }
 
+  async selectProtocolNft(): Promise<PlaV1.AssetClass> {
+    const res: QueryResult = await this.query(
+      {
+        text:
+          `SELECT (asset_class).currency_symbol AS currency_symbol, (asset_class).token_name AS token_name ` +
+          `FROM dens_protocol_nft ` +
+          `LIMIT 1`,
+        values: [],
+      },
+    );
+    if (res.rows.length !== 1) {
+      throw new Error(`Protocol NFT has not been set yet`);
+    }
+
+    return [
+      Prelude.fromJust(
+        PlaV1.currencySymbolFromBytes(res.rows[0]!.currency_symbol),
+      ),
+      Prelude.fromJust(PlaV1.tokenNameFromBytes(res.rows[0]!.token_name)),
+    ] as PlaV1.AssetClass;
+  }
+
   async selectProtocol(): Promise<DensProtocolUtxo | undefined> {
     const res: QueryResult = await this.query(
       {
         text:
-          `SELECT element_id_minting_policy, set_elem_minting_policy, set_validator, records_validator, tx_out_ref_id, tx_out_ref_idx
-                   FROM dens_protocol_utxos`,
+          `SELECT element_id_minting_policy, set_elem_minting_policy, set_validator, records_validator, tx_out_ref_id, tx_out_ref_idx FROM dens_protocol_utxos`,
         values: [],
       },
     );
@@ -305,101 +333,109 @@ class DensDbClient {
   }
 
   /**
-   * Given all `assetClassesAtTheUtxo` at the UTxO, finds all `name`s which
-   * have an asset class in `assetClassesAtTheUtxo`, and adds the `name` +
-   * provided `rrs` + `txOutRef` to the table.
-   *
-   * Note that this ignores the `name` in {@link DensRrsUtxo}
+   * Inserts the dens elmeent UTxO
    */
-  async insertDensRrsUtxo(
-    assetClassesAtTheUtxo: PlaV1.AssetClass[],
-    { rrs, txOutRef }: DensRrsUtxo,
-  ): Promise<void> {
-    const transposedAssetClassesAtTheUtxo: [CurrencySymbol[], TokenName[]] =
-      transposeAssetClasses(assetClassesAtTheUtxo);
-
-    // First, we make note of the UTxO which contains the RRs
+  async insertDensElemIdUtxo(
+    mintedToken: PlaV1.AssetClass,
+    txOutRef: TxOutRef,
+  ) {
     await this.query(
       {
-        // NOTE(jaredponn): we don't use the following query since we need to
-        // be a bit clever on adding this to names which actually have it.
-        // ```
-        // text: `INSERT INTO dens_rrs_utxos VALUES($1,$2,$3,$4,$5,$6)`,
-        // ```
-        text: `INSERT INTO dens_rrs_utxos(name, tx_out_ref_id, tx_out_ref_idx)
-               SELECT name,$3::bytea,$4::bigint
-               FROM dens_set_utxos
-               WHERE (currency_symbol,token_name) IN (SELECT * FROM UNNEST($1::bytea[],$2::bytea[]) as asset_classes_at_the_utxo(currency_symbol,token_name))
-                    AND (dens_is_valid_name(name))
-               ON CONFLICT DO NOTHING
-                    `,
-        // Note that we ONLY add records which match the domains in
-        // Section 3.5 of
-        // <https://datatracker.ietf.org/doc/html/rfc1034> AND are
-        // lower case (this is to ensure adversaries can't add
-        // random RRs to someone elses things.
+        text:
+          `INSERT INTO dens_elem_ids(tx_out_ref_id, tx_out_ref_idx, asset_class) ` +
+          `VALUES ($1, $2, CAST(ROW($3, $4) AS asset_class))`,
         values: [
-          transposedAssetClassesAtTheUtxo[0].map((bs) =>
-            Buffer.from(bs.buffer)
-          ),
-          transposedAssetClassesAtTheUtxo[1].map((bs) =>
-            Buffer.from(bs.buffer)
-          ),
           Buffer.from(txOutRef.txOutRefId.buffer),
           txOutRef.txOutRefIdx,
+          Buffer.from(mintedToken[0]),
+          Buffer.from(mintedToken[1]),
         ],
       },
     );
+  }
 
-    // Then, we add the list of RRs
-    for (const rr of rrs) {
-      const { ttl } = rr;
-      const content = validateDensRr(rr);
+  /**
+   * Deletes the transaction outputs which contain the
+   */
+  async deleteDensElemIdTxOutRef(txOutRef: TxOutRef) {
+    await this.query(
+      {
+        text: `DELETE FROM dens_elem_ids ` +
+          `WHERE tx_out_ref_id = $1 AND tx_out_ref_idx = $2`,
+        values: [Buffer.from(txOutRef.txOutRefId.buffer), txOutRef.txOutRefIdx],
+      },
+    );
+  }
 
-      if (content === undefined) {
-        logger.info(
-          `Invalid RR at ${
-            JSON.stringify(
-              txOutRef,
-              (_, v) => typeof v === "bigint" ? v.toString() : v,
-            )
-          }: ${
-            JSON.stringify(
-              rr,
-              (_, v) => typeof v === "bigint" ? v.toString() : v,
-            )
-          }`,
-        );
-        continue;
-      }
+  /** Tests if the result is a valid name
+   */
+  async densIsValidName(name: Uint8Array): Promise<boolean> {
+    const result = await this.query(
+      {
+        text: `SELECT dens_is_valid_name($1)`,
+        values: [Buffer.from(name)],
+      },
+    );
 
-      await this.query(
-        {
-          text:
-            `INSERT INTO dens_rrs(tx_out_ref_id, tx_out_ref_idx, type, ttl, content)
-                       VALUES ($1, $2, $3, $4, $5)
-                            `,
-          values: [
-            Buffer.from(txOutRef.txOutRefId.buffer),
-            txOutRef.txOutRefIdx,
-            rr.rData.name,
-            Number(ttl),
-            content,
-          ],
-        },
+    return result.rows[0]!;
+  }
+
+  async insertDensRr(
+    outputWithDensElemId: {
+      elemTxOutRef: TxOutRef;
+      elemAssetClass: PlaV1.AssetClass;
+    },
+    rr: DensRr,
+  ) {
+    const { elemTxOutRef, elemAssetClass } = outputWithDensElemId;
+    const { ttl } = rr;
+    const content = validateDensRr(rr);
+
+    if (content === undefined) {
+      logger.info(
+        `Invalid RR from the tx with output with dens elem id ${
+          JSON.stringify(elemAssetClass, stringifyReplacer)
+        } identifed by ${
+          JSON.stringify(
+            elemTxOutRef,
+            stringifyReplacer,
+          )
+        }: ${
+          JSON.stringify(
+            rr,
+            stringifyReplacer,
+          )
+        }`,
       );
+      return;
     }
+    await this.query(
+      {
+        text: `INSERT INTO dens_rrs(type, ttl, content, dens_elem_id) ` +
+          `SELECT $1, $2, $3, dens_elem_ids.id ` +
+          `FROM dens_elem_ids JOIN dens_set_utxos ON dens_elem_ids.asset_class = dens_set_utxos.pointer ` +
+          `WHERE dens_elem_ids.tx_out_ref_id = $4 AND dens_elem_ids.tx_out_ref_idx = $5 AND dens_elem_ids.asset_class = CAST(ROW($6, $7) AS asset_class) ` +
+          `AND dens_is_valid_name(dens_set_utxos.name)`,
+        values: [
+          rr.rData.name,
+          Number(ttl),
+          content,
+          Buffer.from(elemTxOutRef.txOutRefId.buffer),
+          elemTxOutRef.txOutRefIdx,
+          elemAssetClass[0],
+          elemAssetClass[1],
+        ],
+      },
+    );
   }
 
   async selectNamesRrs(name: Uint8Array): Promise<DensRr[]> {
     const res: QueryResult = await this.query(
       {
-        text: `SELECT type, ttl, content
-               FROM dens_rrs_utxos JOIN dens_rrs
-                ON dens_rrs_utxos.tx_out_ref_id = dens_rrs.tx_out_ref_id
-                    AND dens_rrs_utxos.tx_out_ref_idx = dens_rrs.tx_out_ref_idx
-               WHERE dens_rrs_utxos.name = CAST($1 AS bytea)
-               ORDER BY dens_rrs.id ASC`,
+        text: `SELECT type, ttl, content ` +
+          `FROM dens_elem_ids JOIN dens_rrs ON dens_elem_ids.id = dens_rrs.dens_elem_id JOIN dens_set_utxos ON dens_set_utxos.pointer = dens_elem_ids.asset_class ` +
+          `WHERE dens_set_utxos.name = CAST($1 AS bytea) ` +
+          `ORDER BY dens_rrs.id ASC`,
         values: [Buffer.from(name.buffer)],
       },
     );
@@ -447,7 +483,7 @@ class DensDbClient {
     const res: QueryResult = await this.query(
       {
         text:
-          `SELECT name, currency_symbol, token_name, tx_out_ref_id, tx_out_ref_idx, EXISTS (SELECT 1 FROM dens_set_utxos WHERE name=$1) AS is_already_inserted
+          `SELECT name, (pointer).currency_symbol, (pointer).token_name, tx_out_ref_id, tx_out_ref_idx, EXISTS (SELECT 1 FROM dens_set_utxos WHERE name=$1) AS is_already_inserted
            FROM dens_set_utxos
            WHERE name < $1
            ORDER BY name DESC
@@ -506,7 +542,8 @@ class DensDbClient {
     const res = await this.query(
       {
         text:
-          `SELECT * FROM (VALUES ((dens_set_protocol_nft($1, $2)).*) ) AS t (pk, currency_symbol, token_name)`,
+          `SELECT (t.asset_class).currency_symbol AS currency_symbol, (t.asset_class).token_name AS token_name 
+           FROM (VALUES ((dens_set_protocol_nft($1, $2)).*) ) AS t (pk, asset_class)`,
         values: [currencySymbol, tokenName],
       },
     );
@@ -535,7 +572,8 @@ class DensDbClient {
     const res = await this.query(
       {
         text:
-          `SELECT * FROM (VALUES ((dens_sync_protocol_nft($1, $2)).*) ) AS t (pk, currency_symbol, token_name)`,
+          `SELECT (asset_class).currency_symbol AS currency_symbol, (asset_class).token_name AS token_name ` +
+          `FROM (VALUES ((dens_sync_protocol_nft($1, $2)).*) ) AS t (pk, asset_class)`,
         values: [currencySymbol, tokenName],
       },
     );
@@ -596,7 +634,7 @@ export function transposeAssetClasses(
  */
 export function validateDensRr(rr: DensRr): string | undefined {
   // See 4.1.3 of <https://www.ietf.org/rfc/rfc1035.txt>
-  if (!(0 <= rr.ttl && rr.ttl <= (2 ^ 32 - 1))) {
+  if (!(0 <= rr.ttl && rr.ttl <= (2 ** 32 - 1))) {
     return undefined;
   }
 
@@ -619,9 +657,39 @@ export function validateDensRr(rr: DensRr): string | undefined {
     }
 
     case `SOA`: {
-      // TODO(jaredponn): write a quick regex to validate this.
+      // TODO(jaredponn): write a quick regex to validate this. Urgh, I'm not
+      // actually sure what PowerDNS expects here -- to my knowledge, this
+      // isn't documented... So we write a quick regex in an attempt to
+      // 'generalize' what it looks like it wants.
+      // See {@link https://doc.powerdns.com/authoritative/appendices/types.html#soa}..
+      // See 3.3.13. of {@link https://www.ietf.org/rfc/rfc1035.txt}
+      // And, dens_is_valid_name in api/postgres/dens.sql
+      const soaRegex =
+        /^(?<primary>([a-z]([-a-z0-9]*[a-z0-9])?)(.([a-z]([-a-z0-9]*[a-z0-9])?))*) (?<hostname>([a-z]([-a-z0-9]*[a-z0-9])?)(.([a-z]([-a-z0-9]*[a-z0-9])?))*) (?<serial>[0-9]+) (?<refresh>[0-9]+) (?<retry>[0-9]+) (?<expire>[0-9]+) (?<minimum>[0-9]+)$/g;
       const soa = Buffer.from(Uint8Array.from(rdata.fields)).toString();
+
+      const matches = soa.match(soaRegex);
+
+      if (matches === null) {
+        return undefined;
+      }
+
       return soa;
     }
+  }
+}
+
+/**
+ * A "replacer" for `JSON.stringify` which:
+ *  - allows printing of big ints
+ *  - prints byte arrays in the hexadecimal representation
+ */
+function stringifyReplacer(_key: unknown, value: unknown): unknown {
+  if (typeof value === "bigint") {
+    return value.toString();
+  } else if (value instanceof Uint8Array) {
+    return Buffer.from(value).toString("hex");
+  } else {
+    return value;
   }
 }

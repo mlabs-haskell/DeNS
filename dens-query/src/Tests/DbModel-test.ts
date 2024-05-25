@@ -28,7 +28,6 @@ import * as assert from "node:assert/strict";
 import * as DbTestUtils from "./DbTestUtils.js";
 import * as Samples from "./Samples.js";
 import * as Db from "../DensQuery/Db.js";
-import * as PlaV1 from "plutus-ledger-api/V1.js";
 
 import * as Prelude from "prelude";
 import * as PMap from "prelude/Map.js";
@@ -55,9 +54,9 @@ type Model = {
 };
 
 /**
- * A command for {@link insertDensSetUtxo}
+ * A command for {@link upsertDensSetUtxo}
  */
-class InsertDensSetUtxoCommand implements fc.AsyncCommand<Model, Db.DensDb> {
+class UpsertDensSetUtxoCommand implements fc.AsyncCommand<Model, Db.DensDb> {
   #densSetRow: Db.DensSetUtxo;
   #point: Db.Point;
 
@@ -88,22 +87,14 @@ class InsertDensSetUtxoCommand implements fc.AsyncCommand<Model, Db.DensDb> {
 
       await client.insertPoint(this.#point);
       await client.insertTxOutRef(this.#densSetRow.txOutRef);
-      await client.insertDensSetUtxo(
-        [[
-          Prelude.fromJust(
-            PlaV1.currencySymbolFromBytes(
-              selectedProtocol.protocol.setElemMintingPolicy,
-            ),
-          ),
-          PlaV1.adaToken,
-        ]],
+      await client.upsertDensSetUtxo(
         this.#densSetRow,
       );
     });
   }
 
   toString() {
-    return `insertDensSetUtxo(${JSON.stringify(this.#densSetRow)})`;
+    return `upsertDensSetUtxo(${JSON.stringify(this.#densSetRow)})`;
   }
 }
 
@@ -155,7 +146,7 @@ it(`Database model tests`, async () => {
       const allCommands = [
         fc.tuple(Samples.fcPoint(), Samples.fcDensSetUtxo()).map((
           [point, densSetRow],
-        ) => new InsertDensSetUtxoCommand(point, densSetRow)),
+        ) => new UpsertDensSetUtxoCommand(point, densSetRow)),
         Samples.fcName().map((name) =>
           new StrictInfimumDensSetUtxoCommand(name)
         ),

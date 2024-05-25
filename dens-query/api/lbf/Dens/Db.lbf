@@ -60,7 +60,7 @@ instance PlutusData DensRr
 -- configuration of the entire protocol
 record DensProtocolUtxo = 
     { txOutRef: TxOutRef
-    , protocol : Protocol
+    , protocol: Protocol
     }
 derive Eq DensProtocolUtxo
 derive Json DensProtocolUtxo
