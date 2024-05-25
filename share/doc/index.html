@@ -879,7 +879,7 @@ requiring the protocol to undo all the changes from the present to the block to 
 -- For each "kind of UTxO" for the dens protocol, we create a table for it e.g.
 -- we have tables
 --  - `+dens_set_utxos+`
---  - `+dens_rrs_utxos+`
+--  - `+dens_elem_ids+`
 --  - `+dens_protocol_utxos+`
 -- We call such a table a _dens table_.
 -- Each of these dens tables has a foreign key to `+tx_out_refs+` s.t. when a
@@ -914,6 +914,22 @@ requiring the protocol to undo all the changes from the present to the block to 
 -- * [#ogmios] https://ogmios.dev/api/
 
 -----------------------------------------------------------------------------
+-- = Types
+-----------------------------------------------------------------------------
+CREATE TYPE asset_class_type AS (
+    currency_symbol bytea,
+    token_name bytea
+);
+
+CREATE DOMAIN asset_class AS asset_class_type 
+CONSTRAINT currency_symbol_not_null CHECK (((VALUE).currency_symbol IS NOT NULL))
+CONSTRAINT token_name_not_null CHECK (((VALUE).token_name IS NOT NULL))
+-- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L75-L92
+CONSTRAINT currency_symbol_length CHECK ((octet_length((VALUE).currency_symbol) = 0) OR (octet_length((VALUE).currency_symbol) = 28))
+-- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L99-L112
+CONSTRAINT token_name_length CHECK (octet_length((VALUE).token_name) &lt;= 32);
+
+-----------------------------------------------------------------------------
 -- = Tables for general information about the blockchain
 -----------------------------------------------------------------------------
 
@@ -938,6 +954,9 @@ CREATE TABLE IF NOT EXISTS tx_out_refs (
 
     FOREIGN KEY (block_id, block_slot) REFERENCES blocks (block_id, block_slot)
     ON DELETE CASCADE DEFERRABLE,
+
+    -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Tx.hs#L51-L65
+    CONSTRAINT tx_id_length_is_32 CHECK (octet_length(tx_out_ref_id) = 32),
  
     PRIMARY KEY (tx_out_ref_id, tx_out_ref_idx)
 );
@@ -959,60 +978,9 @@ CREATE TABLE IF NOT EXISTS dens_set_utxos (
 
     -- Token which associates this `+name+` with a validator address which
     -- actually holds (a reference) to the RRs.
-    currency_symbol bytea,
-    token_name bytea,
+    pointer asset_class NOT NULL,
 
     tx_out_ref_id bytea NOT NULL,
-    tx_out_ref_idx bigint NOT NULL,
-
-    PRIMARY KEY (tx_out_ref_id, tx_out_ref_idx),
-
-    FOREIGN KEY (tx_out_ref_id, tx_out_ref_idx) REFERENCES tx_out_refs (tx_out_ref_id, tx_out_ref_idx)
-    ON DELETE CASCADE DEFERRABLE,
-
-    CONSTRAINT currency_symbol_and_token_name_both_present_or_not CHECK
-    (
-        (currency_symbol IS null AND token_name IS null)
-        OR (currency_symbol IS NOT null AND token_name IS NOT null)
-    ),
-
-    -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L75-L92
-    CONSTRAINT currency_symbol_length_0_or_28 CHECK
-    (
-        (octet_length(currency_symbol) = 0) OR (octet_length(currency_symbol) = 28)
-    ),
-
-    -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L99-L112
-    CONSTRAINT token_name_length_at_most_32 CHECK (octet_length(token_name) &lt;= 32),
-
-    -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Tx.hs#L51-L65
-    CONSTRAINT tx_id_length_is_32 CHECK (octet_length(tx_out_ref_id) = 32)
-);
-
--- Index s.t. one can efficiently query if change has happened in the
--- dens_set_utxos
-CREATE INDEX IF NOT EXISTS dens_set_utxos_currency_symbol_token_name ON dens_set_utxos (currency_symbol, token_name);
-
--- Index s.t. one can efficiently query which UTxO to spend
-CREATE INDEX IF NOT EXISTS dens_set_utxos_name ON dens_set_utxos (name);
-
-
------------------------------------------------------------------------------
--- == Table for representing the UTxOs which contain RRs
------------------------------------------------------------------------------
-
--- `+DensValidator+`s with pointer to the `+dens_set_utxos+` i.e., we have 
---      - M:1 relationship of many DensValidator to 1 dens_set_utxos
-CREATE TABLE IF NOT EXISTS dens_rrs_utxos (
-    -- Foreign key to the dens_set_utxos
-    name bytea REFERENCES dens_set_utxos (name)
-    ON DELETE CASCADE DEFERRABLE,
-
-    -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Tx.hs#L51-L65
-    CONSTRAINT tx_id_length_is_32 CHECK (octet_length(tx_out_ref_id) = 32),
-
-    tx_out_ref_id bytea NOT NULL,
-
     tx_out_ref_idx bigint NOT NULL,
 
     PRIMARY KEY (tx_out_ref_id, tx_out_ref_idx),
@@ -1021,11 +989,52 @@ CREATE TABLE IF NOT EXISTS dens_rrs_utxos (
     ON DELETE CASCADE DEFERRABLE
 );
 
--- Index s.t. we can efficiently join dens_set_utxos with dens_rrs_utxos on the name
-CREATE INDEX IF NOT EXISTS dens_rrs_utxos_name_index ON dens_rrs_utxos (name);
+-- Index s.t. one can efficiently query if change has happened in the
+-- dens_set_utxos
+CREATE INDEX IF NOT EXISTS dens_set_utxos_asset_class ON dens_set_utxos (pointer);
+
+-- Index s.t. one can efficiently query which UTxO to spend
+CREATE INDEX IF NOT EXISTS dens_set_utxos_name ON dens_set_utxos (name);
+
+-----------------------------------------------------------------------------
+-- == Table for representing the UTxOs which contain RRs
+-----------------------------------------------------------------------------
+
+-- `+TxOutRef+`s which contain the dens_set_utxos(pointer)
+-- i.e., these are the UTxOs which identify the transactions which contain
+-- transaction outputs that contain RRs as datum.
+CREATE TABLE IF NOT EXISTS dens_elem_ids (
+    id bigserial UNIQUE,
+
+    tx_out_ref_id bytea NOT NULL,
+
+    tx_out_ref_idx bigint NOT NULL,
+
+    asset_class asset_class NOT NULL,
+
+    PRIMARY KEY(id),
+
+    UNIQUE (asset_class),
+
+    UNIQUE (tx_out_ref_id, tx_out_ref_idx, asset_class),
+
+    FOREIGN KEY (tx_out_ref_id, tx_out_ref_idx) REFERENCES tx_out_refs (tx_out_ref_id, tx_out_ref_idx)
+    ON DELETE CASCADE DEFERRABLE
+);
+
+CREATE INDEX IF NOT EXISTS dens_elem_ids_asset_classes ON dens_elem_ids(asset_class);
 
 -- The list of RRs at `+DensValidator+`s addresses i.e., this forms a
--- . M:1 relationship of `+dens_rrs+` to `+dens_rrs_utxos+`
+-- . M:1 relationship of `+dens_rrs+` to `+dens_elem_ids+`
+--
+-- NOTE:(jaredponn): so unlike the rest of the tables, the UTxOs we are
+-- interested in are controlled by how an asset class at `+dens_elem_ids+`
+-- is traded i.e.,
+--
+-- . If the asset class at `+dens_elem_ids+` is traded (i.e., if this
+--    UTxO is consumed), then the RRs are deleted
+-- 
+-- Contrast this to how all other tables have FKs to the `+tx_out_refs+` table
 --
 -- NOTE(jaredponn): this loosely follows the records table in
 -- &lt;https://github.com/PowerDNS/pdns/blob/0b6eb67e14ce894e8286c0993e393b1191411c96/modules/gpgsqlbackend/schema.pgsql.sql&gt;
@@ -1040,10 +1049,6 @@ CREATE INDEX IF NOT EXISTS dens_rrs_utxos_name_index ON dens_rrs_utxos (name);
 CREATE TABLE IF NOT EXISTS dens_rrs (
     id bigserial,
 
-    tx_out_ref_id bytea NOT NULL,
-
-    tx_out_ref_idx bigint NOT NULL,
-
     -- The type of the RR e.g. `+A+`, `+AAAA+`, etc.
     type varchar(10) NOT NULL,
 
@@ -1051,9 +1056,11 @@ CREATE TABLE IF NOT EXISTS dens_rrs (
 
     content varchar(65535) NOT NULL,
 
+    dens_elem_id bigserial,
+
     PRIMARY KEY(id),
 
-    FOREIGN KEY (tx_out_ref_id, tx_out_ref_idx) REFERENCES dens_rrs_utxos (tx_out_ref_id, tx_out_ref_idx)
+    FOREIGN KEY (dens_elem_id) REFERENCES dens_elem_ids(id)
     ON DELETE CASCADE DEFERRABLE
 );
 
@@ -1091,17 +1098,7 @@ CREATE TABLE IF NOT EXISTS dens_protocol_utxos (
 -- See `+dens_set_protocol_nft+` for details.
 CREATE TABLE IF NOT EXISTS dens_protocol_nft(
     at_most_one boolean PRIMARY KEY DEFAULT TRUE,
-    currency_symbol bytea NOT NULL,
-    token_name bytea NOT NULL,
-
-    -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L75-L92
-    CONSTRAINT currency_symbol_length_0_or_28 CHECK
-    (
-        (octet_length(currency_symbol) = 0) OR (octet_length(currency_symbol) = 28)
-    ),
-
-    -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L99-L112
-    CONSTRAINT token_name_length_at_most_32 CHECK (octet_length(token_name) &lt;= 32),
+    asset_class asset_class NOT NULL,
 
     CONSTRAINT at_most_one CHECK (at_most_one)
     );
@@ -1535,9 +1532,9 @@ SELECT create_table_undo_insert('dens_set_utxos');
 SELECT create_table_undo_delete('dens_set_utxos');
 SELECT create_table_undo_update('dens_set_utxos');
 
-SELECT create_table_undo_insert('dens_rrs_utxos');
-SELECT create_table_undo_delete('dens_rrs_utxos');
-SELECT create_table_undo_update('dens_rrs_utxos');
+SELECT create_table_undo_insert('dens_elem_ids');
+SELECT create_table_undo_delete('dens_elem_ids');
+SELECT create_table_undo_update('dens_elem_ids');
 
 SELECT create_table_undo_insert('dens_rrs');
 SELECT create_table_undo_delete('dens_rrs');
@@ -1563,11 +1560,10 @@ $body$
     BEGIN
         SELECT * INTO old_protocol_nft FROM dens_protocol_nft;
 
-        INSERT INTO dens_protocol_nft(currency_symbol, token_name)
-        VALUES(dens_set_protocol_nft.currency_symbol, dens_set_protocol_nft.token_name)
+        INSERT INTO dens_protocol_nft(asset_class)
+        VALUES(CAST(ROW(dens_set_protocol_nft.currency_symbol, dens_set_protocol_nft.token_name) AS asset_class))
         ON CONFLICT (at_most_one) DO UPDATE
-            SET currency_symbol = EXCLUDED.currency_symbol,
-                token_name = EXCLUDED.token_name;
+            SET asset_class = (EXCLUDED).asset_class;
 
         SELECT * INTO STRICT new_protocol_nft FROM dens_protocol_nft;
 
@@ -1575,7 +1571,7 @@ $body$
             RETURN new_protocol_nft;
         END IF;
 
-        IF old_protocol_nft.currency_symbol = new_protocol_nft.currency_symbol AND old_protocol_nft.token_name = new_protocol_nft.token_name THEN
+        IF (old_protocol_nft).asset_class = (new_protocol_nft).asset_class THEN
             RETURN new_protocol_nft;
         END IF;
 
@@ -1603,7 +1599,7 @@ $body$
         END IF;
 
         -- If the current protocol NFT matches the provided NFT, we're good, so do nothing and return
-        IF current_protocol_nft.currency_symbol = currency_symbol AND current_protocol_nft.token_name = token_name THEN
+        IF (current_protocol_nft).asset_class = ROW(currency_symbol, token_name) THEN
             RETURN current_protocol_nft;
         END IF;
 
