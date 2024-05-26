@@ -1,0 +1,4 @@
+:toc:
+
+This document describes the DeNS transaction component of DeNS. 
+This shows how one can use a CLI interface to create / submit transactions to the Cardano blockchain in order to interact with the DeNS protocol.

@@ -136,6 +136,17 @@ switch (mainOptions["command"]) {
     const txHash = await Utils.signAndSubmitTx(tx);
     Logger.logger.info(`Tx hash: ${txHash}`);
 
+    {
+      const utils = new Lucid.Utils(lucid);
+      Logger.logger.info(
+        `Protocol token: ${
+          JSON.stringify({
+            currency_symbol: utils.mintingPolicyToId(densParams.protocolPolicy),
+            token_name: "",
+          })
+        } `,
+      );
+    }
     await lucid.awaitTx(txHash);
 
     break;

@@ -1,0 +1,21 @@
++++
+title = "update-record"
+weight = 3
++++
+:toc:
+
+.Updating the resource records associated with a domain
+[source,sh]
+```
+dens-transaction-cli \
+    update-record \
+    --ogmios-host 127.0.0.1 \
+    --ogmios-port 1337 \
+    --private-key-bech32 ed25519_sk1djfszzj6dexpv5ms4uww6xdrpfv09mxsdvvlqsu90qnxcq2grryqtl0csw \
+    --network Preview \
+    --protocol-nft-tx-out-ref "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f#0" \
+    --domain-name "www.google.com" \
+    --a-record "1000,101.101.101.101" \
+    --aaaa-record "1000,2607:f8b0:400e:c03::8a" \
+    --soa-record "1000,ns-1139.awsdns-14.org. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400"
+```

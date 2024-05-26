@@ -22,11 +22,10 @@
       in
       {
         packages = {
-          inherit (tsFlake.packages)
-            # Executable
-            dens-transactions-typescript-exe
-            # Library for other projects
-            dens-transactions-typescript-lib;
+          # Executable
+          dens-transactions-cli = tsFlake.packages.dens-transactions-typescript-exe;
+          # Library for other projects
+          inherit (tsFlake.packages) dens-transactions-typescript-lib;
         };
 
         # When developing, in this directory, run

@@ -1,0 +1,18 @@
++++
+title = "register-domain"
+weight = 3
++++
+:toc:
+
+.Registering a domain
+[source,sh]
+```
+dens-transaction-cli \
+    register-domain \
+    --ogmios-host 127.0.0.1 \
+    --ogmios-port 1337 \
+    --private-key-bech32 ed25519_sk1djfszzj6dexpv5ms4uww6xdrpfv09mxsdvvlqsu90qnxcq2grryqtl0csw \
+    --network Preview \
+    --protocol-nft-tx-out-ref "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f#0" \
+    --domain-name "www.google.com"
+```
