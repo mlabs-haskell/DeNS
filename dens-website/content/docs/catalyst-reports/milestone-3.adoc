@@ -16,7 +16,7 @@ weight = 3
 This serves as the main query layer for other applications like DNS analytics (we expect this to be particularly useful for security-related applications) but also as the database from which traditional DNS service integration can take place.
 
 ** The package which listens to Cardano transactions that are related to DeNS and populates a relational database can be found https://github.com/mlabs-haskell/DeNS/tree/main/dens-query[here].
-** The documentation for this package can be found https://www.example.com[here].
+** The documentation for this package can be found https://mlabs-haskell.github.io/DeNS/docs/dens-query[here].
 
 // Acceptance criteria
 
@@ -32,11 +32,11 @@ This serves as the main query layer for other applications like DNS analytics (w
 |
 * Links to PRs, issues and commits in the DeNS repository where the objectives of the milestone are achieved will be made available so that the Catalyst community and public can review the code.
 
-** This https://www.example.com[commit] contains the package for the milestone completion.
+** This https://github.com/mlabs-haskell/DeNS/tree/933780fbdc5d5fa7ab6c1b9d307e514ecce95873/dens-query[commit] contains the package for the milestone completion.
 
 * Video demonstration of the use of the package that shows the successful operation of the query layer will be posted on YouTube. A link will be provided to the community in the DeNS repository.
 
-** The video can be found https://www.example.com[here].
+** The video can be found https://youtu.be/lYMqIUAymYs[here].
 
 [NOTE]
 ====
