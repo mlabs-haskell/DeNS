@@ -19,9 +19,28 @@
     };
   };
 
-  perSystem = { system, ... }:
+  perSystem = { system, pkgs, config, ... }:
     {
-      packages.ogmios = inputs.ogmios.packages.${system}."ogmios:exe:ogmios";
-    };
+      packages = {
+        ogmios = inputs.ogmios.packages.${system}."ogmios:exe:ogmios";
 
+        ogmios-image = pkgs.dockerTools.buildImage {
+          name = "ogmios";
+          tag = "latest";
+          created = "now";
+
+          copyToRoot = pkgs.buildEnv {
+            name = "ogmios-image-root";
+            paths = [ config.packages.ogmios ];
+            pathsToLink = [ "/bin" ];
+          };
+          config = {
+            Cmd = [ "/bin/ogmios" ];
+            Volumes = {
+              "/ipc/cardano-node" = { };
+            };
+          };
+        };
+      };
+    };
 }

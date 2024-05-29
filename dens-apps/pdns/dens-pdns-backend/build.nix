@@ -34,25 +34,29 @@
       in
       {
         packages = {
-
           # Executable
           dens-pdns-backend = tsFlake.packages.dens-pdns-backend-typescript-exe;
 
-          # User manual
-          # dens-pdns-backend-manual = pkgs.stdenv.mkDerivation {
-          #   name = "dens-pdns-backend-manual";
-          #   nativeBuildInputs = [ pkgs.nodejs pkgs.asciidoctor ];
-          #   src = ./.;
-          #   buildPhase =
-          #     ''
-          #       npm run doc-manual
-          #     '';
-          #   installPhase =
-          #     ''
-          #       mkdir -p "$out/share/doc"
-          #       mv index.html "$out/share/doc"
-          #     '';
-          # };
+          dens-pdns-backend-image = pkgs.dockerTools.buildImage {
+            name = "dens-pdns-backend";
+            tag = "latest";
+            created = "now";
+
+            copyToRoot = pkgs.buildEnv {
+              name = "dens-pdns-backend-image-root";
+              paths = [ config.packages.dens-pdns-backend ];
+              pathsToLink = [ "/bin" ];
+            };
+
+            config = {
+              Env = [ "SOCKET_PATH=/ipc/dens-pdns-backend/.s.dens-pdns-backend" ];
+              Cmd = [ "/bin/dens-pdns-backend-cli" ];
+              Volumes = {
+                "/ipc/dens-pdns-backend" = { };
+              };
+            };
+          };
+
         };
 
         # When developing, in this directory, run
