@@ -13,6 +13,7 @@
   imports =
     [
       ./api/lbf/build.nix
+      ./api/postgres/build.nix
     ];
   config = {
     perSystem = { system, config, pkgs, ... }:
@@ -48,15 +49,13 @@
                 ''
                   ${super.postFixup or ""}
 
+                  # Copy the SQL schema to a data directory in the application
+                  mkdir -p "$out/share/sql"
+                  cp ${config.packages.dens-query-postgres-schema} "$out/share/sql/dens-query-postgres-schema.sql"
+
+                  # Wrap the program s.t. it uses the previous SQL file
                   wrapProgram $out/bin/dens-query-cli \
-                      --set DENS_QUERY_INIT_SQL_FILE ${
-                            # Awkwardness since Hercules CI doesn't like
-                            # depending on files in the nix store at run time,
-                            # and instead prefers derivations
-                            pkgs.runCommand "dens-sql"  { SQL_FILE = ./api/postgres/dens.sql; } ''
-                                cp "$SQL_FILE" "$out"
-                            ''
-                        }
+                      --set DENS_QUERY_POSTGRES_SCHEMA "$out/share/sql/dens-query-postgres-schema.sql"
                 '';
             });
 

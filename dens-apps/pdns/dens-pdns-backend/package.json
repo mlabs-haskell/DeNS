@@ -1,0 +1,24 @@
+{
+  "name": "dens-pdns-backend",
+  "version": "1.0.0",
+  "description": "pdns backend for DeNS",
+  "bin": {
+    "dens-pdns-backend-cli": "./bin/dens-pdns-backend-cli.mjs"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "npx tsc -b src/lib",
+    "test": "npx tsc -b src/tests && node --test"
+  },
+  "author": "DeNS team",
+  "license": "ISC",
+  "dependencies": {
+    "pg": "^8.11.5",
+    "winston": "^3.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.8",
+    "@types/pg": "^8.11.5",
+    "typescript": "^5.4.5"
+  }
+}
