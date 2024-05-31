@@ -1,0 +1,628 @@
+<!doctype html>
+<html itemscope itemtype="http://schema.org/WebPage" lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+
+
+<link rel="shortcut icon" href="/DeNS/favicons/favicon.ico" >
+<link rel="apple-touch-icon" href="/DeNS/favicons/apple-touch-icon-180x180.png" sizes="180x180">
+<link rel="icon" type="image/png" href="/DeNS/favicons/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/DeNS/favicons/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-36x36.png" sizes="36x36">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-48x48.png" sizes="48x48">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-72x72.png" sizes="72x72">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-96x96.png" sizes="96x96">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-144x144.png" sizes="144x144">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-192x192.png" sizes="192x192">
+
+<title>Technical Specification | DeNS</title>
+<meta name="description" content="Requirements (Conceptual) The DeNS protocol must support a small list of essential features to deliver on the promise of a decentralized, transparent, censorship-resistant, and privacy-conscious successor to the DNS protocol. These features are:
+Records must be stored in an immutable, permanent, and public database. Users must have the ability (at least in principle) to resolve queries locally - that is, it ought to be possible for a user to reconstruct the DeNS database solely from public information, and use that database to resolve queries without sharing those queries (or the identity of the user) with any third party Users must be provided with direct control over their records, such that they can update those records without the assent or intervention of any third party.">
+<meta property="og:title" content="Technical Specification" />
+<meta property="og:description" content="Requirements (Conceptual) The DeNS protocol must support a small list of essential features to deliver on the promise of a decentralized, transparent, censorship-resistant, and privacy-conscious successor to the DNS protocol. These features are:
+Records must be stored in an immutable, permanent, and public database. Users must have the ability (at least in principle) to resolve queries locally - that is, it ought to be possible for a user to reconstruct the DeNS database solely from public information, and use that database to resolve queries without sharing those queries (or the identity of the user) with any third party Users must be provided with direct control over their records, such that they can update those records without the assent or intervention of any third party." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://mlabs-haskell.github.io/DeNS/docs/architecture/architecture/" /><meta property="article:section" content="docs" />
+
+
+<meta itemprop="name" content="Technical Specification">
+<meta itemprop="description" content="Requirements (Conceptual) The DeNS protocol must support a small list of essential features to deliver on the promise of a decentralized, transparent, censorship-resistant, and privacy-conscious successor to the DNS protocol. These features are:
+Records must be stored in an immutable, permanent, and public database. Users must have the ability (at least in principle) to resolve queries locally - that is, it ought to be possible for a user to reconstruct the DeNS database solely from public information, and use that database to resolve queries without sharing those queries (or the identity of the user) with any third party Users must be provided with direct control over their records, such that they can update those records without the assent or intervention of any third party.">
+
+<meta itemprop="wordCount" content="4735">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Technical Specification"/>
+<meta name="twitter:description" content="Requirements (Conceptual) The DeNS protocol must support a small list of essential features to deliver on the promise of a decentralized, transparent, censorship-resistant, and privacy-conscious successor to the DNS protocol. These features are:
+Records must be stored in an immutable, permanent, and public database. Users must have the ability (at least in principle) to resolve queries locally - that is, it ought to be possible for a user to reconstruct the DeNS database solely from public information, and use that database to resolve queries without sharing those queries (or the identity of the user) with any third party Users must be provided with direct control over their records, such that they can update those records without the assent or intervention of any third party."/>
+
+
+
+
+<link rel="preload" href="/DeNS/scss/main.min.5118d334f4d49e78b43432d75232dda13144ff70fc9d784048f9c31c8751ea0f.css" as="style">
+<link href="/DeNS/scss/main.min.5118d334f4d49e78b43432d75232dda13144ff70fc9d784048f9c31c8751ea0f.css" rel="stylesheet" integrity="">
+
+<script
+  src="https://code.jquery.com/jquery-3.7.1.min.js"
+  integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+  crossorigin="anonymous"></script>
+<script defer
+  src="https://unpkg.com/lunr@2.3.9/lunr.min.js"
+  integrity="sha384-203J0SNzyqHby3iU6hzvzltrWi/M41wOP5Gu+BiJMz5nwKykbkUx8Kp7iti0Lpli"
+  crossorigin="anonymous"></script>
+
+  </head>
+  <body class="td-page">
+    <header>
+      <nav class="td-navbar js-navbar-scroll" data-bs-theme="dark">
+<div class="container-fluid flex-column flex-md-row">
+  <a class="navbar-brand" href="/DeNS/"><span class="navbar-brand__logo navbar-logo"></span><span class="navbar-brand__name">DeNS</span></a>
+  <div class="td-navbar-nav-scroll ms-md-auto" id="main_navbar">
+    <ul class="navbar-nav">
+      </ul>
+  </div>
+  <div class="d-none d-lg-block">
+    <div class="td-search td-search--offline">
+  <div class="td-search__icon"></div>
+  <input
+    type="search"
+    class="td-search__input form-control"
+    placeholder="Search this site…"
+    aria-label="Search this site…"
+    autocomplete="off"
+    
+    data-offline-search-index-json-src="/DeNS/offline-search-index.4b13c4d542d169e5b7f5eeac924eef3b.json"
+    data-offline-search-base-href="/"
+    data-offline-search-max-results="10"
+  >
+</div>
+  </div>
+</div>
+</nav>
+    </header>
+    <div class="container-fluid td-outer">
+      <div class="td-main">
+        <div class="row flex-xl-nowrap">
+          <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+            <div id="td-sidebar-menu" class="td-sidebar__inner">
+  <form class="td-sidebar__search d-flex align-items-center">
+    <div class="td-search td-search--offline">
+  <div class="td-search__icon"></div>
+  <input
+    type="search"
+    class="td-search__input form-control"
+    placeholder="Search this site…"
+    aria-label="Search this site…"
+    autocomplete="off"
+    
+    data-offline-search-index-json-src="/DeNS/offline-search-index.4b13c4d542d169e5b7f5eeac924eef3b.json"
+    data-offline-search-base-href="/"
+    data-offline-search-max-results="10"
+  >
+</div>
+    <button class="btn btn-link td-sidebar__toggle d-md-none p-0 ms-3 fas fa-bars" type="button" data-bs-toggle="collapse" data-bs-target="#td-section-nav" aria-controls="td-section-nav" aria-expanded="false" aria-label="Toggle section navigation">
+    </button>
+  </form>
+  <nav class="td-sidebar-nav collapse" id="td-section-nav">
+    <ul class="td-sidebar-nav__section pe-md-3 ul-0">
+      <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-densdocs-li">
+  <a href="/DeNS/docs/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section tree-root" id="m-densdocs"><span class="">DeNS</span></a>
+  <ul class="ul-1">
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-densdocsarchitecture-li">
+  <a href="/DeNS/docs/architecture/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section" id="m-densdocsarchitecture"><span class="">Design &amp; Architecture</span></a>
+  <ul class="ul-2 foldable">
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id="m-densdocsarchitecturearchitecture-li">
+  <a href="/DeNS/docs/architecture/architecture/" class="align-left ps-0 active td-sidebar-link td-sidebar-link__page" id="m-densdocsarchitecturearchitecture"><span class="td-sidebar-nav-active-item">Technical Specification</span></a>
+</li>
+  </ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-densdocsdens-query-li">
+  <a href="/DeNS/docs/dens-query/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section" id="m-densdocsdens-query"><span class="">DeNS Query</span></a>
+  <ul class="ul-2 foldable">
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-querygetting_started-li">
+  <a href="/DeNS/docs/dens-query/getting_started/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-querygetting_started"><span class="">Getting Started</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-queryhttp_api-li">
+  <a href="/DeNS/docs/dens-query/http_api/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-queryhttp_api"><span class="">HTTP API</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-querydatabase_schema-li">
+  <a href="/DeNS/docs/dens-query/database_schema/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-querydatabase_schema"><span class="">Database Schema</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-queryreadme-li">
+  <a href="/DeNS/docs/dens-query/readme/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-queryreadme"><span class=""></span></a>
+</li>
+  </ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-densdocscatalyst-reports-li">
+  <a href="/DeNS/docs/catalyst-reports/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section" id="m-densdocscatalyst-reports"><span class="">Catalyst reports</span></a>
+  <ul class="ul-2 foldable">
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocscatalyst-reportsmilestone-3-li">
+  <a href="/DeNS/docs/catalyst-reports/milestone-3/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocscatalyst-reportsmilestone-3"><span class="">Milestone 3</span></a>
+</li>
+  </ul>
+</li>
+  </ul>
+</li>
+    </ul>
+  </nav>
+</div>
+
+          </aside>
+          <aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+            <div class="td-page-meta ms-2 pb-1 pt-2 mb-0">
+
+</div>
+
+            <div class="td-toc">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#requirements-conceptual">Requirements (Conceptual)</a></li>
+    <li><a href="#overview-a-cross-chain-database-conceptual">Overview: A Cross-Chain Database (Conceptual)</a></li>
+    <li><a href="#root-domain-topography-conceptual">Root Domain Topography (Conceptual)</a></li>
+    <li><a href="#architecture---cardano-technical-wip">Architecture - Cardano (Technical) (WIP)</a>
+      <ul>
+        <li><a href="#protocol-nft">Protocol NFT</a></li>
+        <li><a href="#record-keys-and-values">Record Keys and Values</a></li>
+        <li><a href="#set-validator--elementid-minting-policy">Set Validator / ELEMENTID Minting Policy</a></li>
+        <li><a href="#records-validator">Records Validator</a></li>
+      </ul>
+    </li>
+    <li><a href="#architecturearweave-technical-wip">Architecture—Arweave (Technical) (WIP)</a>
+      <ul>
+        <li><a href="#why-not-cardano">Why not Cardano?</a></li>
+        <li><a href="#why-arweave">Why Arweave?</a></li>
+        <li><a href="#initial-upload">Initial Upload</a></li>
+        <li><a href="#update-of-a-set-of-records-and-upload-of-new-records">Update of a set of records and upload of new records</a></li>
+        <li><a href="#domain-solving">Domain Solving</a></li>
+      </ul>
+    </li>
+    <li><a href="#architecture---offchain-technical-wip">Architecture - Offchain (Technical) (WIP)</a>
+      <ul>
+        <li><a href="#efficient-utxo-queries">Efficient UTxO queries</a></li>
+        <li><a href="#providing-dns-records">Providing DNS records</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      </div>
+    
+            
+
+          </aside>
+          <main class="col-12 col-md-9 col-xl-8 ps-md-5" role="main">
+            
+  
+
+            <nav aria-label="breadcrumb" class="td-breadcrumbs">
+  <ol class="breadcrumb">
+  <li class="breadcrumb-item">
+    <a href="/DeNS/docs/">DeNS</a></li>
+  <li class="breadcrumb-item">
+    <a href="/DeNS/docs/architecture/">Design &amp; Architecture</a></li>
+  <li class="breadcrumb-item active" aria-current="page">
+    Technical Specification</li>
+  </ol>
+</nav>
+            
+<div class="td-content">
+	<h1>Technical Specification</h1>
+	
+	<header class="article-meta">
+		
+</header>
+	<h2 id="requirements-conceptual">Requirements (Conceptual)</h2>
+<p>The DeNS protocol must support a small list of essential features to deliver on the promise of a decentralized, transparent, censorship-resistant, and privacy-conscious successor to the DNS protocol.
+These features are:</p>
+<ul>
+<li>Records must be stored in an immutable, permanent, and public database.</li>
+<li>Users must have the ability (at least in principle) to resolve queries <em>locally</em> - that is, it ought to be possible for a user to reconstruct the DeNS database solely from public information, and use that database to resolve queries without sharing those queries (or the identity of the user) with any third party</li>
+<li>Users must be provided with direct control over their records, such that they can update those records without the assent or intervention of any third party.</li>
+<li>Users must have the ability to transfer ownership of their records without the assent or intervention of any third party.</li>
+<li>It must be possible to reconstruct a database, suitable for use as the primary database mapping domain names to resources in a DNS resolver, from these public records</li>
+<li>A viable and orderly transition path from traditional DNS must exist, such that existing users of DNS can gradually migrate to the DeNS protocol</li>
+</ul>
+<p>The last feature requires further elaboration and discussion. A &rsquo;transition path&rsquo;, for the purposes of this document, can be understood in two ways: First, from the perspective of end-users of the system, a DeNS transition path requires that they be able to interact with DeNS to resolve traditional DNS queries while benefiting from the advantages of decentralization, transparency, etc. Second, from the perspective of (DNS) domain owners and operators, a transition path requires that DeNS (temporarily) delegates authority over existing DNS records to the authoritative sources of those records in the existing DNS system.</p>
+<p>As far as we can determine, the only way to delegate authority over existing DNS records to their authoritative source in traditional DNS without abandoning some other required feature is to <em>mirror existing DNS records in the DeNS system</em>. This entails a further design constraint: It must be <em>economically feasible</em> to perform DNS record mirroring in DeNS. While this is, in some sense, an implementation detail, it is nevertheless an essential requirement which must guide the rest of the design.</p>
+<h2 id="overview-a-cross-chain-database-conceptual">Overview: A Cross-Chain Database (Conceptual)</h2>
+<p>The constraints outlined in the previous section give rise to an apparent dilemma: The Web3 technologies which are most suitable for the <em>data-storage</em> functionality (Arweave, IPFS, other distributed storage solutions) are inadequate for implementing the transaction logic, while, conversely, the Web3 technologies most suited to implement transaction logic necessary for users to have meaningful control over their records (Cardano and other smart-contract capable blockchains) are unsuitable for storing the large (relative to typical smart contracts) amounts of data necessary for a protocol that aims to replace DNS in its entirety.</p>
+<p>Fortunately, this dilemma only poses a problem under the assumption that the database of DeNS records must exist &ldquo;in one place&rdquo;. Were that the case, we would be forced to choose between two unsatisfactory and cumbersome solutions: Either we would have to implement complex smart contract logic on a platform designed primarily for data storage, or implement data storage on a platform designed for contract logic. This assumption, however, is false. If we think of a database as an abstract structure that (logically) associates values (or sets of values) with specific keys, it is clear that a logical relation can be established between keys and values located on entirely distinct Web3 technologies.</p>
+<p>This insight motivates the general architecture of the DeNS (onchain) protocol: DeNS will consist in a cross-chain database, such that contract logic (creating, updating, deleting, transferring ownership of) records is performed on a smart-contract capable blockchain, while data-storage is performed on a blockchain (or similar Web3 technology) designed for efficient storage and retrieval of data. Transactions on the smart-contract blockchain do not contain records as such (&ldquo;inline&rdquo;), but rather contain <em>pointers</em> (references, addresses) to resources on the data-storage Web3 platform. When constructing the database of records to be used in a resolver, transactions on the smart-contract blockchain serve as a source of authorization - only those records which are properly referenced in a suitable transaction on the smart-contract blockchain will be retrieved from the data-store and included in the final data set.</p>
+<h2 id="root-domain-topography-conceptual">Root Domain Topography (Conceptual)</h2>
+<p>Before moving to a detailed discussion of the DeNS protocol architecture, it is necessary to first clarify exactly what is meant (conceptually) by &ldquo;names&rdquo; and &ldquo;records&rdquo; - and, perhaps most importantly, by &ldquo;ownership&rdquo; - in DeNS. To motivate this discussion, it will be helpful to look at the format of a DNS record, here represented as a Haskell data type (we ignore the inner structure of DNS names and resource data here, as these are not important at this level of discussion):</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-haskell" data-lang="haskell"><span style="display:flex;"><span><span style="color:#66d9ef">data</span> <span style="color:#66d9ef">DNSRecord</span> <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">DNSRecord</span> {
+</span></span><span style="display:flex;"><span>    name     <span style="color:#f92672">::</span> <span style="color:#66d9ef">DNSName</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">type</span>     <span style="color:#f92672">::</span> <span style="color:#66d9ef">Word16</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">class</span>    <span style="color:#f92672">::</span> <span style="color:#66d9ef">Word16</span>,
+</span></span><span style="display:flex;"><span>    ttl      <span style="color:#f92672">::</span> <span style="color:#66d9ef">Word32</span>,
+</span></span><span style="display:flex;"><span>    rdLength <span style="color:#f92672">::</span> <span style="color:#66d9ef">Word16</span>,
+</span></span><span style="display:flex;"><span>    rData    <span style="color:#f92672">::</span> <span style="color:#66d9ef">ResourceData</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span></code></pre></div><p>Although it is commonplace (and perfectly fine in most circumstances) to think of DNS records as representing a mapping from a human-readable name to a machine-readable IP address, this is not strictly correct. The <code>class</code> field in a DNS record indicates the protocol that the record is concerned with, and one must know the class in order to interpret the <code>type</code> field (and consequently the <code>rData</code> field as well). In almost every interaction with DNS, the <code>class</code> can be assumed to be <code>1</code>, which indicates an IP (Internet Protocol) record (<code>A</code>,<code>AAAA</code>,<code>MX</code>, etc) - the family of records with which most developers are familiar.</p>
+<p>While this may seem like a minor technical detail, it motivates several important questions about the nature of ownership, names, and records in DeNS. Because DeNS aims to support both &ldquo;traditional DNS records&rdquo; (which we can now operationally define as: IP class records of types specified in the relevant DNS RFCs) and new classes of records that support a variety of Web3 naming protocols, we cannot maintain the illusion that all records are IP class records. Furthermore, if we wish to sell access rights for the records associated with a given name, we must be able to specify precisely the criteria by which a record is &ldquo;associated with a given name&rdquo;. That is: We must be able to tell our potential customers exactly what it is they are buying.</p>
+<p>We anticipate that, in the future, DeNS will support a variety of name systems. Some of them may integrate with DeNS at a deep level, such that transactions are always processed by a DeNS contract. However, we would also like to support (name resolution for) autonomous protocols which are not managed by DeNS contracts and therefore cannot assume that a single name (i.e. the value of the <code>name</code> field) is owned by the same entity in each supported protocol. Consequently, in DeNS, &ldquo;ownership&rdquo; must mean: Delegated control over the records associated with a <code>(Name,Class)</code> pair, where a record <code>R</code> is associated with a name/class pair <code>(N,C)</code> iff <code>R.name == N &amp;&amp; R.class == C</code>.</p>
+<p>Similarly, at the highest level there are no &ldquo;bare names&rdquo; in DeNS. A DeNS name exists in a <em>Name-Universe</em> which is indicated by the associated class (or, if you prefer, by the protocol the class refers to).</p>
+<p>Records in DeNS, then, are just ordinary DNS records. However, in order to maximize the number of additional protocols that DeNS support, and to reduce the burden of supporting obsolete protocols, we will consider all existing DNS record classes other than 1 (IP) to be deprecated. We will not consider ourselves obliged to support these protocols, and we reserve the right to reassign their class identifier at our discretion.</p>
+<p>The considerations raised in this section also constrain the logical structure of the DeNS root domain. In particular, the DeNS root domain must be <em>universal</em> in a sense in which the DNS root domain is not. To elaborate: What we ordinarily refer to as the DNS root domain - the set of zone files served by DNS root servers - is really <em>a</em> DNS root domain. Namely, it is the root domain for the IP class. There are <a href="https://chaosnet.net/chaos-dns">other</a> root domains for non-IP classes, and (e.g.) the Chaosnet root domain and the IP root domain are utterly distinct from one another. In this sense, the existing DNS root domain is not universal.</p>
+<p>DeNS, by contrast, will be universal. Concretely, this implies that the records which constitute the DeNS top-level root domain will contain resources which are associated with a <em>class</em>, and not, as with DNS, a top-level domain. In this way, we can support a wide variety of different protocols, including protocols that serve as their own autonomous top-level domain.</p>
+<p>This architecture allows us to specify more clearly the mechanics of the transition away from DNS as an authority for IP records: We will lease the IP class of domains to ourselves and maintain mirrors of DNS records until DeNS adoption reaches a level that we judge sufficient to facilitate a &ldquo;hard fork&rdquo; from DNS authority. At that point, we will let the lease expire and IP class domains in DeNS will be directly managed by domain owners via DeNS smart contracts.</p>
+<h2 id="architecture---cardano-technical-wip">Architecture - Cardano (Technical) (WIP)</h2>
+<p>TODO/FIXME: Everything here assumes that domain ownership is eternal/indefinite. In practice that won&rsquo;t work, and we&rsquo;ll have to modify this design to accommodate a &ldquo;lease&rdquo; model instead of a &ldquo;permanent control&rdquo; model.</p>
+<h3 id="protocol-nft">Protocol NFT</h3>
+<p>All contract scripts will be parameterized by a <code>Protocol</code> NFT that uniquely identifies a UTxO which as datum contains the configuration (trusted knowledge of Plutus scripts) of the protocol. More precisely, the <code>Protocol</code> NFT must be paid to an unspendable validator, say <code>ProtocolValidator</code>, which has the following as datum.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-haskell" data-lang="haskell"><span style="display:flex;"><span><span style="color:#66d9ef">data</span> <span style="color:#66d9ef">Protocol</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">Protocol</span>
+</span></span><span style="display:flex;"><span>  { elementIdMintingPolicy <span style="color:#f92672">::</span> <span style="color:#66d9ef">ScriptHash</span>
+</span></span><span style="display:flex;"><span>  , setElemMintingPolicy <span style="color:#f92672">::</span> <span style="color:#66d9ef">ScriptHash</span>
+</span></span><span style="display:flex;"><span>  , setValidator <span style="color:#f92672">::</span> <span style="color:#66d9ef">ScriptHash</span>
+</span></span><span style="display:flex;"><span>  , recordsValidator <span style="color:#f92672">::</span> <span style="color:#66d9ef">ScriptHash</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span></code></pre></div><p><strong>DISCUSSION:</strong> The <code>Protocol</code> NFT acts as a single source of truth for the protocol. This is advantageous because of the following.</p>
+<ul>
+<li>It allows one to easily refer to other Plutus scripts within the protocol without the worry of cyclic dependencies.</li>
+<li>It gives the a trustless setup since every <code>Protocol</code> NFT must be paid to the unspendable validator <code>ProtocolValidator</code>, so participants may verify offchain that the datum <code>Protocol</code> is &ldquo;as expected&rdquo; without the need to scan through all transactions in the blockchain.</li>
+<li>If one may extends the <code>ProtocolValidator</code> to be spent under controlled conditions, then since the <code>Protocol</code> NFT acts as the single source of truth, one may effectively update the protocol dynamically.</li>
+</ul>
+<h3 id="record-keys-and-values">Record Keys and Values</h3>
+<p>Morally, the DeNS protocol is a cross-chain distributed Key-Value store, where the key component is a <code>(Name,Class)</code> pair managed by a Cardano smart-contract, and the value is a pointer to an Arweave resource which in turn contains a set of records.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-haskell" data-lang="haskell"><span style="display:flex;"><span><span style="color:#75715e">{-
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">  This data type contains all of the elements necessary to function as a key in our logical database.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">-}</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">data</span> <span style="color:#66d9ef">DeNSKey</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">=</span> <span style="color:#66d9ef">DeNSKey</span>
+</span></span><span style="display:flex;"><span>    { densName  <span style="color:#f92672">::</span> <span style="color:#66d9ef">ByteString</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">-- ^ A human readable domain name</span>
+</span></span><span style="display:flex;"><span>    , densClass <span style="color:#f92672">::</span> <span style="color:#66d9ef">Word16</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">-- ^ Each set represents a Name Universe and must be tagged w/ the class ID corresponding to that universe</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">-- By convention, this should be an Arweave resource address. `Nothing` indicates a deleted record</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">newtype</span> <span style="color:#66d9ef">DeNSValue</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">DeNSValue</span> { densPointer <span style="color:#f92672">::</span> <span style="color:#66d9ef">Maybe</span> <span style="color:#66d9ef">ByteString</span> }
+</span></span></code></pre></div><p>Note that <code>DeNSKey</code>s may be ordered by defining <code>DeNSKey n1 c1 &lt;= DeNSKey n2 c2</code> iff <code>(n1, c1) &lt;= (n2, c2)</code> i.e., <code>DeNSKey</code>s are ordered lexicographically using the lexicographical ordering of <code>ByteString</code> and the natural ordering of <code>Word16</code>s.</p>
+<h3 id="set-validator--elementid-minting-policy">Set Validator / ELEMENTID Minting Policy</h3>
+<p>The most important invariant that the protocol must maintain is the <em>uniqueness of names</em> in the set of onchain keys. Unfortunately, we cannot adopt the naive approach of using an onchain List to represent this set. Because such a list could conceivably grow to include <em>tens of millions</em> (or more!) entries, and because traversing a list that large would assuredly exceed Cardano ExUnit limits, we are forced to adopt a more sophisticated solution. First, we will require a data type to represent entries in our set:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-haskell" data-lang="haskell"><span style="display:flex;"><span><span style="color:#66d9ef">data</span> <span style="color:#66d9ef">SetDatum</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">=</span> <span style="color:#66d9ef">SetDatum</span>
+</span></span><span style="display:flex;"><span>    { key <span style="color:#f92672">::</span> <span style="color:#66d9ef">DeNSKey</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">-- ^ This entry&#39;s key</span>
+</span></span><span style="display:flex;"><span>    , next <span style="color:#f92672">::</span> <span style="color:#66d9ef">DeNSKey</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">-- ^ The successor to key</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span></code></pre></div><h4 id="setelemid-minting-policy">SetElemID Minting Policy</h4>
+<p>The <code>SetValidator</code> locks UTxOs containing <code>SetDatum</code> entries and is used alongside with <code>SetElemID</code> to represent the on-chain collection of unique keys. We initialize the set by locking a UTXO with <code>SetDatum (DeNSKey &quot;&quot; 0) (DeNSKey ub (2^16 - 1)</code> at the validator (which can be assumed to exist for validation checks) when minting <code>Protocol</code> NFT (to ensure uniqueness of the linked list) where <code>ub</code> is the minimal upper bound (under lexicographical ordering) of all <code>ByteString</code>s that are DNS names (see <a href="https://www.ietf.org/rfc/rfc1035.txt">2.3.4. of RFC  1035</a>) which is itself not a DNS name.
+<code>SetElemID</code> will identify a subset of all <code>SetValidator</code>s on the blockchain to distinguish the <code>SetValidator</code>s relevant to the protocol as opposed to random <code>SetValidator</code> addresses adversaries may have paid to.</p>
+<p><code>SetElemID</code> will mint in two cases. The first case is the trivial initialization case &ndash; it mints only if all of the following are satisfied.</p>
+<ul>
+<li>
+<p><code>Protocol</code> NFT has minted.</p>
+</li>
+<li>
+<p>There is a unique <code>SetDatum</code> initialized as above at <code>SetValidator</code> in the outputs.</p>
+</li>
+<li>
+<p>There is no <code>SetValidator</code>s in the inputs</p>
+</li>
+<li>
+<p>No <code>ElementID</code> has minted.</p>
+</li>
+</ul>
+<p>The other case is more tricky.</p>
+<p>Let</p>
+<ul>
+<li><code>DeNSKey N C = densKey</code> designate a new Name/Class pair for which we would like to mint an <strong>ElementID</strong> NFT</li>
+<li><code>SD(k,nxt)</code>designate a SetDatum such that <code>key = k, next = nxt</code></li>
+</ul>
+<p><strong>INPUTS:</strong></p>
+<ul>
+<li>A UTxO (locked at <code>SetValidator</code> with a <code>SetElemID</code> token) <code>SD(k,nxt)</code> where k &lt; densKey &lt; nxt</li>
+</ul>
+<p><strong>OUTPUTS:</strong></p>
+<ul>
+<li>A UTxO <code>SD(k, densKey)</code> (paid to the Set Validator) with a <code>SetElemID</code> token.</li>
+<li>A UTxO <code>SD(densKey, nxt)</code> (paid to the Set Validator) with a <code>SetElemID</code> token.</li>
+</ul>
+<p><strong>MINTS</strong>:</p>
+<ul>
+<li>One <code>SetElemID</code> NFT</li>
+<li>One <code>ElementID</code> NFT with token name <code>blake2b_256(serialiseData(densKey))</code></li>
+</ul>
+<p><strong>REDEEMER</strong>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-haskell" data-lang="haskell"><span style="display:flex;"><span><span style="color:#66d9ef">data</span> <span style="color:#66d9ef">SetInsert</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">SetInsert</span>
+</span></span><span style="display:flex;"><span>    { densKey <span style="color:#f92672">::</span> <span style="color:#66d9ef">DeNSKey</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span></code></pre></div><p><strong>CHECKS:</strong></p>
+<ul>
+<li>The transaction corresponds to the above schema exactly.</li>
+</ul>
+<p><strong>DISCUSSION:</strong></p>
+<ul>
+<li>Because the set is initialized with a lower bound and upper bound, inserting an arbitrary name <code>n</code> always amounts to inserting <code>n</code> after some <em>known</em> name <code>m</code> where <code>m &lt; n</code> and before some known name <code>o</code> s.t. <code>n &lt; o</code>.</li>
+</ul>
+<p><strong>EXTENSIONS:</strong></p>
+<ul>
+<li>
+<p>Since the <code>SetElemID</code> token name isn&rsquo;t used, it should be the empty string to save bytes.</p>
+</li>
+<li>
+<p>It is possible to introduce a hierarchical ownership of names (e.g. <code>DeNSKey 1 &quot;google.com.&quot;</code> may be purchased only if the owner of <code>DeNSKey 1 &quot;com.&quot;</code> approves such a sale). We only describe the inductive case, and leave the base case up to implementations where the owner of the empty domain (for each class) would be coded directly in the smart contract.  First, we will assume that a function <code>parse :: ByteString -&gt; [ByteString]</code> exists which maps names like <code>&quot;google.com&quot;</code> to <code>[&quot;google&quot;, &quot;com&quot;]</code> i.e., <code>parse</code> decomposes a <code>name</code> into its labels, and if <code>parse n1</code> is a suffix of <code>parse n2</code>, then we say that <code>n2</code> is a subdomain of <code>n1</code> (see <a href="https://www.ietf.org/rfc/rfc1035.txt">2.3.1</a>). We will also assume there exists a function <code>unparse :: [ByteString] -&gt; ByteString</code> that is the inverse of <code>parse</code>. The key idea is that a subdomain must verify that the domain immediately &ldquo;above&rdquo; has approved purchasing the subdomain&rsquo;s name.</p>
+<p>We modify the datum and redeemer as follows.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-diff" data-lang="diff"><span style="display:flex;"><span>data SetDatum
+</span></span><span style="display:flex;"><span>  = SetDatum
+</span></span><span style="display:flex;"><span>    { key :: DeNSKey
+</span></span><span style="display:flex;"><span>    , next :: DeNSKey
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">+   , ownerApproval :: CurrencySymbol
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+       -- ^ A token which must mint in order for a subdomain to be bought
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e"></span>  }
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-haskell" data-lang="haskell"><span style="display:flex;"><span><span style="color:#66d9ef">data</span> <span style="color:#66d9ef">SetInsert</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">SetInsert</span>
+</span></span><span style="display:flex;"><span>    { densKey <span style="color:#f92672">::</span> <span style="color:#66d9ef">DeNSKey</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">+</span>   , ownerApproval <span style="color:#f92672">::</span> <span style="color:#66d9ef">CurrencySymbol</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span></code></pre></div><p>Let <code>SD(k,nxt,o)</code> denote a <code>SetDatum</code> with <code>key = k, next = nxt, ownerApproval = o</code>.</p>
+<p>Now, the transaction where <code>SetElemID</code> mints must conform to the following schema when given redeemer <code>SetInsert{densKey, ownerApproval}</code> where <code>densKey = DeNSKey N C</code> and <code>n:ns = parse N</code>.</p>
+<p><strong>INPUTS:</strong></p>
+<ul>
+<li>A UTxO (locked at <code>SetValidator</code> with a <code>SetElemID</code> token) <code>SD(k,nxt,o)</code> where k &lt; densKey &lt; nxt</li>
+</ul>
+<p><strong>REFERENCE INPUTS:</strong></p>
+<ul>
+<li>A UTxO (locked at <code>SetValidator</code> with a <code>SetElemID</code> token) <code>SD(unparse ns, _, domainOwner)</code></li>
+</ul>
+<p><strong>OUTPUTS:</strong></p>
+<ul>
+<li>A UTxO <code>SD(k,densKey,o)</code> (paid to the <code>SetValidator</code>) with a <code>SetElemID</code> token</li>
+<li>A UTxO <code>SD(densKey,nxt,ownerApproval)</code> (paid to the <code>SetValidator</code>) with a <code>SetElemID</code> token</li>
+</ul>
+<p><strong>MINTS</strong>:</p>
+<ul>
+<li>One <code>SetElemID</code> NFT with token name.</li>
+<li>One <code>ElementID</code> NFT with token name <code>blake2b_256(serialiseData(densKey))</code></li>
+<li>At least one token from the <code>domainOwner</code> from the reference input is minted.</li>
+</ul>
+<p>Note how the <code>ownerApproval</code> is an extra check to verify that this subdomain purchase has been approved by the domain immediately &ldquo;above&rdquo; it. A simple <code>ownerApproval</code> script could verify if some public key has signed the transaction, or some token (controlled by the owner) has been burned.</p>
+</li>
+<li>
+<p>One may consider to not allow <code>DeNSKey</code>s with empty strings to be inserted.</p>
+</li>
+</ul>
+<h4 id="setvalidator-validator">SetValidator validator</h4>
+<p><code>SetValidator</code> is the validator address which holds the elements in the logical database. It simply validates only if <code>SetElemID</code> mints i.e., it forwards all verifications to <code>SetElemID</code>.</p>
+<p><strong>DISCUSSION:</strong>
+Since <code>SetValidator</code> forwards everything to <code>SetElemID</code>, this makes the potential for upgrading to a new <code>SetElemID</code> convenient as swapping to a new <code>SetElemID'</code> would still keep existing <code>SetElemID</code> already at <code>SetValidator</code> meaning there would be no need for a large migration of tokens.</p>
+<h4 id="elementid-minting-policy">ElementID Minting Policy</h4>
+<p>The <code>ElementID</code> minting policy is an NFT which serves as an access control identifier in order to gate access to specific records in the virtual DeNS database.</p>
+<p><strong>CHECKS:</strong>:</p>
+<ul>
+<li><code>SetElemID</code> mints in the same transaction</li>
+</ul>
+<p><strong>DISCUSSION:</strong></p>
+<p>This forwards all verifications to <code>SetElemID</code> whose minting is unique w.r.t to the element inserted in the set, and ensures that this <code>ElementID</code>&rsquo;s token name contains sufficient information to identify it with the inserted element.</p>
+<h3 id="records-validator">Records Validator</h3>
+<p>The records validator serves as an access control list for the virtual DeNS database. When the offchain code reconstructs the database from Cardano keys and Arweave values, it treats the records locked at the Records validator identified with a <code>ElementID</code> token as the source of authority. That is: Only records locked at the records validator are used to construct the database used in a DeNS resolver.</p>
+<p><strong>PARAMETERS</strong>:</p>
+<ul>
+<li>The Protocol NFT</li>
+</ul>
+<p><strong>DATUM</strong>:</p>
+<p>The Records Validator datum functions as the key in our virtual database. To update or create a record, a DeNS user simply adjusts the reference for the class and name that they own. To delete a record, the user submits a transaction with an output datum where the <code>reference</code> field is <code>Nothing</code>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-haskell" data-lang="haskell"><span style="display:flex;"><span><span style="color:#66d9ef">data</span> <span style="color:#66d9ef">RecordDatum</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">RecordDatum</span> 
+</span></span><span style="display:flex;"><span>    { <span style="color:#66d9ef">class</span> <span style="color:#f92672">::</span> <span style="color:#66d9ef">Word16</span>
+</span></span><span style="display:flex;"><span>    , name  <span style="color:#f92672">::</span> <span style="color:#66d9ef">ByteString</span>
+</span></span><span style="display:flex;"><span>    , reference <span style="color:#f92672">::</span> <span style="color:#66d9ef">Maybe</span> <span style="color:#66d9ef">ByteString</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">-- ^ an Arweave address</span>
+</span></span><span style="display:flex;"><span>    , owner <span style="color:#f92672">::</span> <span style="color:#66d9ef">PubKeyHash</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>The offchain code that constructs the DeNS database will always treat the <em>most recent</em> record associated with a given name as authoritative, and consequently we do not need to distinguish between record creation and record deletion. (Unlike the <code>SetValidator</code>, we do not need a simulated Map or Set).</p>
+<p><strong>INPUTS:</strong></p>
+<ul>
+<li>A UTxO containing a NFT where the AssetClass consists of a CurrencySymbol == the hash of the ElementID MintingPolicy and where the token name is (or should be) == the blake2b hash calculated from <code>blake2b_256 (serialiseData(redeemer.class , redeemer.name))</code></li>
+</ul>
+<p><strong>OUTPUTS:</strong></p>
+<ul>
+<li>A UTxO, paid to the Records Validator, which contains the <code>RecordDatum</code> passed by the user</li>
+</ul>
+<p><strong>MINTS</strong>: N/A</p>
+<p><strong>CHECKS:</strong></p>
+<ul>
+<li>The transaction is signed by <code>owner</code></li>
+</ul>
+<p><strong>DISCUSSION:</strong> Since the <code>owner</code> owns the token, this validator gives them &ldquo;free reign&rdquo; to update it as they please. In practise, to not confuse offchain code and devalue one&rsquo;s own Records (by e.g. giving it to someone else for free), one would most likely want to check the following conditions as well</p>
+<ul>
+<li>The NFT in the inputs contains a token that satisfies the constraints outlined above in the section</li>
+<li>The output contains a single UTxO with an <em>inline</em> <code>RecordDatum</code> datum which is equal to the input passed in by the user</li>
+<li>This output UTxO is paid to the validator</li>
+</ul>
+<h2 id="architecturearweave-technical-wip">Architecture—Arweave (Technical) (WIP)</h2>
+<h3 id="why-not-cardano">Why not Cardano?</h3>
+<p>The current size of a file containing the totality of domains in internet is
+estimated in 10 GB.</p>
+<p>Cardano maximum size for a transaction is 16 KB.</p>
+<p>This means that we have to perform 655_360 transactions in the optimistic case.
+The time and cost of this amount of transactions is prohibitive, specifically for
+initialization. We need a secondary way to store data.</p>
+<h3 id="why-arweave">Why Arweave?</h3>
+<p>It seems that the maximum amount of data we can upload paying the minimum amount possible
+in Arweave is:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>https://arweave.net/price/256000
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">212017846</span>
+</span></span></code></pre></div><p>Here the <code>256000</code> are the bytes for upload and <code>212017846</code> is the response in Wilson.</p>
+<p>A Wilson is related to AR (the Arweave currency) as:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>AR <span style="color:#f92672">=</span> <span style="color:#ae81ff">1e12</span> Wilson
+</span></span></code></pre></div><p>At today the price of an AR is around <code>9.5</code> USD, this means that the minimum
+cost of a transaction is : <code>0.002014169537</code> USD. And the maximum size of a
+transaction with such a price is above 250 KB.</p>
+<p>Additionally, some gateways allow the upload of certain amount of bytes for free.
+For example, Irys allow us to upload 200 KB for free in Node2.</p>
+<p>Those are the reasons we choose to store every set of records in a particular zone file as a single transaction.</p>
+<h3 id="initial-upload">Initial Upload</h3>
+<p>Initially, we will assume we have the following zone files.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>ZoneCOM.txt
+</span></span><span style="display:flex;"><span>ZoneNET.txt
+</span></span><span style="display:flex;"><span>.
+</span></span><span style="display:flex;"><span>.
+</span></span><span style="display:flex;"><span>.
+</span></span><span style="display:flex;"><span>ZoneSome.txt
+</span></span></code></pre></div><p>We will transform them, striping redundant data and complementing with other files
+(to avoid breaking the TOS). Eventually we will reach a new state in which we will have
+small chunks of data of size <code>ORIGINAL_CHUNK_SIZE</code> (to be defined).</p>
+<p>Then using the services of a bundler we will upload the chunks in bulk to Arweave.</p>
+<p>Arweave has a limit of transactions per block, but they allow the use of
+<code>bundle</code> transactions that allows the inclusion of up to <code>2^256</code> transactions
+in every bundle.
+Although the cost of upload can increase (to be investigated), this
+allows the resolution of a query by only downloading a single chunk instead of waiting
+for the download of an entire zone file.
+Additionally, we believe that the increase cost won&rsquo;t be more than
+$100 USD, and we expect it to be much less (to be investigated).</p>
+<p>The process of bundling will assign a unique transaction Id to the uploaded chunk
+This means that at this point the reference inside a <code>DeNSValue</code> is
+the assigned Id of the chunk.</p>
+<p>This means that when someone tries to solve the ip of a domain, they
+need to find the right domain inside the original chunk.</p>
+<h3 id="update-of-a-set-of-records-and-upload-of-new-records">Update of a set of records and upload of new records</h3>
+<p>After the initial upload, every owner of a domain is responsible for the
+update of their own records. With the use of a bundler, we can recommend
+them to upload a single set of records in a single transaction. But
+they may choose not to bundle and just upload a single transaction
+mixing records for other domains that they own. In such cases
+the local dns would only update the local records corresponding to
+the domain that is being updated in Cardano. This means that different domains
+registered in Cardano, can point to the same chunk of records.</p>
+<p>This model means that the initial actor/maintainer of the network
+would be able to do updates in bulk with low cost and to
+discharge the update responsibility on a new owner in the future
+with ease.</p>
+<h3 id="domain-solving">Domain Solving</h3>
+<p>We have two approaches here.</p>
+<p>The first one is:</p>
+<ul>
+<li>Ask the Indexer to immediately retrieve the associated Cardano
+transaction and then the Arweave transaction data.</li>
+</ul>
+<p>The second one:</p>
+<ul>
+<li>Wait for the Indexer to update the Cardano and Arweave sides.</li>
+</ul>
+<p>To improve the last one, we can improve the priority of the
+information related to the domain requested.</p>
+<p>In both cases the idea is to let the Cardano Indexer guide the
+acquisition of data in the Arweave side.</p>
+<p>The full process will be:</p>
+<ul>
+<li>
+<p>User request domain <code>D</code> to be solved.</p>
+</li>
+<li>
+<p>Cardano indexer looks for the registry of <code>D</code>.</p>
+</li>
+<li>
+<p>We look for the records for <code>D</code> in the DB.</p>
+</li>
+<li>
+<p>We compare the address in Cardano with the one in the
+DB if we find <code>D</code> in the DB. If is the same we
+return it. Otherwise, we begin the next step.</p>
+</li>
+<li>
+<p>We check if we already have the chunk of data stored (we
+could have a cache of chunks). If we haven&rsquo;t, we
+retrieve it from Arweave.</p>
+</li>
+<li>
+<p>We look for the IP of <code>D</code> in the chunk, then :</p>
+<ul>
+<li>Return the response</li>
+<li>Update the records on the DB for <code>D</code></li>
+<li>Update the cache (if any) of chunks</li>
+</ul>
+</li>
+</ul>
+<h2 id="architecture---offchain-technical-wip">Architecture - Offchain (Technical) (WIP)</h2>
+<p>The offchain infrastructure needs to provide the following services.</p>
+<ol>
+<li>
+<p><em>Efficient UTxO queries.</em> Of course, we must efficiently provide UTxOs for
+the onchain code to build transactions. In particular, some of the special
+needs of the onchain protocol includes:</p>
+<ul>
+<li>
+<p>An efficient mapping from <code>CurrencySymbol</code>s/<code>TokenName</code>s to the UTxOs
+which the token resides at.</p>
+</li>
+<li>
+<p>An efficient mapping from a <code>DeNSKey</code>, say <code>k</code>, to the UTxO in the set
+with the largest <code>DeNSKey</code>, say <code>lb</code>, s.t. <code>lb &lt; k</code>.</p>
+</li>
+</ul>
+</li>
+<li>
+<p><em>Provide DNS records to query.</em> This is straightforward &ndash; we obviously need to a
+method to provide DNS records compatible with existing DNS systems.</p>
+</li>
+</ol>
+<h3 id="efficient-utxo-queries">Efficient UTxO queries</h3>
+<p>Due to the peculiar needs of the onchain protocol, we will most likely need to adapt an existing chain indexer.
+Off the shelf solutions like <a href="https://github.com/CardanoSolutions/kupo">Kupo</a> (which is used internally by <a href="https://github.com/Plutonomicon/cardano-transaction-lib?tab=readme-ov-file#additional-resourcestools">CTL</a>) unfortunately supports querying UTxOs via &ldquo;patterns&rdquo; which in particular do not satisfy the requirement of efficiently mapping <code>DeNSKey</code>s to a particular UTxO in the sense mentioned above.</p>
+<p>As such, we must maintain our own index to query UTxOs by e.g. maintaining an SQL database such as PostgreSQL (where note that most relational databases by construction can efficiently query achieve our desired <code>DeNSKey</code> query) which listens for &ldquo;events&rdquo; on the Cardano blockchain and updates its tables appropriately.</p>
+<p>Of course, we can write our own chain indexer, but it&rsquo;s probably better to build off existing work such as:</p>
+<ul>
+<li>
+<p>Adapting the more chain flexible indexers such as <a href="https://github.com/txpipe/oura/#readme">oura</a> which filters events on the blockchain according to patterns and outputs the values to a &ldquo;sink&rdquo; which updates our own database.
+Note that we could also use <a href="https://github.com/input-output-hk/marconi">marconi</a>, but it appears to be under heavy development.</p>
+</li>
+<li>
+<p><a href="https://ogmios.dev/">Interacting with ogmios</a> which provides a convenient websockets to interact with the blockchain node, and we could update our database based on the information obtained by the websockets.</p>
+</li>
+</ul>
+<!-- raw HTML omitted -->
+<!-- raw HTML omitted -->
+<h3 id="providing-dns-records">Providing DNS records</h3>
+<p>We will piggyback off of existing DNS systems.
+This has the benefit of allowing ease of integration to existing DNS systems.
+We considered the following two existing DNS systems.</p>
+<ul>
+<li>
+<p><a href="https://www.isc.org/bind/">BIND 9</a> is the first, oldest, and most commonly deployed solution.
+This has the immediate benefit that network engineers will already be familiar with its deployment to ease adoption of DeNS.
+This is an all-in-one solution which combines both the recursive resolver, and the authoritative server.
+Unfortunately, in DeNS, since the blockchain is the single source of truth of ownership for the RRs, there is no need to use the recursive resolver part.
+It is possible to disable the recursive resolver in BIND 9, but we opted with the more modular PowerDNS solution described below.</p>
+</li>
+<li>
+<p><a href="https://doc.powerdns.com/">PowerDNS</a> consists of two parts: the authoritative server, and the recursor.
+The authoritative server answers questions about the domains it knows about (from its database), and importantly will not go out on the net to resolve queries about other domains.
+On the other hand, the recursor has no knowledge of domains itself, but will always consult other authoritative servers to answer questions given to it.
+Indeed, DeNS would like to integrate with only the authoritative server part of PowerDNS (ignoring the recursor), where DeNS will fill up the authoritative server&rsquo;s database with its own DNS records.</p>
+</li>
+</ul>
+<p>Of the two existing solutions, we believe that PowerDNS&rsquo;s modularity of splitting the authoritative server and the recursor into separate entities makes it a better fit to integrate into DeNS since DeNS only needs the authoritative server functionality.</p>
+<p>PowerDNS requires some <a href="https://doc.powerdns.com/authoritative/guides/basic-database.html">basic setup</a> in order to talk to a backend database.
+In particular, it supports a PostgreSQL database backend.
+Its operation falls under the <a href="https://doc.powerdns.com/authoritative/backends/generic-sql.html">generic SQL backend</a> category for which users can interact with it via the application <code>pdnsutil</code> or the <a href="https://doc.powerdns.com/authoritative/http-api/index.html">REST-API</a>.
+We will interact with the authoritative server via the REST-API which in particular has endpoints to manipulate zones to add RRsets &ndash; details are in the documentation <a href="https://doc.powerdns.com/authoritative/http-api/zone.html">here</a>.</p>
+<p>Finally, the only question that remains is how updates from the blockchain should propagate to the authoritative server.
+We propose to piggyback back on top of the chain indexer from the previous section where we listen for the event of set changes, and on the occurrence of such event, we update the DNS records.</p>
+<!-- raw HTML omitted -->
+<!-- raw HTML omitted -->
+
+	
+</div>
+
+
+          </main>
+        </div>
+      </div>
+      <footer class="td-footer row d-print-none">
+  <div class="container-fluid">
+    <div class="row mx-md-2">
+      <div class="td-footer__left col-6 col-sm-4 order-sm-1">
+        
+      </div><div class="td-footer__right col-6 col-sm-4 order-sm-3">
+        
+      </div><div class="td-footer__center col-12 col-sm-4 py-2 order-sm-2">
+        
+      </div>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <script src="/DeNS/js/main.min.37d14e870feb76f0f7a2a2422bae231efb0186c477999a4ab9ca7e9924ced592.js" integrity="sha256-N9FOhw/rdvD3oqJCK64jHvsBhsR3mZpKucp&#43;mSTO1ZI=" crossorigin="anonymous"></script>
+<script defer src="/DeNS/js/click-to-copy.min.73478a7d4807698aed7e355eb23f9890ca18fea3158604c8471746d046702bad.js" integrity="sha256-c0eKfUgHaYrtfjVesj&#43;YkMoY/qMVhgTIRxdG0EZwK60=" crossorigin="anonymous"></script>
+<script src='/DeNS/js/tabpane-persist.js'></script>
+
+  </body>
+</html>

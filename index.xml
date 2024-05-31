@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>DeNS</title>
+    <link>https://mlabs-haskell.github.io/DeNS/</link>
+    <description>Recent content on DeNS</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <atom:link href="https://mlabs-haskell.github.io/DeNS/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Getting Started</title>
+      <link>https://mlabs-haskell.github.io/DeNS/docs/dens-query/getting_started/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://mlabs-haskell.github.io/DeNS/docs/dens-query/getting_started/</guid>
+      <description>DeNS Query is implemented with the dens-query-cli executable. In the git repository, it is provided at the flake output packages.&amp;lt;system&amp;gt;.dens-query-cli, so Nix users can enter a shell with the dens-query-cli executable with the following command.&#xA;nix shell github:mlabs-haskell/DeNS#dens-query-cli When dens-query-cli is executed, it will require that the following dependencies are running:&#xA;PostgreSQL&#xA;Ogmios&#xA;Moreover, it will look for a configuration file (see Configuration file format) provided in the environment variable in DENS_QUERY_CONFIG for the relevant dependency connection information along DeNS specific information.</description>
+    </item>
+    <item>
+      <title>Technical Specification</title>
+      <link>https://mlabs-haskell.github.io/DeNS/docs/architecture/architecture/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://mlabs-haskell.github.io/DeNS/docs/architecture/architecture/</guid>
+      <description>Requirements (Conceptual) The DeNS protocol must support a small list of essential features to deliver on the promise of a decentralized, transparent, censorship-resistant, and privacy-conscious successor to the DNS protocol. These features are:&#xA;Records must be stored in an immutable, permanent, and public database. Users must have the ability (at least in principle) to resolve queries locally - that is, it ought to be possible for a user to reconstruct the DeNS database solely from public information, and use that database to resolve queries without sharing those queries (or the identity of the user) with any third party Users must be provided with direct control over their records, such that they can update those records without the assent or intervention of any third party.</description>
+    </item>
+    <item>
+      <title>HTTP API</title>
+      <link>https://mlabs-haskell.github.io/DeNS/docs/dens-query/http_api/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://mlabs-haskell.github.io/DeNS/docs/dens-query/http_api/</guid>
+      <description>DeNS Query provides an HTTP interface for accessing the UTxOs stored in the database.&#xA;Authentication Some endpoints provided by DeNS Query are exposed internal functionalities to and are made available to facilitate testing and development.&#xA;Important To prevent malicious interactions/modifications of DeNS Query’s database, it is therefore expected that these endpoints must NOT be exposed publicly (i.e., not accessible to end-users). For this to be effective, a HTTPS reverse proxy may be used to:</description>
+    </item>
+    <item>
+      <title>Database Schema</title>
+      <link>https://mlabs-haskell.github.io/DeNS/docs/dens-query/database_schema/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://mlabs-haskell.github.io/DeNS/docs/dens-query/database_schema/</guid>
+      <description>Note Readers may skip this section. DeNS query uses PostgreSQL with many PostgreSQL specific extensions. In particular, the PostgreSQL specific extensions were used to respond to blockchain rollbacks where the blockchain will rollback to a particular block requiring the protocol to undo all the changes from the present to the block to rollback to.&#xA;Database schema source code -- = Overview -- For each &amp;#34;kind of UTxO&amp;#34; for the dens protocol, we create a table for it e.</description>
+    </item>
+    <item>
+      <title>Milestone 3</title>
+      <link>https://mlabs-haskell.github.io/DeNS/docs/catalyst-reports/milestone-3/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://mlabs-haskell.github.io/DeNS/docs/catalyst-reports/milestone-3/</guid>
+      <description>DeNS Query Layer Development Milestone Outputs&#xA;A package that listens to Cardano transactions that are related to DeNS and populates a relational database. This serves as the main query layer for other applications like DNS analytics (we expect this to be particularly useful for security-related applications) but also as the database from which traditional DNS service integration can take place.&#xA;The package which listens to Cardano transactions that are related to DeNS and populates a relational database can be found here.</description>
+    </item>
+    <item>
+      <title></title>
+      <link>https://mlabs-haskell.github.io/DeNS/docs/dens-query/readme/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://mlabs-haskell.github.io/DeNS/docs/dens-query/readme/</guid>
+      <description>This describes the DeNS query component of DeNS. DeNS Query is an HTTP server that syncs with the Cardano blockchain (using Ogmios as an interface to the blockchain) by providing a PostgreSQL database of all UTxOs containing relevant information to the DeNS protocol.</description>
+    </item>
+  </channel>
+</rss>

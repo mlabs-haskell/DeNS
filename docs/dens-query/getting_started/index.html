@@ -1,0 +1,381 @@
+<!doctype html>
+<html itemscope itemtype="http://schema.org/WebPage" lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+
+
+<link rel="shortcut icon" href="/DeNS/favicons/favicon.ico" >
+<link rel="apple-touch-icon" href="/DeNS/favicons/apple-touch-icon-180x180.png" sizes="180x180">
+<link rel="icon" type="image/png" href="/DeNS/favicons/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/DeNS/favicons/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-36x36.png" sizes="36x36">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-48x48.png" sizes="48x48">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-72x72.png" sizes="72x72">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-96x96.png" sizes="96x96">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-144x144.png" sizes="144x144">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-192x192.png" sizes="192x192">
+
+<title>Getting Started | DeNS</title>
+<meta name="description" content="DeNS Query is implemented with the dens-query-cli executable. In the git repository, it is provided at the flake output packages.&amp;lt;system&amp;gt;.dens-query-cli, so Nix users can enter a shell with the dens-query-cli executable with the following command.
+nix shell github:mlabs-haskell/DeNS#dens-query-cli When dens-query-cli is executed, it will require that the following dependencies are running:
+PostgreSQL
+Ogmios
+Moreover, it will look for a configuration file (see Configuration file format) provided in the environment variable in DENS_QUERY_CONFIG for the relevant dependency connection information along DeNS specific information.">
+<meta property="og:title" content="Getting Started" />
+<meta property="og:description" content="DeNS Query is implemented with the dens-query-cli executable. In the git repository, it is provided at the flake output packages.&lt;system&gt;.dens-query-cli, so Nix users can enter a shell with the dens-query-cli executable with the following command.
+nix shell github:mlabs-haskell/DeNS#dens-query-cli When dens-query-cli is executed, it will require that the following dependencies are running:
+PostgreSQL
+Ogmios
+Moreover, it will look for a configuration file (see Configuration file format) provided in the environment variable in DENS_QUERY_CONFIG for the relevant dependency connection information along DeNS specific information." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://mlabs-haskell.github.io/DeNS/docs/dens-query/getting_started/" /><meta property="article:section" content="docs" />
+
+
+<meta itemprop="name" content="Getting Started">
+<meta itemprop="description" content="DeNS Query is implemented with the dens-query-cli executable. In the git repository, it is provided at the flake output packages.&lt;system&gt;.dens-query-cli, so Nix users can enter a shell with the dens-query-cli executable with the following command.
+nix shell github:mlabs-haskell/DeNS#dens-query-cli When dens-query-cli is executed, it will require that the following dependencies are running:
+PostgreSQL
+Ogmios
+Moreover, it will look for a configuration file (see Configuration file format) provided in the environment variable in DENS_QUERY_CONFIG for the relevant dependency connection information along DeNS specific information.">
+
+<meta itemprop="wordCount" content="305">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Getting Started"/>
+<meta name="twitter:description" content="DeNS Query is implemented with the dens-query-cli executable. In the git repository, it is provided at the flake output packages.&lt;system&gt;.dens-query-cli, so Nix users can enter a shell with the dens-query-cli executable with the following command.
+nix shell github:mlabs-haskell/DeNS#dens-query-cli When dens-query-cli is executed, it will require that the following dependencies are running:
+PostgreSQL
+Ogmios
+Moreover, it will look for a configuration file (see Configuration file format) provided in the environment variable in DENS_QUERY_CONFIG for the relevant dependency connection information along DeNS specific information."/>
+
+
+
+
+<link rel="preload" href="/DeNS/scss/main.min.5118d334f4d49e78b43432d75232dda13144ff70fc9d784048f9c31c8751ea0f.css" as="style">
+<link href="/DeNS/scss/main.min.5118d334f4d49e78b43432d75232dda13144ff70fc9d784048f9c31c8751ea0f.css" rel="stylesheet" integrity="">
+
+<script
+  src="https://code.jquery.com/jquery-3.7.1.min.js"
+  integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+  crossorigin="anonymous"></script>
+<script defer
+  src="https://unpkg.com/lunr@2.3.9/lunr.min.js"
+  integrity="sha384-203J0SNzyqHby3iU6hzvzltrWi/M41wOP5Gu+BiJMz5nwKykbkUx8Kp7iti0Lpli"
+  crossorigin="anonymous"></script>
+
+  </head>
+  <body class="td-page">
+    <header>
+      <nav class="td-navbar js-navbar-scroll" data-bs-theme="dark">
+<div class="container-fluid flex-column flex-md-row">
+  <a class="navbar-brand" href="/DeNS/"><span class="navbar-brand__logo navbar-logo"></span><span class="navbar-brand__name">DeNS</span></a>
+  <div class="td-navbar-nav-scroll ms-md-auto" id="main_navbar">
+    <ul class="navbar-nav">
+      </ul>
+  </div>
+  <div class="d-none d-lg-block">
+    <div class="td-search td-search--offline">
+  <div class="td-search__icon"></div>
+  <input
+    type="search"
+    class="td-search__input form-control"
+    placeholder="Search this site…"
+    aria-label="Search this site…"
+    autocomplete="off"
+    
+    data-offline-search-index-json-src="/DeNS/offline-search-index.4b13c4d542d169e5b7f5eeac924eef3b.json"
+    data-offline-search-base-href="/"
+    data-offline-search-max-results="10"
+  >
+</div>
+  </div>
+</div>
+</nav>
+    </header>
+    <div class="container-fluid td-outer">
+      <div class="td-main">
+        <div class="row flex-xl-nowrap">
+          <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+            <div id="td-sidebar-menu" class="td-sidebar__inner">
+  <form class="td-sidebar__search d-flex align-items-center">
+    <div class="td-search td-search--offline">
+  <div class="td-search__icon"></div>
+  <input
+    type="search"
+    class="td-search__input form-control"
+    placeholder="Search this site…"
+    aria-label="Search this site…"
+    autocomplete="off"
+    
+    data-offline-search-index-json-src="/DeNS/offline-search-index.4b13c4d542d169e5b7f5eeac924eef3b.json"
+    data-offline-search-base-href="/"
+    data-offline-search-max-results="10"
+  >
+</div>
+    <button class="btn btn-link td-sidebar__toggle d-md-none p-0 ms-3 fas fa-bars" type="button" data-bs-toggle="collapse" data-bs-target="#td-section-nav" aria-controls="td-section-nav" aria-expanded="false" aria-label="Toggle section navigation">
+    </button>
+  </form>
+  <nav class="td-sidebar-nav collapse" id="td-section-nav">
+    <ul class="td-sidebar-nav__section pe-md-3 ul-0">
+      <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-densdocs-li">
+  <a href="/DeNS/docs/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section tree-root" id="m-densdocs"><span class="">DeNS</span></a>
+  <ul class="ul-1">
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-densdocsarchitecture-li">
+  <a href="/DeNS/docs/architecture/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section" id="m-densdocsarchitecture"><span class="">Design &amp; Architecture</span></a>
+  <ul class="ul-2 foldable">
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsarchitecturearchitecture-li">
+  <a href="/DeNS/docs/architecture/architecture/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsarchitecturearchitecture"><span class="">Technical Specification</span></a>
+</li>
+  </ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-densdocsdens-query-li">
+  <a href="/DeNS/docs/dens-query/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section" id="m-densdocsdens-query"><span class="">DeNS Query</span></a>
+  <ul class="ul-2 foldable">
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id="m-densdocsdens-querygetting_started-li">
+  <a href="/DeNS/docs/dens-query/getting_started/" class="align-left ps-0 active td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-querygetting_started"><span class="td-sidebar-nav-active-item">Getting Started</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-queryhttp_api-li">
+  <a href="/DeNS/docs/dens-query/http_api/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-queryhttp_api"><span class="">HTTP API</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-querydatabase_schema-li">
+  <a href="/DeNS/docs/dens-query/database_schema/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-querydatabase_schema"><span class="">Database Schema</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-queryreadme-li">
+  <a href="/DeNS/docs/dens-query/readme/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-queryreadme"><span class=""></span></a>
+</li>
+  </ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-densdocscatalyst-reports-li">
+  <a href="/DeNS/docs/catalyst-reports/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section" id="m-densdocscatalyst-reports"><span class="">Catalyst reports</span></a>
+  <ul class="ul-2 foldable">
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocscatalyst-reportsmilestone-3-li">
+  <a href="/DeNS/docs/catalyst-reports/milestone-3/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocscatalyst-reportsmilestone-3"><span class="">Milestone 3</span></a>
+</li>
+  </ul>
+</li>
+  </ul>
+</li>
+    </ul>
+  </nav>
+</div>
+
+          </aside>
+          <aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+            <div class="td-page-meta ms-2 pb-1 pt-2 mb-0">
+
+</div>
+
+            <div class="td-toc">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#_configuration_file_format">Configuration file format</a>
+      <ul>
+        <li><a href="#_dens_query_cli_serving_http_requests_on_the_unix_domain"><code>dens-query-cli</code> serving HTTP requests on the UNIX domain</a></li>
+        <li><a href="#_dens_query_cli_serving_http_requests_on_the_internet_domain"><code>dens-query-cli</code> serving HTTP requests on the Internet domain</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      </div>
+    
+            
+
+          </aside>
+          <main class="col-12 col-md-9 col-xl-8 ps-md-5" role="main">
+            
+  
+
+            <nav aria-label="breadcrumb" class="td-breadcrumbs">
+  <ol class="breadcrumb">
+  <li class="breadcrumb-item">
+    <a href="/DeNS/docs/">DeNS</a></li>
+  <li class="breadcrumb-item">
+    <a href="/DeNS/docs/dens-query/">DeNS Query</a></li>
+  <li class="breadcrumb-item active" aria-current="page">
+    Getting Started</li>
+  </ol>
+</nav>
+            
+<div class="td-content">
+	<h1>Getting Started</h1>
+	
+	<header class="article-meta">
+		
+</header>
+	
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>DeNS Query is implemented with the <code>dens-query-cli</code> executable.
+In the git repository, it is provided at the flake output <code>packages.&lt;system&gt;.dens-query-cli</code>,
+so Nix users can enter a shell with the <code>dens-query-cli</code> executable with the following command.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>nix shell github:mlabs-haskell/DeNS#dens-query-cli</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When <code>dens-query-cli</code> is executed, it will require that the following dependencies are running:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://www.postgresql.org/">PostgreSQL</a></p>
+</li>
+<li>
+<p><a href="https://ogmios.dev/">Ogmios</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Moreover, it will look for a <em>configuration file</em> (see <a href="#_configuration_file_format">Configuration file format</a>) provided in the environment variable in <code>DENS_QUERY_CONFIG</code> for the relevant dependency connection information along DeNS specific information.
+Thus, executing <code>dens-query-cli</code> from a shell will often look as follows.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>DENS_QUERY_CONFIG=./path/to/config.json dens-query-cli</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_configuration_file_format">Configuration file format</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Users can choose between making <code>dens-query-cli</code> serve HTTP requests on the UNIX domain (via Unix domain sockets) or the Internet domain.</p>
+</div>
+<div class="sect2">
+<h3 id="_dens_query_cli_serving_http_requests_on_the_unix_domain"><code>dens-query-cli</code> serving HTTP requests on the UNIX domain</h3>
+<div class="listingblock">
+<div class="title">Example configuration file for running <code>dens-query-cli</code> on the UNIX domain</div>
+<div class="content">
+<pre class="highlight"><code>{
+  &#34;ogmios&#34;: <b class="conum">(1)</b>
+    {
+      &#34;url&#34;: &#34;ws://127.0.0.1:1337&#34;
+    },
+  &#34;database&#34;: <b class="conum">(2)</b>
+    {
+      &#34;user&#34;: &#34;dens&#34;,
+      &#34;password&#34;: &#34;&#34;,
+      &#34;socket&#34;: {
+        &#34;name&#34;: &#34;UnixDomain&#34;,
+        &#34;fields&#34;: [
+          {
+            &#34;path&#34;: &#34;/var/postgres/&#34;
+          }
+        ]
+      },
+      &#34;database&#34;: &#34;dens&#34;
+    },
+  &#34;server&#34;: <b class="conum">(3)</b>
+    {
+      &#34;name&#34;: &#34;UnixDomain&#34;,
+      &#34;fields&#34;: [
+        {
+          &#34;path&#34;: &#34;/ipc/.s.dens-query&#34;
+        }
+      ],
+    },
+  &#34;protocolNft&#34;: <b class="conum">(4)</b>
+    {
+       &#34;currency_symbol&#34;: &#34;0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F&#34;,
+       &#34;token_name&#34;: &#34;&#34;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>The connection to Ogmios.</p>
+</li>
+<li>
+<p>The connection to a PostgreSQL database.</p>
+</li>
+<li>
+<p>The Unix domain socket that <code>dens-query-cli</code> will serve HTTP requests on.</p>
+</li>
+<li>
+<p>The protocol’s NFT to uniquely identify the DeNS protocol used. The <code>currency_symbol</code> and <code>token_name</code> are hex encoded.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_dens_query_cli_serving_http_requests_on_the_internet_domain"><code>dens-query-cli</code> serving HTTP requests on the Internet domain</h3>
+<div class="listingblock">
+<div class="title">Example configuration file for running <code>dens-query-cli</code> on the Internet domain</div>
+<div class="content">
+<pre class="highlight"><code>{
+  &#34;ogmios&#34;:
+    {
+      &#34;url&#34;: &#34;ws://127.0.0.1:1337&#34;
+    },
+  &#34;database&#34;:
+    {
+      &#34;database&#34;: &#34;dens&#34;,
+      &#34;password&#34;: &#34;&#34;,
+      &#34;socket&#34;: {
+        &#34;name&#34;: &#34;UnixDomain&#34;,
+        &#34;fields&#34;: [
+          {
+            &#34;path&#34;: &#34;/var/postgres/&#34;
+          }
+        ]
+      },
+      &#34;user&#34;: &#34;dens&#34;
+    },
+  &#34;server&#34;: <b class="conum">(1)</b>
+    {
+      &#34;name&#34;: &#34;InternetDomain&#34;,
+      &#34;fields&#34;: [
+        {
+          &#34;host&#34;: &#34;127.0.0.1&#34;,
+          &#34;port&#34;: &#34;6969&#34;,
+        }
+      ],
+    },
+  &#34;protocolNft&#34;:
+    {
+       &#34;currency_symbol&#34;: &#34;0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F&#34;,
+       &#34;token_name&#34;: &#34;&#34;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>The host and port that <code>dens-query-cli</code> will serve HTTP requests on.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+
+	
+</div>
+
+
+          </main>
+        </div>
+      </div>
+      <footer class="td-footer row d-print-none">
+  <div class="container-fluid">
+    <div class="row mx-md-2">
+      <div class="td-footer__left col-6 col-sm-4 order-sm-1">
+        
+      </div><div class="td-footer__right col-6 col-sm-4 order-sm-3">
+        
+      </div><div class="td-footer__center col-12 col-sm-4 py-2 order-sm-2">
+        
+      </div>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <script src="/DeNS/js/main.min.37d14e870feb76f0f7a2a2422bae231efb0186c477999a4ab9ca7e9924ced592.js" integrity="sha256-N9FOhw/rdvD3oqJCK64jHvsBhsR3mZpKucp&#43;mSTO1ZI=" crossorigin="anonymous"></script>
+<script defer src="/DeNS/js/click-to-copy.min.73478a7d4807698aed7e355eb23f9890ca18fea3158604c8471746d046702bad.js" integrity="sha256-c0eKfUgHaYrtfjVesj&#43;YkMoY/qMVhgTIRxdG0EZwK60=" crossorigin="anonymous"></script>
+<script src='/DeNS/js/tabpane-persist.js'></script>
+
+  </body>
+</html>

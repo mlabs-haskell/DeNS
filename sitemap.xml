@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-query/getting_started/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/architecture/architecture/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-query/http_api/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-query/database_schema/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/architecture/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/catalyst-reports/milestone-3/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-query/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/catalyst-reports/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-query/readme/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/categories/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/tags/</loc>
+  </url>
+</urlset>
