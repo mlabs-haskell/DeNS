@@ -22,6 +22,8 @@
     "./.extra-dependencies/**/*"
   ],
   "devDependencies": {
+    "@types/command-line-args": "^5.2.3",
+    "@types/command-line-usage": "^5.0.4",
     "@types/node": "^20.8.10",
     "fast-check": "^3.14.0",
     "typedoc": "^0.25.4",
@@ -31,9 +33,9 @@
     "@cardano-ogmios/client": "^6.2.0",
     "@cardano-ogmios/schema": "^6.2.0",
     "@emurgo/cardano-serialization-lib-nodejs": "^11.5.0",
-    "@sinclair/typebox": "^0.32.22",
-    "express": "^4.19.2",
-    "got": "^14.2.1",
+    "command-line-args": "^5.2.1",
+    "command-line-usage": "^7.0.1",
+    "got": "^13.0.0",
     "lbf-dens": "file:.extra-dependencies/lbf-dens",
     "lbf-dens-db": "file:.extra-dependencies/lbf-dens-db",
     "lbf-plutus": "file:.extra-dependencies/lbf-plutus",
@@ -41,7 +43,6 @@
     "lbr-plutus": "file:.extra-dependencies/lbr-plutus",
     "lbr-prelude": "file:.extra-dependencies/lbr-prelude",
     "lucid-cardano": "^0.10.7",
-    "node-fetch": "^3.3.2",
     "plutus-ledger-api": "file:.extra-dependencies/plutus-ledger-api",
     "prelude": "file:.extra-dependencies/prelude",
     "winston": "^3.13.0"

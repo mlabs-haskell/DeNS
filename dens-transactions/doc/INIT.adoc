@@ -1,0 +1,22 @@
++++
+title = "init"
+weight = 2
++++
+:toc:
+
+A single participant in the protocol will need to initialize the DeNS protocol. This can be accomplished with the following command.
+
+.Initializing the DeNS protocol
+[source,sh]
+```
+dens-transaction-cli \
+    init \
+    --ogmios-host 127.0.0.1 \
+    --ogmios-port 1337 \
+    --private-key-bech32 ed25519_sk1djfszzj6dexpv5ms4uww6xdrpfv09mxsdvvlqsu90qnxcq2grryqtl0csw \
+    --network Preview \
+    --protocol-nft-tx-out-ref "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f#0" \
+    --dens-query-socket-path "/ipc/.s.dens-query.sock"
+```
+
+NOTE: This will output the protocol's token which must be used in all `+dens-query-cli+`s' configuration files that follow this instance of the DeNS protocol.

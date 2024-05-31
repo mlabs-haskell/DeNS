@@ -16,6 +16,7 @@ import {
   scriptHashFromBytes,
 } from "plutus-ledger-api/V1.js";
 import { got, HTTPError } from "got";
+import * as FakeProvider from "./FakeProvider.js";
 import elemIdMPEnvelope from "./scripts/mkElemIDMintingPolicy.json" with {
   type: "json",
 };
@@ -38,6 +39,19 @@ import { UnixDomainOrInternetDomain } from "lbf-dens-db/LambdaBuffers/Dens/Confi
 (BigInt as unknown as any).prototype["toJSON"] = function () {
   return this.toString();
 };
+
+export async function mkLucid(
+  ogmiosHost: string,
+  ogmiosPort: number,
+  network: L.Network,
+): Promise<L.Lucid> {
+  const fakeProvider = new FakeProvider.OgmiosOnly(
+    ogmiosHost,
+    ogmiosPort,
+    network,
+  );
+  return await L.Lucid.new(fakeProvider);
+}
 
 export const mkParams = async (
   lucid: L.Lucid,
