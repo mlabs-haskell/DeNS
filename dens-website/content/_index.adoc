@@ -1,0 +1,27 @@
+---
+title: DeNS
+---
+
+++++
+{{< blocks/cover title="DeNS: Decentralized Name System" image_anchor="top" height="full" >}}
+<a class="btn btn-lg btn-primary me-3 mb-4" href="./docs/">
+  Documentation <i class="fas fa-arrow-alt-circle-right ms-2"></i>
+</a>
+<a class="btn btn-lg btn-secondary me-3 mb-4" href="https://github.com/mlabs-haskell/DeNS">
+  Download <i class="fab fa-github ms-2 "></i>
+</a>
+<p class="lead mt-5">A decentralized name system built on the Cardano blockchain</p>
+{{< blocks/link-down color="info" >}}
+{{< /blocks/cover >}}
+++++
+
+
+++++
+{{% blocks/lead color="primary" %}}
+++++
+
+DeNS is a blockchain-based name resolution service that is an alternative to DNS with much stronger security, transparency, anti-censorship, and anti-centralization guarantees.
+
+++++
+{{% /blocks/lead %}}
+++++

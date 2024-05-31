@@ -1,14 +1,4 @@
-:sectlinks:
-:apidir: ../api
-
-= DeNS Query
 :toc:
 
-This document describes the DeNS query component of DeNS. 
+This describes the DeNS query component of DeNS. 
 DeNS Query is an HTTP server that syncs with the Cardano blockchain (using Ogmios as an interface to the blockchain) by providing a PostgreSQL database of all UTxOs containing relevant information to the DeNS protocol.
-
-include::GETTING_STARTED.adoc[]
-
-include::HTTP_API.adoc[]
-
-include::DATABASE_SCHEMA.adoc[]

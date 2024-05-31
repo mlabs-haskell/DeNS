@@ -51,6 +51,9 @@
           ./dens-transactions/build.nix
           ./dens-validation/build.nix
 
+          # Documentation / website
+          ./dens-website/build.nix
+
           # Settings
           ./settings.nix
         ];

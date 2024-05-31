@@ -1,39 +1,124 @@
-== Getting Started
++++
+title = "Getting Started"
+weight = 1
++++
+:toc:
 
-DeNS query will look for a _configuration file_ provided in the environment variable in `+DENS_QUERY_CONFIG+`.
+= Getting Started
 
-TODO(jaredponn): this has changed
+DeNS Query is implemented with the `+dens-query-cli+` executable. 
+In the git repository, it is provided at the flake output `+packages.<system>.dens-query-cli+`, 
+so Nix users can enter a shell with the `+dens-query-cli+` executable with the following command.
 
-.Example configuration file
+[source,sh]
+```
+nix shell github:mlabs-haskell/DeNS#dens-query-cli
+```
+
+When `+dens-query-cli+` is executed, it will require that the following dependencies are running:
+
+* https://www.postgresql.org/[PostgreSQL]
+* https://ogmios.dev/[Ogmios]
+
+Moreover, it will look for a _configuration file_ (see <<_configuration_file_format>>) provided in the environment variable in `+DENS_QUERY_CONFIG+` for the relevant dependency connection information along DeNS specific information.
+Thus, executing `+dens-query-cli+` from a shell will often look as follows.
+
+[source, sh]
+```
+DENS_QUERY_CONFIG=./path/to/config.json dens-query-cli
+```
+
+== Configuration file format
+
+Users can choose between making `+dens-query-cli+` serve HTTP requests on the UNIX domain (via Unix domain sockets) or the Internet domain.
+
+=== `+dens-query-cli+` serving HTTP requests on the UNIX domain
+
+.Example configuration file for running `+dens-query-cli+` on the UNIX domain
 [example]
 [source,json]
 ```
 {
-    "ogmios":       <1>
+  "ogmios": <1>
+    { 
+      "url": "ws://127.0.0.1:1337"
+    },
+  "database": <2>
+    {
+      "user": "dens",
+      "password": "",
+      "socket": {
+        "name": "UnixDomain",
+        "fields": [
+          {
+            "path": "/var/postgres/"
+          }
+        ]
+      },
+      "database": "dens"
+    },
+  "server": <3>
+    { 
+      "name": "UnixDomain",
+      "fields": [
         {
-            "host": "127.0.0.1",
-            "port": 1337
-        },
-    "db":           <2>
-        {
-            "host": "127.0.0.1",
-            "port": 5432,
-            "user": "dens",
-            "password": "",
-            "database": "dens"
-        },
-    "server":       <3>
-        {
-            "port": 6969
-        },
-    "protocolNft":  <4>
-        {
-            "currency_symbol": "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
-            "token_name": ""
+          "path": "/ipc/.s.dens-query"
         }
+      ],
+    },
+  "protocolNft": <4>
+    { 
+       "currency_symbol": "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
+       "token_name": ""
+    }
 }
 ```
-<1> The connection to ogmios.
+
+<1> The connection to Ogmios.
 <2> The connection to a PostgreSQL database.
-<3> The port that DeNS query will serve HTTP requests on.
+<3> The Unix domain socket that `+dens-query-cli+` will serve HTTP requests on.
 <4> The protocol's NFT to uniquely identify the DeNS protocol used. The `+currency_symbol+` and `+token_name+` are hex encoded.
+
+=== `+dens-query-cli+` serving HTTP requests on the Internet domain
+
+.Example configuration file for running `+dens-query-cli+` on the Internet domain
+[example]
+[source,json]
+```
+{
+  "ogmios": 
+    {
+      "url": "ws://127.0.0.1:1337"
+    },
+  "database": 
+    {
+      "database": "dens",
+      "password": "",
+      "socket": {
+        "name": "UnixDomain",
+        "fields": [
+          {
+            "path": "/var/postgres/"
+          }
+        ]
+      },
+      "user": "dens"
+    },
+  "server": <1>
+    { 
+      "name": "InternetDomain",
+      "fields": [
+        {
+          "host": "127.0.0.1",
+          "port": "6969",
+        }
+      ],
+    },
+  "protocolNft": 
+    {
+       "currency_symbol": "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
+       "token_name": ""
+    }
+}
+```
+<1> The host and port that `+dens-query-cli+` will serve HTTP requests on.
