@@ -27,7 +27,7 @@
     plutip.url = "github:mlabs-haskell/plutip/1bf0b547cd3689c727586abb8385c008fb2a3d1c";
 
     # cardano-node:
-    cardano-node.url = "github:input-output-hk/cardano-node";
+    cardano-node.url = "github:input-output-hk/cardano-node?ref=8.9.3";
 
     # TypeScript libraries
     prelude-typescript.follows = "lambda-buffers/prelude-typescript";

@@ -77,28 +77,6 @@
                 mv index.html "$out/share/doc"
               '';
           };
-
-          # Docker image for dens-query
-          dens-query-image = pkgs.dockerTools.buildImage {
-            name = "dens-query";
-            tag = "latest";
-            created = "now";
-
-            copyToRoot = pkgs.buildEnv {
-              name = "dens-query-image-root";
-              paths = [ config.packages.dens-query-cli ];
-              pathsToLink = [ "/bin" ];
-            };
-
-            config = {
-              Env = [ "DENS_QUERY_CONFIG=/etc/dens-query/config.json" ];
-              Cmd = [ "/bin/dens-query-cli" ];
-              Volumes = {
-                "/etc/dens-query" = { };
-                "/ipc/dens-query" = { };
-              };
-            };
-          };
         };
 
         # When developing, in this directory, run

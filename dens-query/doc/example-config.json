@@ -1,15 +1,13 @@
 {
   "ogmios": {
-    "host": "127.0.0.1",
-    "port": 1337
+    "url": "ws://ogmios:1337"
   },
   "database": {
     "socket": {
-      "name": "InternetDomain",
+      "name": "UnixDomain",
       "fields": [
         {
-          "host": "127.0.0.1",
-          "port": 5432
+          "path": "/ipc/postgres"
         }
       ]
     },
@@ -21,7 +19,7 @@
     "name": "InternetDomain",
     "fields": [
       {
-        "host": "127.0.0.1",
+        "host": "0.0.0.0",
         "port": 6969
       }
     ]
