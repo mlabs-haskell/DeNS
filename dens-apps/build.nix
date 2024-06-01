@@ -113,7 +113,7 @@
 
           copyToRoot = pkgs.buildEnv {
             name = "dens-query-image-root";
-            paths = [ config.packages.dens-query-cli ];
+            paths = [ config.packages.dens-query-cli config.packages.dens-transactions-cli ];
             pathsToLink = [ "/bin" ];
           };
 
@@ -128,6 +128,54 @@
           config = {
             Env = [ "DENS_QUERY_CONFIG=/etc/dens-query/config.json" ];
             Cmd = [ "/bin/dens-query-cli" ];
+          };
+        };
+
+        dens-pdns-image = pkgs.dockerTools.buildImage {
+          name = "dens-pdns";
+          tag = "latest";
+          created = "now";
+
+          copyToRoot = pkgs.buildEnv {
+            name = "dens-pdns-image-root";
+            paths = [ pkgs.pdns ];
+            pathsToLink = [ "/bin" ];
+          };
+
+          runAsRoot = ''
+            #!${pkgs.runtimeShell}
+
+            mkdir -p /etc/pdns
+            mkdir -p /ipc/pdns
+
+            cp ${./pdns/pdns.conf} /etc/pdns/pdns.conf
+          '';
+
+          config = {
+            Cmd = [ "/bin/pdns_server" "--config-dir" "/etc/pdns" "--socket-dir" "/ipc/pdns" "--local-port" "5353" ];
+          };
+        };
+
+        dens-pdns-backend-image = pkgs.dockerTools.buildImage {
+          name = "dens-pdns-backend";
+          tag = "latest";
+          created = "now";
+
+          runAsRoot = ''
+            #!${pkgs.runtimeShell}
+
+            mkdir -p /ipc/dens-pdns-backend
+          '';
+
+          copyToRoot = pkgs.buildEnv {
+            name = "dens-pdns-backend-image-root";
+            paths = [ pkgs.bash config.packages.dens-pdns-backend ];
+            pathsToLink = [ "/bin" ];
+          };
+
+          config = {
+            Env = [ "SOCKET_PATH=/ipc/dens-pdns-backend/dens-pdns-backend.sock" ];
+            Cmd = [ "/bin/dens-pdns-backend-cli" ];
           };
         };
 
