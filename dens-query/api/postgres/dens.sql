@@ -39,18 +39,26 @@
 -----------------------------------------------------------------------------
 -- = Types
 -----------------------------------------------------------------------------
-CREATE TYPE asset_class_type AS (
-    currency_symbol bytea,
-    token_name bytea
-);
+DO LANGUAGE plpgsql
+$body$
+    BEGIN
+        CREATE TYPE asset_class_type AS (
+            currency_symbol bytea,
+            token_name bytea
+        );
 
-CREATE DOMAIN asset_class AS asset_class_type 
-CONSTRAINT currency_symbol_not_null CHECK (((VALUE).currency_symbol IS NOT NULL))
-CONSTRAINT token_name_not_null CHECK (((VALUE).token_name IS NOT NULL))
--- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L75-L92
-CONSTRAINT currency_symbol_length CHECK ((octet_length((VALUE).currency_symbol) = 0) OR (octet_length((VALUE).currency_symbol) = 28))
--- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L99-L112
-CONSTRAINT token_name_length CHECK (octet_length((VALUE).token_name) <= 32);
+        CREATE DOMAIN asset_class AS asset_class_type 
+        CONSTRAINT currency_symbol_not_null CHECK (((VALUE).currency_symbol IS NOT NULL))
+        CONSTRAINT token_name_not_null CHECK (((VALUE).token_name IS NOT NULL))
+        -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L75-L92
+        CONSTRAINT currency_symbol_length CHECK ((octet_length((VALUE).currency_symbol) = 0) OR (octet_length((VALUE).currency_symbol) = 28))
+        -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L99-L112
+        CONSTRAINT token_name_length CHECK (octet_length((VALUE).token_name) <= 32);
+
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+    END
+$body$;
 
 -----------------------------------------------------------------------------
 -- = Tables for general information about the blockchain

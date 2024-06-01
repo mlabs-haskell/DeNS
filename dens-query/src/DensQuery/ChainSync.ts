@@ -522,7 +522,7 @@ export async function runChainSync(
     let resolveBatch: (value?: unknown) => void;
     const task = new Promise((resolve) => resolveBatch = resolve);
 
-    let numberOfRequests = 2;
+    let numberOfRequests = 100;
 
     const callback = async (msg: Buffer | Buffer[] | ArrayBuffer) => {
       const stringMsg: string = (() => {

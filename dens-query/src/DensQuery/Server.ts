@@ -38,85 +38,97 @@ export function runServer(
     res.send(PJson.stringify(req.body));
   });
 
-  app.post(`/api/query-set-insertion-utxo`, async (req, res) => {
-    const { name } = LbrPrelude
-      .Json[LbDensServer.QueryDensSetInsertionUtxoRequest].fromJson(req.body);
+  app.post(`/api/query-set-insertion-utxo`, async (req, res, next) => {
+    try {
+      const { name } = LbrPrelude
+        .Json[LbDensServer.QueryDensSetInsertionUtxoRequest].fromJson(req.body);
 
-    const lkup = await db.densWithDbClient((client) => {
-      return client.selectStrictInfimumDensSetUtxo(name);
-    });
+      const lkup = await db.densWithDbClient((client) => {
+        return client.selectStrictInfimumDensSetUtxo(name);
+      });
 
-    if (lkup === undefined) {
-      res.status(500);
-      const resJson = LbrPrelude
-        .Json[LbDensServer.QueryDensSetInsertionUtxoResponse].toJson(
-          {
-            name: `Failed`,
-            fields: {
-              error:
-                `No set elements found. Most likely a misconfigured protocol.`,
+      if (lkup === undefined) {
+        res.status(500);
+        const resJson = LbrPrelude
+          .Json[LbDensServer.QueryDensSetInsertionUtxoResponse].toJson(
+            {
+              name: `Failed`,
+              fields: {
+                error:
+                  `No set elements found. Most likely a misconfigured protocol.`,
+              },
             },
-          },
-        );
-      res.send(PJson.stringify(resJson));
-    } else if (lkup.isAlreadyInserted) {
-      res.status(400);
-      const resJson = LbrPrelude
-        .Json[LbDensServer.QueryDensSetInsertionUtxoResponse].toJson({
-          name: `Failed`,
-          fields: { error: `${name.toString()} already exists.` },
-        });
-      res.send(PJson.stringify(resJson));
-    } else {
-      const resJson = LbrPrelude
-        .Json[LbDensServer.QueryDensSetInsertionUtxoResponse].toJson({
-          name: `Ok`,
-          fields: lkup,
-        });
-      res.send(PJson.stringify(resJson));
+          );
+        res.send(PJson.stringify(resJson));
+      } else if (lkup.isAlreadyInserted) {
+        res.status(400);
+        const resJson = LbrPrelude
+          .Json[LbDensServer.QueryDensSetInsertionUtxoResponse].toJson({
+            name: `Failed`,
+            fields: { error: `${name.toString()} already exists.` },
+          });
+        res.send(PJson.stringify(resJson));
+      } else {
+        const resJson = LbrPrelude
+          .Json[LbDensServer.QueryDensSetInsertionUtxoResponse].toJson({
+            name: `Ok`,
+            fields: lkup,
+          });
+        res.send(PJson.stringify(resJson));
+      }
+    } catch (err) {
+      next(err);
     }
   });
 
-  app.post(`/api/set-protocol-nft`, async (req, res) => {
-    const { protocolNft } = LbrPrelude
-      .Json[LbDensServer.SetProtocolNftRequest].fromJson(req.body);
+  app.post(`/api/set-protocol-nft`, async (req, res, next) => {
+    try {
+      const { protocolNft } = LbrPrelude
+        .Json[LbDensServer.SetProtocolNftRequest].fromJson(req.body);
 
-    const newProtocolNft = await db.densWithDbClient((client) => {
-      return client.setProtocolNft(protocolNft);
-    });
+      const newProtocolNft = await db.densWithDbClient((client) => {
+        return client.setProtocolNft(protocolNft);
+      });
 
-    const resJson = LbrPrelude
-      .Json[LbDensServer.SetProtocolNftResponse].toJson(
-        {
-          name: `Ok`,
-          fields: { protocolNft: newProtocolNft },
-        },
-      );
-    res.send(PJson.stringify(resJson));
-  });
-
-  app.post(`/api/query-protocol-utxo`, async (_req, res) => {
-    const lkup = await db.densWithDbClient((client) => {
-      return client.selectProtocol();
-    });
-
-    if (lkup === undefined) {
-      res.status(500);
       const resJson = LbrPrelude
-        .Json[LbDensServer.QueryDensProtocolUtxoResponse].toJson(
+        .Json[LbDensServer.SetProtocolNftResponse].toJson(
           {
-            name: `Failed`,
-            fields: { error: `Failed to find protocol UTxO.` },
+            name: `Ok`,
+            fields: { protocolNft: newProtocolNft },
           },
         );
       res.send(PJson.stringify(resJson));
-    } else {
-      const resJson = LbrPrelude
-        .Json[LbDensServer.QueryDensProtocolUtxoResponse].toJson({
-          name: `Ok`,
-          fields: lkup,
-        });
-      res.send(PJson.stringify(resJson));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post(`/api/query-protocol-utxo`, async (_req, res, next) => {
+    try {
+      const lkup = await db.densWithDbClient((client) => {
+        return client.selectProtocol();
+      });
+
+      if (lkup === undefined) {
+        res.status(500);
+        const resJson = LbrPrelude
+          .Json[LbDensServer.QueryDensProtocolUtxoResponse].toJson(
+            {
+              name: `Failed`,
+              fields: { error: `Failed to find protocol UTxO.` },
+            },
+          );
+        res.send(PJson.stringify(resJson));
+      } else {
+        const resJson = LbrPrelude
+          .Json[LbDensServer.QueryDensProtocolUtxoResponse].toJson({
+            name: `Ok`,
+            fields: lkup,
+          });
+        res.send(PJson.stringify(resJson));
+      }
+    } catch (err) {
+      next(err);
     }
   });
 
