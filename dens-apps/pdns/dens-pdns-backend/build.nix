@@ -37,25 +37,6 @@
           # Executable
           dens-pdns-backend = tsFlake.packages.dens-pdns-backend-typescript-exe;
 
-          dens-pdns-backend-image = pkgs.dockerTools.buildImage {
-            name = "dens-pdns-backend";
-            tag = "latest";
-            created = "now";
-
-            copyToRoot = pkgs.buildEnv {
-              name = "dens-pdns-backend-image-root";
-              paths = [ config.packages.dens-pdns-backend ];
-              pathsToLink = [ "/bin" ];
-            };
-
-            config = {
-              Env = [ "SOCKET_PATH=/ipc/dens-pdns-backend/.s.dens-pdns-backend" ];
-              Cmd = [ "/bin/dens-pdns-backend-cli" ];
-              Volumes = {
-                "/ipc/dens-pdns-backend" = { };
-              };
-            };
-          };
 
         };
 
