@@ -138,7 +138,7 @@
 
           copyToRoot = pkgs.buildEnv {
             name = "dens-pdns-image-root";
-            paths = [ pkgs.pdns ];
+            paths = [ pkgs.bash pkgs.coreutils pkgs.pdns pkgs.dig ];
             pathsToLink = [ "/bin" ];
           };
 
@@ -152,7 +152,7 @@
           '';
 
           config = {
-            Cmd = [ "/bin/pdns_server" "--config-dir" "/etc/pdns" "--socket-dir" "/ipc/pdns" "--local-port" "5353" ];
+            Cmd = [ "/bin/pdns_server" "--config-dir=/etc/pdns" "--socket-dir=/ipc/pdns" "--local-port=5353" ];
           };
         };
 
@@ -169,12 +169,18 @@
 
           copyToRoot = pkgs.buildEnv {
             name = "dens-pdns-backend-image-root";
-            paths = [ pkgs.bash config.packages.dens-pdns-backend ];
+            paths = [ pkgs.bash pkgs.coreutils config.packages.dens-pdns-backend pkgs.netcat-openbsd ];
             pathsToLink = [ "/bin" ];
           };
 
           config = {
-            Env = [ "SOCKET_PATH=/ipc/dens-pdns-backend/dens-pdns-backend.sock" ];
+            Env = [
+              "SOCKET_PATH=/ipc/dens-pdns-backend/dens-pdns-backend.sock"
+              "PGHOST=/ipc/postgres"
+              "PGUSER=dens"
+              "PGPASSWORD="
+              "PGDATABASE=dens"
+            ];
             Cmd = [ "/bin/dens-pdns-backend-cli" ];
           };
         };

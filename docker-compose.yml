@@ -7,7 +7,7 @@ services:
     healthcheck:
       test: ["CMD", "cardano-cli", "ping", "-Q", "-u", "/ipc/cardano-node/node.socket"]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 3
 
   ogmios: 
@@ -41,6 +41,9 @@ services:
     volumes:
       - ipc-dens-pdns:/ipc/pdns
       - ipc-dens-pdns-backend:/ipc/dens-pdns-backend
+    ports:
+      - 6653:5353/udp
+      - 6653:5353/tcp
     depends_on:
       dens-pdns-backend:
         condition: service_healthy
@@ -49,8 +52,7 @@ services:
     image: "dens-pdns-backend"
     volumes:
       - ipc-dens-pdns-backend:/ipc/dens-pdns-backend
-    ports:
-      - 5353:5353
+      - ipc-dens-query-postgres:/ipc/postgres
     depends_on:
       dens-query-postgres:
         condition: service_healthy
