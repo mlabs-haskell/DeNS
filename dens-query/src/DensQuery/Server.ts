@@ -8,6 +8,7 @@ import { default as getRawBody } from "raw-body";
 import * as PJson from "prelude/Json.js";
 import * as LbrPrelude from "lbr-prelude";
 import * as LbDensServer from "lbf-dens-db/LambdaBuffers/Dens/Server.mjs";
+import * as fs from "node:fs/promises";
 
 /**
  * {@link lbJson} body parser using LambdaBuffers' JSON parser
@@ -26,10 +27,10 @@ export const lbJson: RequestHandler = async (req, _res, next) => {
  * {@link runServer} is an HTTP server which provides an interface to some of
  * the queries for the database
  */
-export function runServer(
+export async function runServer(
   config: ServerConfig,
   db: Db.DensDb,
-): void {
+): Promise<void> {
   const app = express();
 
   app.use("/api", lbJson);
@@ -152,6 +153,10 @@ export function runServer(
     }
     case `UnixDomain`: {
       const path = config.fields.path;
+
+      // Always remove the socket s.t. the next command will (provided there are no
+      // race conditions) not complain about the address being already in use.
+      await fs.rm(path, { force: true });
       app.listen(path, () => {
         logger.info(`Server running Unix domain socket: '${path}`);
       });
