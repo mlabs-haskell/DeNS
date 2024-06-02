@@ -50,7 +50,7 @@ export async function mkLucid(
     ogmiosPort,
     network,
   );
-  return await L.Lucid.new(fakeProvider);
+  return await L.Lucid.new(fakeProvider, network);
 }
 
 export const mkParams = async (
@@ -114,7 +114,11 @@ export const signAndSubmitTx = async (tx: L.Tx) => {
   });
 
   const hash = await readyToSubmit.submit().catch((e) => {
-    throw new Error("Error when submitting tx:\n" + e);
+    throw new Error(
+      `Error when submitting tx:\n${e}\nTx is as follows:\n${
+        JSON.stringify(readyToSubmit.txSigned.to_js_value())
+      }`,
+    );
   });
   return hash;
 };

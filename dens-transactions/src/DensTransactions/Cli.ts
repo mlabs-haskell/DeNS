@@ -43,14 +43,32 @@ export async function mkLucidAndDensParamsFromCliOpts(
     opts["ogmios-port"],
     opts["network"] as Lucid.Network,
   );
+
   await lucid.selectWalletFromPrivateKey(opts["private-key-bech32"]);
+
+  // NOTE(jaredponn): Wow, Lucid is a dumpster fire. Their default
+  // implementation of getting the address of the wallet is simply wrong as it
+  // incorrectly uses the testnet magic.
+  // See here for details:
+  // https://github.com/spacebudz/lucid/blob/457c156e74ef49ce35823aa2bca91b3bbc585221/src/lucid/lucid.ts#L231-L243
+  // So, we overwrite it with a correct version ourselves
+  lucid.wallet.address = () => {
+    const pubKeyHash = Lucid.C.PrivateKey.from_bech32(
+      opts["private-key-bech32"],
+    ).to_public().hash();
+    const result = Lucid.C.EnterpriseAddress.new(
+      Lucid.networkToId(lucid.network),
+      Lucid.C.StakeCredential.from_keyhash(pubKeyHash),
+    ).to_address().to_bech32(undefined);
+    return Promise.resolve(result);
+  };
 
   // It's the hash of blake2b 256, so 32 bytes, so 64 hex digits
   // <hash>#<index>
   // TODO(jaredponn): cram this in the type parser {@link https://github.com/75lb/command-line-args/wiki/Custom-type-example}
   const protocolNftOutRef: Lucid.OutRef = (() => {
-    const txOutRefRegex = /^(?<txHash>[0-9a-f]{64})#(?<outputIndex>\d+)$/ig;
-    const matches = opts["private-key-bech32"].match(txOutRefRegex);
+    const txOutRefRegex = /^(?<txHash>[0-9a-f]{64})#(?<outputIndex>\d+)$/i;
+    const matches = opts["protocol-nft-tx-out-ref"].match(txOutRefRegex);
     return {
       txHash: matches.groups["txHash"],
       outputIndex: parseInt(matches.groups["outputIndex"]),
@@ -245,7 +263,7 @@ switch (mainOptions["command"]) {
       str: string,
       f: (record: string, ttl: number) => DensRr,
     ): DensRr => {
-      const ttlAndContentRegex = /^(?<ttl>\d+),(?<content>.*)$/g;
+      const ttlAndContentRegex = /^(?<ttl>\d+),(?<content>.*)$/;
       const matches = str.match(ttlAndContentRegex);
 
       const ttl = parseInt(matches.groups["ttl"]);

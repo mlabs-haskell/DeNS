@@ -75,10 +75,6 @@ export const initializeDeNS = async (
     .mintAssets(oneProtocolToken, L.Data.void())
     .attachMintingPolicy(params.setElemIDPolicy)
     .mintAssets(oneSetElemToken, initSetInsert().to_hex())
-    // WARNING(jaredponn): we MUST put the protocol datum as a tx output BEFORE
-    // ALL OTHER TX OUTPUTS. This is because of the way the query layer works.
-    // There is a way to "fix" this, but that'd make a good separate project --
-    // A Framework for Efficient Databases of subsets of UTxOs for Cardano.
     .payToAddressWithData(setValidatorAddr, protocolDatum, oneProtocolToken)
     .payToAddressWithData(
       setValidatorAddr,
