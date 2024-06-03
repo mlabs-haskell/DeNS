@@ -16,11 +16,31 @@ weight = 5
 
 1. A deployment-ready package or container (Nix/Docker) is made available for users 
 
+** Such packages are all available with Nix as a flake output:
+
+*** https://github.com/mlabs-haskell/DeNS/blob/f5a8c6f419dffdd77b052f74d80e9824842e1bca/dens-query/build.nix#L45[dens-query-cli]
+
+*** https://github.com/mlabs-haskell/DeNS/blob/f5a8c6f419dffdd77b052f74d80e9824842e1bca/dens-transactions/build.nix#L26[dens-transactions-cli]
+
+*** https://github.com/mlabs-haskell/DeNS/blob/main/dens-apps/pdns/dens-pdns-backend/build.nix#L38[dens-pdns-backend]
+
+** Docker images and a Docker compose file to run the system on the Preview testnet are available https://github.com/mlabs-haskell/DeNS/blob/b4fbf713e6289ca57786140fe4201819e8ae2266/dens-apps/preview-testnet/build.nix[here]
+
 2. Extensive tests, including golden tests where applicable/useful, are implemented for each of the DeNS components
+
+** An integration test suite which verifies data is piped between each component correctly can be found https://github.com/mlabs-haskell/DeNS/tree/656a29b39581e97dc9403d3ddfbf882a79c62a56/dens-testsuites/integration[here]
+
+** A test suite for DeNS Query's to verify the SQL queries function as expected can be found https://github.com/mlabs-haskell/DeNS/tree/f12e3f85e3ed666bd3d8a7b06966babe7071d640/dens-query/src/Tests[here]
+
+** A PowerDNS backend test suite to verify that DeNS Query's SQL schema integrates with PowerDNS can be found https://github.com/mlabs-haskell/DeNS/tree/76cc117681bde6c23c76a360ee997c1124db92b3/dens-apps/pdns/dens-pdns-backend/src/tests[here]
 
 3. User-facing documentation & examples are provided 
 
-4. A running service (the exact nature depends on design decisions, provisionally: a DeNS “local resolver”) that users can integrate with to perform name-resolution queries using our system. 
+** A website with user-facing documentation and examples can be found xref:../../../../DeNS.adoc[here]
+
+4. A running service (the exact nature depends on design decisions, provisionally: a DeNS "local resolver") that users can integrate with to perform name-resolution queries using our system. 
+
+** A running service is demonstrated on the Preview testnet with the Docker images and Docker compose file mentioned above.
 
 // Acceptance criteria
 
@@ -29,11 +49,19 @@ weight = 5
 
 * The package / container is properly configured and can be deployed by users to interact with the DeNS protocol. 
 
+** The demo video <<_preview_testnet_demo_video>> demonstrates this.
+
 * The test suites are extensive and all tests pass. 
+
+** CI on the most recent https://hercules-ci.com/github/mlabs-haskell/DeNS/jobs/575[commit] (at the time of writing this) passes and hence demonstrates that all tests pass.
 
 * Documentation is clear, thorough, and sufficient for users to interact with the protocol.
 
+** The project website provided found xref:../../../../DeNS.adoc[here] has such documentation.
+
 * The running service actually works. 
+
+** The demo video <<_preview_testnet_demo_video>> demonstrates this.
 
 
 // Evidence of milestone completion
@@ -42,10 +70,42 @@ weight = 5
 
 * 1-2: A link to a commit where the objectives of the milestone are achieved. 
 
+** Commits which demonstrate completion of 1-2 are as follows.
+
+*** https://github.com/mlabs-haskell/DeNS/blob/f5a8c6f419dffdd77b052f74d80e9824842e1bca/dens-query/build.nix#L45[Implementation of `dens-query-cli`]
+
+*** https://github.com/mlabs-haskell/DeNS/blob/f5a8c6f419dffdd77b052f74d80e9824842e1bca/dens-transactions/build.nix#L26[Implementation of `dens-transactions-cli`]
+
+*** https://github.com/mlabs-haskell/DeNS/blob/main/dens-apps/pdns/dens-pdns-backend/build.nix#L38[Implementation of `dens-pdns-backend`]
+
+*** https://github.com/mlabs-haskell/DeNS/blob/b4fbf713e6289ca57786140fe4201819e8ae2266/dens-apps/preview-testnet/build.nix[Docker images to orchestrate the services]
+
+*** https://github.com/mlabs-haskell/DeNS/tree/656a29b39581e97dc9403d3ddfbf882a79c62a56/dens-testsuites/integration[Integration test suite]
+
+*** https://github.com/mlabs-haskell/DeNS/tree/f12e3f85e3ed666bd3d8a7b06966babe7071d640/dens-query/src/Tests[DeNS Query test suite]
+
+*** https://github.com/mlabs-haskell/DeNS/tree/76cc117681bde6c23c76a360ee997c1124db92b3/dens-apps/pdns/dens-pdns-backend/src/tests[PowerDNS backend test suite]
+
 * 3: A link to the documentation website. 
+
+** The documentation website can be found https://mlabs-haskell.github.io/DeNS/[here]
 
 * 4: A demonstration video or set of network logs that clearly show the service in operation. 
 
+** The demo video <<_preview_testnet_demo_video>> demonstrates this.
+
 * 5: We will show the Cardano community an open-source, well-documented, blockchain-based name resolution service that improves on the privacy and security of DNS. 
 
+** Evidence is presented above.
+
 |===
+
+=== Preview Testnet Demo Video
+
+
+TODO(jaredponn): do the video and dump the network logs here.
+
+.
+```
+```
+
