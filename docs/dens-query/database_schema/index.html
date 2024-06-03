@@ -31,7 +31,7 @@ Database schema source code -- = Overview -- For each &#34;kind of UTxO&#34; for
 <meta itemprop="description" content="Note Readers may skip this section. DeNS query uses PostgreSQL with many PostgreSQL specific extensions. In particular, the PostgreSQL specific extensions were used to respond to blockchain rollbacks where the blockchain will rollback to a particular block requiring the protocol to undo all the changes from the present to the block to rollback to.
 Database schema source code -- = Overview -- For each &#34;kind of UTxO&#34; for the dens protocol, we create a table for it e.">
 
-<meta itemprop="wordCount" content="3045">
+<meta itemprop="wordCount" content="3057">
 <meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Database Schema"/>
 <meta name="twitter:description" content="Note Readers may skip this section. DeNS query uses PostgreSQL with many PostgreSQL specific extensions. In particular, the PostgreSQL specific extensions were used to respond to blockchain rollbacks where the blockchain will rollback to a particular block requiring the protocol to undo all the changes from the present to the block to rollback to.
 Database schema source code -- = Overview -- For each &#34;kind of UTxO&#34; for the dens protocol, we create a table for it e."/>
@@ -71,7 +71,7 @@ Database schema source code -- = Overview -- For each &#34;kind of UTxO&#34; for
     aria-label="Search this site…"
     autocomplete="off"
     
-    data-offline-search-index-json-src="/DeNS/offline-search-index.4b13c4d542d169e5b7f5eeac924eef3b.json"
+    data-offline-search-index-json-src="/DeNS/offline-search-index.431717aa0dc54696f5d382ed72711164.json"
     data-offline-search-base-href="/"
     data-offline-search-max-results="10"
   >
@@ -95,7 +95,7 @@ Database schema source code -- = Overview -- For each &#34;kind of UTxO&#34; for
     aria-label="Search this site…"
     autocomplete="off"
     
-    data-offline-search-index-json-src="/DeNS/offline-search-index.4b13c4d542d169e5b7f5eeac924eef3b.json"
+    data-offline-search-index-json-src="/DeNS/offline-search-index.431717aa0dc54696f5d382ed72711164.json"
     data-offline-search-base-href="/"
     data-offline-search-max-results="10"
   >
@@ -235,18 +235,26 @@ requiring the protocol to undo all the changes from the present to the block to 
 -----------------------------------------------------------------------------
 -- = Types
 -----------------------------------------------------------------------------
-CREATE TYPE asset_class_type AS (
-    currency_symbol bytea,
-    token_name bytea
-);
+DO LANGUAGE plpgsql
+$body$
+    BEGIN
+        CREATE TYPE asset_class_type AS (
+            currency_symbol bytea,
+            token_name bytea
+        );
 
-CREATE DOMAIN asset_class AS asset_class_type 
-CONSTRAINT currency_symbol_not_null CHECK (((VALUE).currency_symbol IS NOT NULL))
-CONSTRAINT token_name_not_null CHECK (((VALUE).token_name IS NOT NULL))
--- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L75-L92
-CONSTRAINT currency_symbol_length CHECK ((octet_length((VALUE).currency_symbol) = 0) OR (octet_length((VALUE).currency_symbol) = 28))
--- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L99-L112
-CONSTRAINT token_name_length CHECK (octet_length((VALUE).token_name) &lt;= 32);
+        CREATE DOMAIN asset_class AS asset_class_type 
+        CONSTRAINT currency_symbol_not_null CHECK (((VALUE).currency_symbol IS NOT NULL))
+        CONSTRAINT token_name_not_null CHECK (((VALUE).token_name IS NOT NULL))
+        -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L75-L92
+        CONSTRAINT currency_symbol_length CHECK ((octet_length((VALUE).currency_symbol) = 0) OR (octet_length((VALUE).currency_symbol) = 28))
+        -- https://github.com/IntersectMBO/plutus/blob/1.16.0.0/plutus-ledger-api/src/PlutusLedgerApi/V1/Value.hs#L99-L112
+        CONSTRAINT token_name_length CHECK (octet_length((VALUE).token_name) &lt;= 32);
+
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+    END
+$body$;
 
 -----------------------------------------------------------------------------
 -- = Tables for general information about the blockchain
