@@ -24,6 +24,10 @@ target = 'content/docs/dens-query'
 source = '../dens-transactions/doc'
 target = 'content/docs/dens-transactions'
 
+[[module.mounts]]
+source = '../dens-apps/pdns/dens-pdns-backend/doc'
+target = 'content/docs/dens-pdns-backend'
+
 [markup.asciidocExt]
 backend = 'html5'
 extensions = []

@@ -1,0 +1,6 @@
++++
+title = "DeNS PowerDNS Integration"
+weight = 40
++++
+
+include::README.adoc[]

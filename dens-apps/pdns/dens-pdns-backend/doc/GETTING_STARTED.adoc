@@ -1,0 +1,42 @@
++++
+title = "Getting Started"
+weight = 1
++++
+:toc:
+
+:relfilesuffix: /
+
+The executable `+dens-pdns-backend-cli+` is a https://doc.powerdns.com/authoritative/backends/remote.html[remote backend to PowerDNS] which facilitates propagating RRs stored in DeNS Query's database to PowerDNS so traditional DNS resolvers are able to transitvely query the blockchain for RRs.
+
+In the git repository, it is provided at the flake output `+dens-pdns-backend+`, so Nix users can enter a shell with the `+dens-pdns-backend-cli+` executable with the following command.
+
+[source,sh]
+```
+nix shell github:mlabs-haskell/DeNS#dens-pdns-backend
+```
+
+When `+dens-pdns-backend-cli+` executes, it needs the following environment variables set.
+
+. `+SOCKET_PATH+`: the path of the Unix domain socket it will run on.
+
+. Environment variables to connect to a PostgreSQL database with the DeNS Query database schema as described https://www.postgresql.org/docs/current/libpq-envars.html[here].
+
+== Integration with PowerDNS
+
+To integrate this with PowerDNS, one will most likely want a https://doc.powerdns.com/authoritative/settings.html[`+pdns.conf+`] file as follows.
+
+```
+launch=remote
+remote-connection-string=unix:path=/ipc/dens-pdns-backend/dens-pdns-backend.sock
+
+zone-cache-refresh-interval=0
+
+### Disable all forms of caching so it always hits the blockchain for the latest information
+
+cache-ttl=0
+negquery-cache-ttl=0
+query-cache-ttl=0
+```
+
+Indeed, the `+path+` in the remote connection should be the `+SOCKET_PATH+` environment variable that `+dens-pdns-backend-cli+` listens on.
+This configuration also disables all forms of caching so PowerDNS will always ask the blockchain for the latest information of RRs.
