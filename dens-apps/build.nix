@@ -113,7 +113,7 @@
 
           copyToRoot = pkgs.buildEnv {
             name = "dens-query-image-root";
-            paths = [ config.packages.dens-query-cli config.packages.dens-transactions-cli ];
+            paths = [ pkgs.bash pkgs.coreutils config.packages.dens-query-cli config.packages.dens-transactions-cli ];
             pathsToLink = [ "/bin" ];
           };
 
@@ -126,7 +126,7 @@
           '';
 
           config = {
-            Env = [ "DENS_QUERY_CONFIG=/etc/dens-query/config.json" ];
+            Env = [ "NODE_ENV=production" "DENS_QUERY_CONFIG=/etc/dens-query/config.json" ];
             Cmd = [ "/bin/dens-query-cli" ];
           };
         };
