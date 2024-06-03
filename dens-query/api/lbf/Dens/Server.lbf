@@ -1,7 +1,7 @@
 module Dens.Server
 
-import Prelude   (Eq, Json, Text, Bytes)
-import Plutus.V1 (TxOutRef, AssetClass)
+import Prelude   (Eq, Json, Text)
+import Plutus.V1 (TxOutRef, AssetClass, Bytes)
 import Dens.Db   (DensProtocolUtxo, DensSetUtxo)
 
 ---------------------------------------------------

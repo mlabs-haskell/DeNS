@@ -113,7 +113,7 @@
 
           copyToRoot = pkgs.buildEnv {
             name = "dens-query-image-root";
-            paths = [ pkgs.bash pkgs.coreutils config.packages.dens-query-cli config.packages.dens-transactions-cli ];
+            paths = [ pkgs.bash pkgs.coreutils config.packages.dens-query-cli config.packages.dens-transactions-cli pkgs.curl ];
             pathsToLink = [ "/bin" ];
           };
 
@@ -192,7 +192,7 @@
 
           copyToRoot = pkgs.buildEnv {
             name = "dens-query-postgres-image-root";
-            paths = [ pkgs.bash pkgs.su pkgs.postgresql ];
+            paths = [ pkgs.bash pkgs.su pkgs.postgresql pkgs.less pkgs.coreutils ];
             pathsToLink = [ "/bin" "/share" ];
           };
 

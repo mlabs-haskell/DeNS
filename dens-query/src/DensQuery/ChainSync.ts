@@ -272,8 +272,8 @@ export async function rollForwardElemId(
     }
   }
 
-  logger.info(
-    `(ElemId) outputs which contain RRs: ${
+  logger.verbose(
+    `(ElemId) outputs which contain candidate RRs: ${
       JSON.stringify(rrs, stringifyReplacer)
     }.`,
   );

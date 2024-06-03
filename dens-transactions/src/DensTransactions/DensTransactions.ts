@@ -151,8 +151,8 @@ export const registerDomain = async (
   const setInsertData = Utils.toCslPlutusData(
     IsPlutusData[SetInsert].toData(setInsertLB),
   );
-  logger.info("setInsertData: " + JSON.stringify(setInsertData, null, 4));
-  logger.info(
+  logger.debug("setInsertData: " + JSON.stringify(setInsertData, null, 4));
+  logger.debug(
     "registerDomain protocolOut:\n" + JSON.stringify(protocolOut, null, 4),
   );
   logger.info(

@@ -238,11 +238,18 @@ export const findOldSetDatum: (
   const endpoint = "/api/query-set-insertion-utxo";
   const domainPath = mkDomainPath(path, endpoint);
 
+  const jsonPayload = { name: hexDomain };
+
+  logger.verbose(
+    "findOldSetDatum: JSON for POST request:\n" +
+      JSON.stringify(jsonPayload, null, 4),
+  );
+
   const data = await got(
     domainPath,
     {
       method: "post",
-      json: { name: hexDomain },
+      json: jsonPayload,
       headers: { "Content-Type": "application/json" },
       enableUnixSockets: isUnixDomain(path),
     },

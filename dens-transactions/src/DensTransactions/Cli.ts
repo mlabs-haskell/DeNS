@@ -6,6 +6,7 @@
  */
 import { default as commandLineArgs } from "command-line-args";
 import { default as commandLineUsage } from "command-line-usage";
+import type { OptionDefinition } from "command-line-args";
 import * as DensTransactions from "./DensTransactions.js";
 import * as Utils from "./Utils.js";
 import * as Logger from "./Logger.js";
@@ -46,23 +47,6 @@ export async function mkLucidAndDensParamsFromCliOpts(
 
   await lucid.selectWalletFromPrivateKey(opts["private-key-bech32"]);
 
-  // NOTE(jaredponn): Wow, Lucid is a dumpster fire. Their default
-  // implementation of getting the address of the wallet is simply wrong as it
-  // incorrectly uses the testnet magic.
-  // See here for details:
-  // https://github.com/spacebudz/lucid/blob/457c156e74ef49ce35823aa2bca91b3bbc585221/src/lucid/lucid.ts#L231-L243
-  // So, we overwrite it with a correct version ourselves
-  lucid.wallet.address = () => {
-    const pubKeyHash = Lucid.C.PrivateKey.from_bech32(
-      opts["private-key-bech32"],
-    ).to_public().hash();
-    const result = Lucid.C.EnterpriseAddress.new(
-      Lucid.networkToId(lucid.network),
-      Lucid.C.StakeCredential.from_keyhash(pubKeyHash),
-    ).to_address().to_bech32(undefined);
-    return Promise.resolve(result);
-  };
-
   // It's the hash of blake2b 256, so 32 bytes, so 64 hex digits
   // <hash>#<index>
   // TODO(jaredponn): cram this in the type parser {@link https://github.com/75lb/command-line-args/wiki/Custom-type-example}
@@ -97,34 +81,35 @@ const argv = mainOptions._unknown || [];
  * {@link commonDefinitions} are the command line options which are common to
  * all subcommands of the CLI interface
  */
-const commonDefinitions = [
-  { name: "ogmios-host", type: String, description: `Host for ogmios` },
-  { name: "ogmios-port", type: Number, description: `Port for ogmios` },
-  {
-    name: "private-key-bech32",
-    type: String,
-    description:
-      `Human readable bech32 encoding of a private key used to balance transactions`,
-  },
-  {
-    name: "network",
-    type: String,
-    description:
-      `The network connected to. Either: 'Mainnet', 'Preview', 'Preprod', or 'Custom'`,
-  },
-  {
-    name: "protocol-nft-tx-out-ref",
-    type: String,
-    description:
-      `The transaction output reference used to initialize the protocol of the form: <tx-hash>#<output-index> where <tx-hash> is hex encoded and <output-index> is the base 10 representation e.g. aa..aa#0`,
-  },
-  {
-    name: "dens-query-socket-path",
-    type: String,
-    description: `Socket path to connect to the dens-query server`,
-  },
-  { name: "help", type: Boolean, description: `Display this help menu` },
-];
+const commonDefinitions:
+  (OptionDefinition & { description: string | undefined })[] = [
+    { name: "ogmios-host", type: String, description: `Host for ogmios` },
+    { name: "ogmios-port", type: Number, description: `Port for ogmios` },
+    {
+      name: "private-key-bech32",
+      type: String,
+      description:
+        `Human readable bech32 encoding of a private key used to balance transactions`,
+    },
+    {
+      name: "network",
+      type: String,
+      description:
+        `The network connected to. Either: 'Mainnet', 'Preview', 'Preprod', or 'Custom'`,
+    },
+    {
+      name: "protocol-nft-tx-out-ref",
+      type: String,
+      description:
+        `The transaction output reference used to initialize the protocol of the form: <tx-hash>#<output-index> where <tx-hash> is hex encoded and <output-index> is the base 10 representation e.g. aa..aa#0`,
+    },
+    {
+      name: "dens-query-socket-path",
+      type: String,
+      description: `Socket path to connect to the dens-query server`,
+    },
+    { name: "help", type: Boolean, description: `Display this help menu` },
+  ];
 
 /* Second, parse command options */
 switch (mainOptions["command"]) {
@@ -221,20 +206,21 @@ switch (mainOptions["command"]) {
           type: String,
           description:
             `A record of the form <ttl>,<content> where <ttl> is non-negative integer for the time to live, and <content> is the content for an A record`,
+          multiple: true,
         },
-        ,
         {
           name: "aaaa-record",
           type: String,
           description:
             `A record of the form <ttl>,<content> where <ttl> is non-negative integer for the time to live, and <content> is the content for an AAAA record`,
+          multiple: true,
         },
-        ,
         {
           name: "soa-record",
           type: String,
           description:
             `A record of the form <ttl>,<content> where <ttl> is non-negative integer for the time to live, and <content> is the content for an SOA record`,
+          multiple: true,
         },
       ],
     );
@@ -341,3 +327,7 @@ switch (mainOptions["command"]) {
     process.exit(1);
   }
 }
+
+// TODO(jaredponn): figure out why we need this.. the CLI should be able to
+// terminate on its own..
+process.exit(0);
