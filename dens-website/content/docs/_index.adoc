@@ -2,4 +2,5 @@
 title = "DeNS"
 weight = 1
 +++
-blah blah
+
+This describes DeNS -- a decentralized name system built on the Cardano blockchain.
