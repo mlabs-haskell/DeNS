@@ -4,6 +4,8 @@ weight = 1
 +++
 :toc:
 
+:relfilesuffix: /
+
 The executable `+dens-transactions-cli+` allows one to submit transactions relating to the DeNS protocol to the blockchain.
 In the git repository, it is provided at the flake output `+dens-transactions-cli+`, so Nix users can enter a shell with the `+dens-transactions-cli+` executable with the following command.
 
@@ -18,4 +20,6 @@ When `+dens-transactions-cli+` executes, most commands will need the following r
 
 // TODO(jaredponn): figure out the story with this reference with regards to
 // Hugo
-* xref:../dens-query[dens-query-cli]
+* xref:../../dens-query.adoc[dens-query-cli]
+
+TIP: Each subcommand (described in later sections) has a `+--help+` flag to describe its usage.

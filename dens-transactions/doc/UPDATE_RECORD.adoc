@@ -1,21 +1,29 @@
 +++
-title = "update-record"
+title = "Update a Record"
 weight = 3
 +++
 :toc:
 
+After a participant purchases a domain, they have a token whose trading associates RRs with the domain name.
+The following command demonstrates how one may trade the token so that the provided RRs are associated with the given domain name.
+
 .Updating the resource records associated with a domain
 [source,sh]
 ```
-dens-transaction-cli \
+dens-transactions-cli \
     update-record \
     --ogmios-host 127.0.0.1 \
     --ogmios-port 1337 \
-    --private-key-bech32 ed25519_sk1djfszzj6dexpv5ms4uww6xdrpfv09mxsdvvlqsu90qnxcq2grryqtl0csw \
-    --network Preview \
-    --protocol-nft-tx-out-ref "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f#0" \
-    --domain-name "www.google.com" \
-    --a-record "1000,101.101.101.101" \
-    --aaaa-record "1000,2607:f8b0:400e:c03::8a" \
-    --soa-record "1000,ns-1139.awsdns-14.org. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400"
+    --network Preview \ 
+    --protocol-nft-tx-out-ref "5969b450ec00019044fbcb1cd5973cc80a47b1507e2e0e14f3e6e4a2f23cdabd#0" \
+    --dens-query-socket-path /ipc/dens-query/dens-query.sock \
+    --private-key-bech32 ed25519_sk1p8874wgza2c5yxytucugt2k2mrw3l3gkpg6ezxn498smerqh8j0qe078pu \
+    --domain-name mydomain.com \
+    --a-record "270,173.194.202.113" \
+    --soa-record "30,ns1.mydomain.com dns-admin.mydomain.com 639491960 900 900 1800 60"
 ```
+
+NOTE: The RR data stored on the blockchain is passed directly to PowerDNS. So, the syntax of the data must follow what PowerDNS expects. Details can be found in the PowerDNS documentation https://doc.powerdns.com/authoritative/appendices/types.html[here]
+
+NOTE: The PowerDNS authoritative name server uses SOA records in order to identify which backend owns a zone. Thus, for PowerDNS to answer queries, one *must* include a SOA record for the zone. 
+Details may be found in the PowerDNS documentation https://doc.powerdns.com/authoritative/appendices/internals.html[here].

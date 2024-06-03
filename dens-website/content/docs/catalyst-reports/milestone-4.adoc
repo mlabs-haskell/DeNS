@@ -1,0 +1,49 @@
++++
+title = "Milestone 4"
+weight = 4
++++
+:toc:
+:relfilesuffix: /
+
+== DeNS Control Layer Development
+[cols="1,3a"]
+|===
+
+// Milestone outputs
+^|Milestone Outputs
+|
+
+* An 'offchain' (which is a bit more substantial here than in most dapps) component that can build DeNS transactions and can be exposed to users through CLIs, GUIs, and APIs. 
+
+** An offchain component that can build DeNS transactions exposed via a CLI is provided https://github.com/mlabs-haskell/DeNS/tree/main/dens-transactions[here].
+
+* Minimally, a basic DeNS CLI utility that can be used to meaningfully interact with the protocol. 
+
+** The CLI utility is provided as a flake output https://github.com/mlabs-haskell/DeNS/blob/060a05df99f5b9fc4d1a457355524f0805cb65ba/dens-transactions/build.nix#L26[here].
+
+** The "meaningful interactions" with the protocol are described in the documentation xref:../../dens-transactions.adoc[here]
+
+// Acceptance criteria
+
+^|Acceptance criteria
+|
+
+* A CLI component using the offchain component is capable of building DeNS transactions and otherwise meaningfully interacting with the protocol 
+(The definition of the phrase “meaningfully interacting” should be clear to the evaluators from design document outputs of the first few milestones).
+
+// Evidence of milestone completion
+^|Evidence of milestone completion
+|
+
+* A link to a commit where the objectives of the milestone are achieved.
+
+** This https://github.com/mlabs-haskell/DeNS/tree/060a05df99f5b9fc4d1a457355524f0805cb65ba/dens-transactions[commit] includes the offchain component with the aforementioned objectives achieved.
+In particular, the package provides functionality to build DeNS transactions and interact with the protocol by:
+
+*** initializing the DeNS protocol;
+
+*** registering a domain name with the DeNS protocol; and
+
+*** updating the RRs associated with a domain name.
+
+|===

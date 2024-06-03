@@ -1,0 +1,51 @@
++++
+title = "Milestone 5"
+weight = 5
++++
+
+:toc:
+:relfilesuffix: /
+
+== Deployment, Documentation, Productionizing
+[cols="1,3a"]
+|===
+
+// Milestone outputs
+^|Milestone Outputs
+|
+
+1. A deployment-ready package or container (Nix/Docker) is made available for users 
+
+2. Extensive tests, including golden tests where applicable/useful, are implemented for each of the DeNS components
+
+3. User-facing documentation & examples are provided 
+
+4. A running service (the exact nature depends on design decisions, provisionally: a DeNS “local resolver”) that users can integrate with to perform name-resolution queries using our system. 
+
+// Acceptance criteria
+
+^|Acceptance criteria
+|
+
+* The package / container is properly configured and can be deployed by users to interact with the DeNS protocol. 
+
+* The test suites are extensive and all tests pass. 
+
+* Documentation is clear, thorough, and sufficient for users to interact with the protocol.
+
+* The running service actually works. 
+
+
+// Evidence of milestone completion
+^|Evidence of milestone completion
+|
+
+* 1-2: A link to a commit where the objectives of the milestone are achieved. 
+
+* 3: A link to the documentation website. 
+
+* 4: A demonstration video or set of network logs that clearly show the service in operation. 
+
+* 5: We will show the Cardano community an open-source, well-documented, blockchain-based name resolution service that improves on the privacy and security of DNS. 
+
+|===
