@@ -128,13 +128,14 @@ switch (mainOptions["command"]) {
       process.exit(1);
     }
 
-    const { lucid, densParams, protocolNftOutRef } =
+    const { lucid, densParams, protocolNftOutRef, densQuery } =
       await mkLucidAndDensParamsFromCliOpts(rawOptions);
 
     const tx = await DensTransactions.initializeDeNS(
       lucid,
       densParams,
       protocolNftOutRef,
+      densQuery,
     );
     const txHash = await Utils.signAndSubmitTx(tx);
     Logger.logger.info(`Tx hash: ${txHash}`);

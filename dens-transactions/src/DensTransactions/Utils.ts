@@ -53,10 +53,10 @@ export async function mkLucid(
   return await L.Lucid.new(fakeProvider, network);
 }
 
-export const mkParams = async (
+export const mkParams = (
   lucid: L.Lucid,
   ref: L.OutRef,
-  path: UnixDomainOrInternetDomain,
+  _path: UnixDomainOrInternetDomain,
 ): Promise<DeNSParams> => {
   const utils = new L.Utils(lucid);
 
@@ -73,8 +73,6 @@ export const mkParams = async (
   };
 
   const protocolCS = utils.validatorToScriptHash(protocolPolicy);
-
-  await setProtocolNFT(path, protocolCS);
 
   const setValidator: L.SpendingValidator = {
     type: "PlutusV2",
@@ -95,13 +93,13 @@ export const mkParams = async (
     type: "PlutusV2",
     script: L.applyParamsToScript(elemIdMPEnvelope.rawHex, [protocolCS]),
   };
-  return {
+  return Promise.resolve({
     setValidator: setValidator,
     recordValidator: recordValidator,
     setElemIDPolicy: setElemIDPolicy,
     elemIDPolicy: elemIDPolicy,
     protocolPolicy: protocolPolicy,
-  };
+  });
 };
 
 export const signAndSubmitTx = async (tx: L.Tx) => {

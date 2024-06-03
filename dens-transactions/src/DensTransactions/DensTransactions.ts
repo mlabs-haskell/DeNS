@@ -28,6 +28,7 @@ export const initializeDeNS = async (
   lucid: L.Lucid,
   params: Utils.DeNSParams,
   oneShotOutRef: L.OutRef,
+  path: UnixDomainOrInternetDomain,
 ): Promise<L.Tx> => {
   const builder = new L.Tx(lucid);
   const utils = new L.Utils(lucid);
@@ -59,6 +60,8 @@ export const initializeDeNS = async (
 
   // Mint one protocol token
   const protocolPolicyID = utils.mintingPolicyToId(params.protocolPolicy);
+
+  await Utils.setProtocolNFT(path, protocolPolicyID);
 
   const oneProtocolToken = { [protocolPolicyID]: BigInt(1) };
 
