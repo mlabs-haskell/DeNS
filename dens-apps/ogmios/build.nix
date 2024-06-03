@@ -21,7 +21,8 @@
 
   perSystem = { system, ... }:
     {
-      packages.ogmios = inputs.ogmios.packages.${system}."ogmios:exe:ogmios";
+      packages = {
+        ogmios = inputs.ogmios.packages.${system}."ogmios:exe:ogmios";
+      };
     };
-
 }

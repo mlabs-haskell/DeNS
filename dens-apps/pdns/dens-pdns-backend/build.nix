@@ -34,25 +34,10 @@
       in
       {
         packages = {
-
           # Executable
           dens-pdns-backend = tsFlake.packages.dens-pdns-backend-typescript-exe;
 
-          # User manual
-          # dens-pdns-backend-manual = pkgs.stdenv.mkDerivation {
-          #   name = "dens-pdns-backend-manual";
-          #   nativeBuildInputs = [ pkgs.nodejs pkgs.asciidoctor ];
-          #   src = ./.;
-          #   buildPhase =
-          #     ''
-          #       npm run doc-manual
-          #     '';
-          #   installPhase =
-          #     ''
-          #       mkdir -p "$out/share/doc"
-          #       mv index.html "$out/share/doc"
-          #     '';
-          # };
+
         };
 
         # When developing, in this directory, run

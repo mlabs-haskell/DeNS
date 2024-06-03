@@ -59,6 +59,7 @@ test.describe("Happy path test for transactions", async () => {
       lucid,
       params,
       oneShotRef,
+      socketPath,
     );
 
     const initTxHash = await Tx.signAndSubmitTx(initializeDeNSTx);

@@ -50,13 +50,13 @@ export async function mkLucid(
     ogmiosPort,
     network,
   );
-  return await L.Lucid.new(fakeProvider);
+  return await L.Lucid.new(fakeProvider, network);
 }
 
-export const mkParams = async (
+export const mkParams = (
   lucid: L.Lucid,
   ref: L.OutRef,
-  path: UnixDomainOrInternetDomain,
+  _path: UnixDomainOrInternetDomain,
 ): Promise<DeNSParams> => {
   const utils = new L.Utils(lucid);
 
@@ -73,8 +73,6 @@ export const mkParams = async (
   };
 
   const protocolCS = utils.validatorToScriptHash(protocolPolicy);
-
-  await setProtocolNFT(path, protocolCS);
 
   const setValidator: L.SpendingValidator = {
     type: "PlutusV2",
@@ -95,13 +93,13 @@ export const mkParams = async (
     type: "PlutusV2",
     script: L.applyParamsToScript(elemIdMPEnvelope.rawHex, [protocolCS]),
   };
-  return {
+  return Promise.resolve({
     setValidator: setValidator,
     recordValidator: recordValidator,
     setElemIDPolicy: setElemIDPolicy,
     elemIDPolicy: elemIDPolicy,
     protocolPolicy: protocolPolicy,
-  };
+  });
 };
 
 export const signAndSubmitTx = async (tx: L.Tx) => {
@@ -114,7 +112,11 @@ export const signAndSubmitTx = async (tx: L.Tx) => {
   });
 
   const hash = await readyToSubmit.submit().catch((e) => {
-    throw new Error("Error when submitting tx:\n" + e);
+    throw new Error(
+      `Error when submitting tx:\n${e}\nTx is as follows:\n${
+        JSON.stringify(readyToSubmit.txSigned.to_js_value())
+      }`,
+    );
   });
   return hash;
 };
@@ -234,11 +236,18 @@ export const findOldSetDatum: (
   const endpoint = "/api/query-set-insertion-utxo";
   const domainPath = mkDomainPath(path, endpoint);
 
+  const jsonPayload = { name: hexDomain };
+
+  logger.verbose(
+    "findOldSetDatum: JSON for POST request:\n" +
+      JSON.stringify(jsonPayload, null, 4),
+  );
+
   const data = await got(
     domainPath,
     {
       method: "post",
-      json: { name: hexDomain },
+      json: jsonPayload,
       headers: { "Content-Type": "application/json" },
       enableUnixSockets: isUnixDomain(path),
     },

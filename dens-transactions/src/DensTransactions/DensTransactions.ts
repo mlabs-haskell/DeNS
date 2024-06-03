@@ -28,6 +28,7 @@ export const initializeDeNS = async (
   lucid: L.Lucid,
   params: Utils.DeNSParams,
   oneShotOutRef: L.OutRef,
+  path: UnixDomainOrInternetDomain,
 ): Promise<L.Tx> => {
   const builder = new L.Tx(lucid);
   const utils = new L.Utils(lucid);
@@ -60,6 +61,8 @@ export const initializeDeNS = async (
   // Mint one protocol token
   const protocolPolicyID = utils.mintingPolicyToId(params.protocolPolicy);
 
+  await Utils.setProtocolNFT(path, protocolPolicyID);
+
   const oneProtocolToken = { [protocolPolicyID]: BigInt(1) };
 
   // Mint one setElem token
@@ -75,10 +78,6 @@ export const initializeDeNS = async (
     .mintAssets(oneProtocolToken, L.Data.void())
     .attachMintingPolicy(params.setElemIDPolicy)
     .mintAssets(oneSetElemToken, initSetInsert().to_hex())
-    // WARNING(jaredponn): we MUST put the protocol datum as a tx output BEFORE
-    // ALL OTHER TX OUTPUTS. This is because of the way the query layer works.
-    // There is a way to "fix" this, but that'd make a good separate project --
-    // A Framework for Efficient Databases of subsets of UTxOs for Cardano.
     .payToAddressWithData(setValidatorAddr, protocolDatum, oneProtocolToken)
     .payToAddressWithData(
       setValidatorAddr,
@@ -155,8 +154,8 @@ export const registerDomain = async (
   const setInsertData = Utils.toCslPlutusData(
     IsPlutusData[SetInsert].toData(setInsertLB),
   );
-  logger.info("setInsertData: " + JSON.stringify(setInsertData, null, 4));
-  logger.info(
+  logger.debug("setInsertData: " + JSON.stringify(setInsertData, null, 4));
+  logger.debug(
     "registerDomain protocolOut:\n" + JSON.stringify(protocolOut, null, 4),
   );
   logger.info(

@@ -15,6 +15,7 @@
 // * [[[powerdns-remote-backend]]] https://doc.powerdns.com/authoritative/backends/remote.html
 // * [[[powerdns-internals]]] https://doc.powerdns.com/authoritative/appendices/internals.html
 import * as net from "node:net";
+import * as fs from "node:fs/promises";
 
 import { default as logger } from "./logger.js";
 import { maxRequestLength, socketPath, socketTimeout } from "./constants.js";
@@ -184,6 +185,10 @@ export async function app(req: Query): Promise<Reply> {
     }
   }
 }
+
+// Always remove the socket s.t. the next command will (provided there are no
+// race conditions) not complain about the address being already in use.
+await fs.rm(socketPath, { force: true });
 
 // Await for the server to be ready to make testing easier e.g. one can just
 // import this module and be certain that "everything is setup properly"

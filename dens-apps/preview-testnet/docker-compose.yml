@@ -1,0 +1,94 @@
+services:
+  cardano-node: 
+    image: "cardano-node-preview-testnet"
+    volumes: 
+      - ipc-cardano-node:/ipc/cardano-node
+      - cardano-node-conf:/etc/cardano-node
+      - var-cardano-node:/var/cardano-node
+    healthcheck:
+      test: ["CMD", "cardano-cli", "ping", "-Q", "-u", "/ipc/cardano-node/node.socket"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+
+  ogmios: 
+    image: "ogmios"
+    volumes: 
+      - ipc-cardano-node:/ipc/cardano-node
+      - cardano-node-conf:/etc/cardano-node
+    ports:
+      - 1337:1337
+    depends_on:
+      cardano-node:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-H", "Accept: application/json", "-f", "localhost:1337/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  dens-query-postgres: 
+    image: "dens-query-postgres"
+    volumes: 
+      - ipc-dens-query-postgres:/ipc/postgres
+      - var-dens-query-postgres:/var/postgres
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "/ipc/postgres"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+
+  dens-pdns:
+    image: "dens-pdns"
+    volumes:
+      - ipc-dens-pdns:/ipc/pdns
+      - ipc-dens-pdns-backend:/ipc/dens-pdns-backend
+    ports:
+      - 6653:5353/udp
+      - 6653:5353/tcp
+    depends_on:
+      dens-pdns-backend:
+        condition: service_healthy
+
+  dens-pdns-backend:
+    image: "dens-pdns-backend"
+    volumes:
+      - ipc-dens-pdns-backend:/ipc/dens-pdns-backend
+      - ipc-dens-query-postgres:/ipc/postgres
+    depends_on:
+      dens-query-postgres:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "test", "-S", "/ipc/dens-pdns-backend/dens-pdns-backend.sock" ]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+
+  dens-query:
+    image: "dens-query"
+    volumes:
+      - ipc-dens-query-postgres:/ipc/postgres
+      - ipc-dens-query:/ipc/dens-query
+    ports:
+      - 6969:6969
+    depends_on:
+      ogmios:
+        condition: service_healthy
+      dens-query-postgres:
+        condition: service_healthy
+
+volumes:
+  ipc-cardano-node:
+  var-cardano-node:
+
+  ipc-dens-query-postgres:
+  var-dens-query-postgres:
+
+  ipc-dens-query:
+
+  ipc-dens-pdns:
+  ipc-dens-pdns-backend:
+
+  cardano-node-conf:
+  dens-query-conf:

@@ -27,6 +27,16 @@ if (process.env["NODE_ENV"] !== "production") {
       level: "silly",
     }),
   );
+} else {
+  logger.add(
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple(),
+      ),
+      level: "info",
+    }),
+  );
 }
 
 export default logger;

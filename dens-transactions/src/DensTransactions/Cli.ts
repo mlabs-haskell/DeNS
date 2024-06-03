@@ -6,6 +6,7 @@
  */
 import { default as commandLineArgs } from "command-line-args";
 import { default as commandLineUsage } from "command-line-usage";
+import type { OptionDefinition } from "command-line-args";
 import * as DensTransactions from "./DensTransactions.js";
 import * as Utils from "./Utils.js";
 import * as Logger from "./Logger.js";
@@ -43,14 +44,15 @@ export async function mkLucidAndDensParamsFromCliOpts(
     opts["ogmios-port"],
     opts["network"] as Lucid.Network,
   );
+
   await lucid.selectWalletFromPrivateKey(opts["private-key-bech32"]);
 
   // It's the hash of blake2b 256, so 32 bytes, so 64 hex digits
   // <hash>#<index>
   // TODO(jaredponn): cram this in the type parser {@link https://github.com/75lb/command-line-args/wiki/Custom-type-example}
   const protocolNftOutRef: Lucid.OutRef = (() => {
-    const txOutRefRegex = /^(?<txHash>[0-9a-f]{64})#(?<outputIndex>\d+)$/ig;
-    const matches = opts["private-key-bech32"].match(txOutRefRegex);
+    const txOutRefRegex = /^(?<txHash>[0-9a-f]{64})#(?<outputIndex>\d+)$/i;
+    const matches = opts["protocol-nft-tx-out-ref"].match(txOutRefRegex);
     return {
       txHash: matches.groups["txHash"],
       outputIndex: parseInt(matches.groups["outputIndex"]),
@@ -79,34 +81,35 @@ const argv = mainOptions._unknown || [];
  * {@link commonDefinitions} are the command line options which are common to
  * all subcommands of the CLI interface
  */
-const commonDefinitions = [
-  { name: "ogmios-host", type: String, description: `Host for ogmios` },
-  { name: "ogmios-port", type: Number, description: `Port for ogmios` },
-  {
-    name: "private-key-bech32",
-    type: String,
-    description:
-      `Human readable bech32 encoding of a private key used to balance transactions`,
-  },
-  {
-    name: "network",
-    type: String,
-    description:
-      `The network connected to. Either: 'Mainnet', 'Preview', 'Preprod', or 'Custom'`,
-  },
-  {
-    name: "protocol-nft-tx-out-ref",
-    type: String,
-    description:
-      `The transaction output reference used to initialize the protocol of the form: <tx-hash>#<output-index> where <tx-hash> is hex encoded and <output-index> is the base 10 representation e.g. aa..aa#0`,
-  },
-  {
-    name: "dens-query-socket-path",
-    type: String,
-    description: `Socket path to connect to the dens-query server`,
-  },
-  { name: "help", type: Boolean, description: `Display this help menu` },
-];
+const commonDefinitions:
+  (OptionDefinition & { description: string | undefined })[] = [
+    { name: "ogmios-host", type: String, description: `Host for ogmios` },
+    { name: "ogmios-port", type: Number, description: `Port for ogmios` },
+    {
+      name: "private-key-bech32",
+      type: String,
+      description:
+        `Human readable bech32 encoding of a private key used to balance transactions`,
+    },
+    {
+      name: "network",
+      type: String,
+      description:
+        `The network connected to. Either: 'Mainnet', 'Preview', 'Preprod', or 'Custom'`,
+    },
+    {
+      name: "protocol-nft-tx-out-ref",
+      type: String,
+      description:
+        `The transaction output reference used to initialize the protocol of the form: <tx-hash>#<output-index> where <tx-hash> is hex encoded and <output-index> is the base 10 representation e.g. aa..aa#0`,
+    },
+    {
+      name: "dens-query-socket-path",
+      type: String,
+      description: `Socket path to connect to the dens-query server`,
+    },
+    { name: "help", type: Boolean, description: `Display this help menu` },
+  ];
 
 /* Second, parse command options */
 switch (mainOptions["command"]) {
@@ -125,13 +128,14 @@ switch (mainOptions["command"]) {
       process.exit(1);
     }
 
-    const { lucid, densParams, protocolNftOutRef } =
+    const { lucid, densParams, protocolNftOutRef, densQuery } =
       await mkLucidAndDensParamsFromCliOpts(rawOptions);
 
     const tx = await DensTransactions.initializeDeNS(
       lucid,
       densParams,
       protocolNftOutRef,
+      densQuery,
     );
     const txHash = await Utils.signAndSubmitTx(tx);
     Logger.logger.info(`Tx hash: ${txHash}`);
@@ -203,20 +207,21 @@ switch (mainOptions["command"]) {
           type: String,
           description:
             `A record of the form <ttl>,<content> where <ttl> is non-negative integer for the time to live, and <content> is the content for an A record`,
+          multiple: true,
         },
-        ,
         {
           name: "aaaa-record",
           type: String,
           description:
             `A record of the form <ttl>,<content> where <ttl> is non-negative integer for the time to live, and <content> is the content for an AAAA record`,
+          multiple: true,
         },
-        ,
         {
           name: "soa-record",
           type: String,
           description:
             `A record of the form <ttl>,<content> where <ttl> is non-negative integer for the time to live, and <content> is the content for an SOA record`,
+          multiple: true,
         },
       ],
     );
@@ -245,7 +250,7 @@ switch (mainOptions["command"]) {
       str: string,
       f: (record: string, ttl: number) => DensRr,
     ): DensRr => {
-      const ttlAndContentRegex = /^(?<ttl>\d+),(?<content>.*)$/g;
+      const ttlAndContentRegex = /^(?<ttl>\d+),(?<content>.*)$/;
       const matches = str.match(ttlAndContentRegex);
 
       const ttl = parseInt(matches.groups["ttl"]);
@@ -323,3 +328,7 @@ switch (mainOptions["command"]) {
     process.exit(1);
   }
 }
+
+// TODO(jaredponn): figure out why we need this.. the CLI should be able to
+// terminate on its own..
+process.exit(0);

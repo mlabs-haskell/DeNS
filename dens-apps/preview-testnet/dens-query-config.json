@@ -1,0 +1,30 @@
+{
+  "ogmios": {
+    "url": "ws://ogmios:1337"
+  },
+  "database": {
+    "socket": {
+      "name": "UnixDomain",
+      "fields": [
+        {
+          "path": "/ipc/postgres"
+        }
+      ]
+    },
+    "user": "dens",
+    "password": "",
+    "database": "dens"
+  },
+  "server": {
+    "name": "UnixDomain",
+    "fields": [
+      {
+        "path": "/ipc/dens-query/dens-query.sock"
+      }
+    ]
+  },
+  "protocolNft": {
+    "currency_symbol": "051123628508c5a60c15e9374a121ece0e6d0c705962a24bd15e6e74",
+    "token_name": ""
+  }
+}
