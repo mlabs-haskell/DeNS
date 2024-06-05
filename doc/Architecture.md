@@ -78,7 +78,9 @@ data Protocol = Protocol
 
 ### Record Keys and Values
 
-Morally, the DeNS protocol is a cross-chain distributed Key-Value store, where the key component is a `(Name,Class)` pair managed by a Cardano smart-contract, and the value is a pointer to an Arweave resource which in turn contains a set of records.
+Morally, the DeNS protocol is a cross-chain distributed Key-Value store, where the key component is a `(Name,Class)` pair managed by a Cardano smart-contract, and the value is an inline DNS record represented as a bytestring.
+
+Note: The contracts are agnostic with respect to the content of the bytestring. While the initial implementation will treat DeNS Values as inline records, future iterations of the offchain may support address pointers to records stored in some offchain persistent storage such as IPFS or Arweave (which may be necessary if, e.g., a domain owner wishes to manage a large number of subdomains).
 
 ```haskell
 {-
@@ -92,7 +94,8 @@ data DeNSKey
         -- ^ Each set represents a Name Universe and must be tagged w/ the class ID corresponding to that universe
     }
 
--- By convention, this should be an Arweave resource address. `Nothing` indicates a deleted record
+-- By convention, this should be a DNS resource record, but might be a pointer to offchain storage in future protocol iterations.
+-- `Nothing` indicates a deleted or reserved record
 newtype DeNSValue = DeNSValue { densPointer :: Maybe ByteString }
 ```
 
@@ -232,7 +235,7 @@ This forwards all verifications to `SetElemID` whose minting is unique w.r.t to 
 
 ### Records Validator
 
-The records validator serves as an access control list for the virtual DeNS database. When the offchain code reconstructs the database from Cardano keys and Arweave values, it treats the records locked at the Records validator identified with a `ElementID` token as the source of authority. That is: Only records locked at the records validator are used to construct the database used in a DeNS resolver.
+The records validator serves as an access control list for the virtual DeNS database. When the offchain code reconstructs the database from Cardano keys and values (i.e. inline DNS-style resourcerecords, though in the future we may also support pointers to offchain records), it treats the records locked at the Records validator identified with a `ElementID` token as the source of authority. That is: Only records locked at the records validator are used to construct the database used in a DeNS resolver.
 
 **PARAMETERS**:
 
@@ -243,11 +246,10 @@ The records validator serves as an access control list for the virtual DeNS data
 The Records Validator datum functions as the key in our virtual database. To update or create a record, a DeNS user simply adjusts the reference for the class and name that they own. To delete a record, the user submits a transaction with an output datum where the `reference` field is `Nothing`.
 
 ```haskell
-data RecordDatum = RecordDatum 
+data RecordDatum = RecordDatum
     { class :: Word16
     , name  :: ByteString
-    , reference :: Maybe ByteString
-        -- ^ an Arweave address
+    , value :: DensValue
     , owner :: PubKeyHash
 }
 ```
