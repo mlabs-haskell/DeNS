@@ -158,7 +158,7 @@ export const registerDomain = async (
   logger.debug(
     "registerDomain protocolOut:\n" + JSON.stringify(protocolOut, null, 4),
   );
-  logger.info(
+  logger.verbose(
     "registerDomain oldSetDatumUtxo:\n" +
       JSON.stringify(oldSetDatumUtxo, null, 4),
   );
