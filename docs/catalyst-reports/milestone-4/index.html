@@ -3,7 +3,6 @@
   <head>
     <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link rel="alternate" type="application/rss&#43;xml" href="https://mlabs-haskell.github.io/DeNS/docs/architecture/index.xml">
 <meta name="robots" content="index, follow">
 
 
@@ -18,15 +17,36 @@
 <link rel="icon" type="image/png" href="/DeNS/favicons/android-144x144.png" sizes="144x144">
 <link rel="icon" type="image/png" href="/DeNS/favicons/android-192x192.png" sizes="192x192">
 
-<title>Design &amp; Architecture | DeNS</title>
-<meta name="description" content="Powerful, extensible, and feature-packed frontend toolkit. Build and customize with Sass, utilize prebuilt grid system and components, and bring projects to life with powerful JavaScript plugins.">
-<meta property="og:title" content="Design &amp; Architecture" />
-<meta property="og:description" content="Powerful, extensible, and feature-packed frontend toolkit. Build and customize with Sass, utilize prebuilt grid system and components, and bring projects to life with powerful JavaScript plugins." />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://mlabs-haskell.github.io/DeNS/docs/architecture/" />
-<meta itemprop="name" content="Design &amp; Architecture">
-<meta itemprop="description" content="Powerful, extensible, and feature-packed frontend toolkit. Build and customize with Sass, utilize prebuilt grid system and components, and bring projects to life with powerful JavaScript plugins."><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Design &amp; Architecture"/>
-<meta name="twitter:description" content="Powerful, extensible, and feature-packed frontend toolkit. Build and customize with Sass, utilize prebuilt grid system and components, and bring projects to life with powerful JavaScript plugins."/>
+<title>Milestone 4 | DeNS</title>
+<meta name="description" content="DeNS Control Layer Development Milestone Outputs
+An &amp;#39;offchain&amp;#39; (which is a bit more substantial here than in most dapps) component that can build DeNS transactions and can be exposed to users through CLIs, GUIs, and APIs.
+An offchain component that can build DeNS transactions exposed via a CLI is provided here.
+Minimally, a basic DeNS CLI utility that can be used to meaningfully interact with the protocol.
+The CLI utility is provided as a flake output here.">
+<meta property="og:title" content="Milestone 4" />
+<meta property="og:description" content="DeNS Control Layer Development Milestone Outputs
+An &#39;offchain&#39; (which is a bit more substantial here than in most dapps) component that can build DeNS transactions and can be exposed to users through CLIs, GUIs, and APIs.
+An offchain component that can build DeNS transactions exposed via a CLI is provided here.
+Minimally, a basic DeNS CLI utility that can be used to meaningfully interact with the protocol.
+The CLI utility is provided as a flake output here." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://mlabs-haskell.github.io/DeNS/docs/catalyst-reports/milestone-4/" /><meta property="article:section" content="docs" />
+
+
+<meta itemprop="name" content="Milestone 4">
+<meta itemprop="description" content="DeNS Control Layer Development Milestone Outputs
+An &#39;offchain&#39; (which is a bit more substantial here than in most dapps) component that can build DeNS transactions and can be exposed to users through CLIs, GUIs, and APIs.
+An offchain component that can build DeNS transactions exposed via a CLI is provided here.
+Minimally, a basic DeNS CLI utility that can be used to meaningfully interact with the protocol.
+The CLI utility is provided as a flake output here.">
+
+<meta itemprop="wordCount" content="198">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Milestone 4"/>
+<meta name="twitter:description" content="DeNS Control Layer Development Milestone Outputs
+An &#39;offchain&#39; (which is a bit more substantial here than in most dapps) component that can build DeNS transactions and can be exposed to users through CLIs, GUIs, and APIs.
+An offchain component that can build DeNS transactions exposed via a CLI is provided here.
+Minimally, a basic DeNS CLI utility that can be used to meaningfully interact with the protocol.
+The CLI utility is provided as a flake output here."/>
 
 
 
@@ -44,7 +64,7 @@
   crossorigin="anonymous"></script>
 
   </head>
-  <body class="td-section">
+  <body class="td-page">
     <header>
       <nav class="td-navbar js-navbar-scroll" data-bs-theme="dark">
 <div class="container-fluid flex-column flex-md-row">
@@ -100,8 +120,8 @@
       <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-densdocs-li">
   <a href="/DeNS/docs/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section tree-root" id="m-densdocs"><span class="">DeNS</span></a>
   <ul class="ul-1">
-    <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-densdocsarchitecture-li">
-  <a href="/DeNS/docs/architecture/" class="align-left ps-0 active td-sidebar-link td-sidebar-link__section" id="m-densdocsarchitecture"><span class="td-sidebar-nav-active-item">Design &amp; Architecture</span></a>
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-densdocsarchitecture-li">
+  <a href="/DeNS/docs/architecture/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section" id="m-densdocsarchitecture"><span class="">Design &amp; Architecture</span></a>
   <ul class="ul-2 foldable">
     <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsarchitecturearchitecture-li">
   <a href="/DeNS/docs/architecture/architecture/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsarchitecturearchitecture"><span class="">Technical Specification</span></a>
@@ -144,13 +164,13 @@
   <a href="/DeNS/docs/dens-pdns-backend/readme/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-pdns-backendreadme"><span class=""></span></a>
 </li>
   </ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-densdocscatalyst-reports-li">
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-densdocscatalyst-reports-li">
   <a href="/DeNS/docs/catalyst-reports/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section" id="m-densdocscatalyst-reports"><span class="">Catalyst reports</span></a>
   <ul class="ul-2 foldable">
     <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocscatalyst-reportsmilestone-3-li">
   <a href="/DeNS/docs/catalyst-reports/milestone-3/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocscatalyst-reportsmilestone-3"><span class="">Milestone 3</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocscatalyst-reportsmilestone-4-li">
-  <a href="/DeNS/docs/catalyst-reports/milestone-4/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocscatalyst-reportsmilestone-4"><span class="">Milestone 4</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id="m-densdocscatalyst-reportsmilestone-4-li">
+  <a href="/DeNS/docs/catalyst-reports/milestone-4/" class="align-left ps-0 active td-sidebar-link td-sidebar-link__page" id="m-densdocscatalyst-reportsmilestone-4"><span class="td-sidebar-nav-active-item">Milestone 4</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocscatalyst-reportsmilestone-5-li">
   <a href="/DeNS/docs/catalyst-reports/milestone-5/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocscatalyst-reportsmilestone-5"><span class="">Milestone 5</span></a>
 </li>
@@ -168,7 +188,14 @@
 
 </div>
 
-            
+            <div class="td-toc">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#_dens_control_layer_development">DeNS Control Layer Development</a></li>
+  </ul>
+</nav>
+      </div>
+    
             
 
           </aside>
@@ -180,33 +207,109 @@
   <ol class="breadcrumb">
   <li class="breadcrumb-item">
     <a href="/DeNS/docs/">DeNS</a></li>
+  <li class="breadcrumb-item">
+    <a href="/DeNS/docs/catalyst-reports/">Catalyst reports</a></li>
   <li class="breadcrumb-item active" aria-current="page">
-    Design &amp; Architecture</li>
+    Milestone 4</li>
   </ol>
 </nav>
             
 <div class="td-content">
-	<h1>Design &amp; Architecture</h1>
-  
+	<h1>Milestone 4</h1>
+	
 	<header class="article-meta">
 		
 </header>
-	<div class="paragraph">
-<p>This section describes the design of all components of DeNS.</p>
+	
+<div class="sect1">
+<h2 id="_dens_control_layer_development">DeNS Control Layer Development</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;"/>
+<col style="width: 75%;"/>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Milestone Outputs</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p>An &#39;offchain&#39; (which is a bit more substantial here than in most dapps) component that can build DeNS transactions and can be exposed to users through CLIs, GUIs, and APIs.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>An offchain component that can build DeNS transactions exposed via a CLI is provided <a href="https://github.com/mlabs-haskell/DeNS/tree/main/dens-transactions">here</a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Minimally, a basic DeNS CLI utility that can be used to meaningfully interact with the protocol.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>The CLI utility is provided as a flake output <a href="https://github.com/mlabs-haskell/DeNS/blob/060a05df99f5b9fc4d1a457355524f0805cb65ba/dens-transactions/build.nix#L26">here</a>.</p>
+</li>
+<li>
+<p>The &#34;meaningful interactions&#34; with the protocol are described in the documentation <a href="../../dens-transactions/">here</a></p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Acceptance criteria</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p>A CLI component using the offchain component is capable of building DeNS transactions and otherwise meaningfully interacting with the protocol
+(The definition of the phrase “meaningfully interacting” should be clear to the evaluators from design document outputs of the first few milestones).</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Evidence of milestone completion</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p>A link to a commit where the objectives of the milestone are achieved.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>This <a href="https://github.com/mlabs-haskell/DeNS/tree/060a05df99f5b9fc4d1a457355524f0805cb65ba/dens-transactions">commit</a> includes the offchain component with the aforementioned objectives achieved.
+In particular, the package provides functionality to build DeNS transactions and interact with the protocol by:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>initializing the DeNS protocol;</p>
+</li>
+<li>
+<p>registering a domain name with the DeNS protocol; and</p>
+</li>
+<li>
+<p>updating the RRs associated with a domain name.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 
-  <div class="section-index">
-    
-    
-    <hr class="panel-line">
-        <div class="entry">
-                <h5>
-                    <a href="/DeNS/docs/architecture/architecture/">Technical Specification</a>
-                </h5>
-                <p></p>
-            </div>
-        </div>
+	
 </div>
+
 
           </main>
         </div>

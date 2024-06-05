@@ -3,7 +3,6 @@
   <head>
     <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link rel="alternate" type="application/rss&#43;xml" href="https://mlabs-haskell.github.io/DeNS/docs/architecture/index.xml">
 <meta name="robots" content="index, follow">
 
 
@@ -18,15 +17,24 @@
 <link rel="icon" type="image/png" href="/DeNS/favicons/android-144x144.png" sizes="144x144">
 <link rel="icon" type="image/png" href="/DeNS/favicons/android-192x192.png" sizes="192x192">
 
-<title>Design &amp; Architecture | DeNS</title>
-<meta name="description" content="Powerful, extensible, and feature-packed frontend toolkit. Build and customize with Sass, utilize prebuilt grid system and components, and bring projects to life with powerful JavaScript plugins.">
-<meta property="og:title" content="Design &amp; Architecture" />
-<meta property="og:description" content="Powerful, extensible, and feature-packed frontend toolkit. Build and customize with Sass, utilize prebuilt grid system and components, and bring projects to life with powerful JavaScript plugins." />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://mlabs-haskell.github.io/DeNS/docs/architecture/" />
-<meta itemprop="name" content="Design &amp; Architecture">
-<meta itemprop="description" content="Powerful, extensible, and feature-packed frontend toolkit. Build and customize with Sass, utilize prebuilt grid system and components, and bring projects to life with powerful JavaScript plugins."><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Design &amp; Architecture"/>
-<meta name="twitter:description" content="Powerful, extensible, and feature-packed frontend toolkit. Build and customize with Sass, utilize prebuilt grid system and components, and bring projects to life with powerful JavaScript plugins."/>
+<title>Initialization | DeNS</title>
+<meta name="description" content=" A single participant in the protocol will need to initialize the DeNS protocol for everyone.
+Initializing the DeNS protocol dens-transactions-cli \ init \ --ogmios-host 127.0.0.1 \ --ogmios-port 1337 \ --network Preview \ --protocol-nft-tx-out-ref &amp;#34;5969b450ec00019044fbcb1cd5973cc80a47b1507e2e0e14f3e6e4a2f23cdabd#0&amp;#34; \ --dens-query-socket-path /ipc/dens-query/dens-query.sock \ --private-key-bech32 ed25519_sk1p8874wgza2c5yxytucugt2k2mrw3l3gkpg6ezxn498smerqh8j0qe078pu Note This will output the protocol’s token which must be used in all `dens-query-cli`s&amp;#39; configuration files that follow this instance of the DeNS protocol. ">
+<meta property="og:title" content="Initialization" />
+<meta property="og:description" content=" A single participant in the protocol will need to initialize the DeNS protocol for everyone.
+Initializing the DeNS protocol dens-transactions-cli \ init \ --ogmios-host 127.0.0.1 \ --ogmios-port 1337 \ --network Preview \ --protocol-nft-tx-out-ref &#34;5969b450ec00019044fbcb1cd5973cc80a47b1507e2e0e14f3e6e4a2f23cdabd#0&#34; \ --dens-query-socket-path /ipc/dens-query/dens-query.sock \ --private-key-bech32 ed25519_sk1p8874wgza2c5yxytucugt2k2mrw3l3gkpg6ezxn498smerqh8j0qe078pu Note This will output the protocol’s token which must be used in all `dens-query-cli`s&#39; configuration files that follow this instance of the DeNS protocol. " />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/init/" /><meta property="article:section" content="docs" />
+
+
+<meta itemprop="name" content="Initialization">
+<meta itemprop="description" content=" A single participant in the protocol will need to initialize the DeNS protocol for everyone.
+Initializing the DeNS protocol dens-transactions-cli \ init \ --ogmios-host 127.0.0.1 \ --ogmios-port 1337 \ --network Preview \ --protocol-nft-tx-out-ref &#34;5969b450ec00019044fbcb1cd5973cc80a47b1507e2e0e14f3e6e4a2f23cdabd#0&#34; \ --dens-query-socket-path /ipc/dens-query/dens-query.sock \ --private-key-bech32 ed25519_sk1p8874wgza2c5yxytucugt2k2mrw3l3gkpg6ezxn498smerqh8j0qe078pu Note This will output the protocol’s token which must be used in all `dens-query-cli`s&#39; configuration files that follow this instance of the DeNS protocol. ">
+
+<meta itemprop="wordCount" content="64">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Initialization"/>
+<meta name="twitter:description" content=" A single participant in the protocol will need to initialize the DeNS protocol for everyone.
+Initializing the DeNS protocol dens-transactions-cli \ init \ --ogmios-host 127.0.0.1 \ --ogmios-port 1337 \ --network Preview \ --protocol-nft-tx-out-ref &#34;5969b450ec00019044fbcb1cd5973cc80a47b1507e2e0e14f3e6e4a2f23cdabd#0&#34; \ --dens-query-socket-path /ipc/dens-query/dens-query.sock \ --private-key-bech32 ed25519_sk1p8874wgza2c5yxytucugt2k2mrw3l3gkpg6ezxn498smerqh8j0qe078pu Note This will output the protocol’s token which must be used in all `dens-query-cli`s&#39; configuration files that follow this instance of the DeNS protocol. "/>
 
 
 
@@ -44,7 +52,7 @@
   crossorigin="anonymous"></script>
 
   </head>
-  <body class="td-section">
+  <body class="td-page">
     <header>
       <nav class="td-navbar js-navbar-scroll" data-bs-theme="dark">
 <div class="container-fluid flex-column flex-md-row">
@@ -100,8 +108,8 @@
       <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-densdocs-li">
   <a href="/DeNS/docs/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section tree-root" id="m-densdocs"><span class="">DeNS</span></a>
   <ul class="ul-1">
-    <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-densdocsarchitecture-li">
-  <a href="/DeNS/docs/architecture/" class="align-left ps-0 active td-sidebar-link td-sidebar-link__section" id="m-densdocsarchitecture"><span class="td-sidebar-nav-active-item">Design &amp; Architecture</span></a>
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-densdocsarchitecture-li">
+  <a href="/DeNS/docs/architecture/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section" id="m-densdocsarchitecture"><span class="">Design &amp; Architecture</span></a>
   <ul class="ul-2 foldable">
     <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsarchitecturearchitecture-li">
   <a href="/DeNS/docs/architecture/architecture/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsarchitecturearchitecture"><span class="">Technical Specification</span></a>
@@ -120,13 +128,13 @@
   <a href="/DeNS/docs/dens-query/readme/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-queryreadme"><span class=""></span></a>
 </li>
   </ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-densdocsdens-transactions-li">
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-densdocsdens-transactions-li">
   <a href="/DeNS/docs/dens-transactions/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section" id="m-densdocsdens-transactions"><span class="">DeNS Transactions</span></a>
   <ul class="ul-2 foldable">
     <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-transactionsgetting_started-li">
   <a href="/DeNS/docs/dens-transactions/getting_started/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-transactionsgetting_started"><span class="">Getting Started</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-transactionsinit-li">
-  <a href="/DeNS/docs/dens-transactions/init/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-transactionsinit"><span class="">Initialization</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id="m-densdocsdens-transactionsinit-li">
+  <a href="/DeNS/docs/dens-transactions/init/" class="align-left ps-0 active td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-transactionsinit"><span class="td-sidebar-nav-active-item">Initialization</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-transactionsregister_domain-li">
   <a href="/DeNS/docs/dens-transactions/register_domain/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-transactionsregister_domain"><span class="">Register a Domain</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-transactionsupdate_record-li">
@@ -180,33 +188,51 @@
   <ol class="breadcrumb">
   <li class="breadcrumb-item">
     <a href="/DeNS/docs/">DeNS</a></li>
+  <li class="breadcrumb-item">
+    <a href="/DeNS/docs/dens-transactions/">DeNS Transactions</a></li>
   <li class="breadcrumb-item active" aria-current="page">
-    Design &amp; Architecture</li>
+    Initialization</li>
   </ol>
 </nav>
             
 <div class="td-content">
-	<h1>Design &amp; Architecture</h1>
-  
+	<h1>Initialization</h1>
+	
 	<header class="article-meta">
 		
 </header>
 	<div class="paragraph">
-<p>This section describes the design of all components of DeNS.</p>
+<p>A single participant in the protocol will need to initialize the DeNS protocol for everyone.</p>
+</div>
+<div class="listingblock">
+<div class="title">Initializing the DeNS protocol</div>
+<div class="content">
+<pre class="highlight"><code>dens-transactions-cli \
+    init \
+    --ogmios-host 127.0.0.1 \
+    --ogmios-port 1337 \
+    --network Preview \
+    --protocol-nft-tx-out-ref &#34;5969b450ec00019044fbcb1cd5973cc80a47b1507e2e0e14f3e6e4a2f23cdabd#0&#34; \
+    --dens-query-socket-path /ipc/dens-query/dens-query.sock \
+    --private-key-bech32 ed25519_sk1p8874wgza2c5yxytucugt2k2mrw3l3gkpg6ezxn498smerqh8j0qe078pu</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tbody><tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+This will output the protocol’s token which must be used in all `dens-query-cli`s&#39; configuration files that follow this instance of the DeNS protocol.
+</td>
+</tr>
+</tbody></table>
 </div>
 
-  <div class="section-index">
-    
-    
-    <hr class="panel-line">
-        <div class="entry">
-                <h5>
-                    <a href="/DeNS/docs/architecture/architecture/">Technical Specification</a>
-                </h5>
-                <p></p>
-            </div>
-        </div>
+	
 </div>
+
 
           </main>
         </div>

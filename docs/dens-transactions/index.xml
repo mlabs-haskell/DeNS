@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>DeNS Transactions on DeNS</title>
+    <link>https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/</link>
+    <description>Recent content in DeNS Transactions on DeNS</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <atom:link href="https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Getting Started</title>
+      <link>https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/getting_started/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/getting_started/</guid>
+      <description>The executable dens-transactions-cli allows one to submit transactions relating to the DeNS protocol to the blockchain. In the git repository, it is provided at the flake output dens-transactions-cli, so Nix users can enter a shell with the dens-transactions-cli executable with the following command.&#xA;nix shell github:mlabs-haskell/DeNS#dens-transactions-cli When dens-transactions-cli executes, most commands will need the following runtime dependencies:&#xA;Ogmios&#xA;dens-query-cli&#xA;Tip Each subcommand (described in later sections) has a --help flag to describe its usage.</description>
+    </item>
+    <item>
+      <title>Initialization</title>
+      <link>https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/init/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/init/</guid>
+      <description> A single participant in the protocol will need to initialize the DeNS protocol for everyone.&#xA;Initializing the DeNS protocol dens-transactions-cli \ init \ --ogmios-host 127.0.0.1 \ --ogmios-port 1337 \ --network Preview \ --protocol-nft-tx-out-ref &amp;#34;5969b450ec00019044fbcb1cd5973cc80a47b1507e2e0e14f3e6e4a2f23cdabd#0&amp;#34; \ --dens-query-socket-path /ipc/dens-query/dens-query.sock \ --private-key-bech32 ed25519_sk1p8874wgza2c5yxytucugt2k2mrw3l3gkpg6ezxn498smerqh8j0qe078pu Note This will output the protocol’s token which must be used in all `dens-query-cli`s&amp;#39; configuration files that follow this instance of the DeNS protocol. </description>
+    </item>
+    <item>
+      <title>Register a Domain</title>
+      <link>https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/register_domain/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/register_domain/</guid>
+      <description> A user who wishes to purchase a domain from the smart contracts may execute the following command to submit a transaction which accomplishes this.&#xA;Registering a domain dens-transactions-cli \ register-domain \ --ogmios-host 127.0.0.1 \ --ogmios-port 1337 \ --network Preview \ --protocol-nft-tx-out-ref &amp;#34;5969b450ec00019044fbcb1cd5973cc80a47b1507e2e0e14f3e6e4a2f23cdabd#0&amp;#34; \ --dens-query-socket-path /ipc/dens-query/dens-query.sock \ --private-key-bech32 ed25519_sk1p8874wgza2c5yxytucugt2k2mrw3l3gkpg6ezxn498smerqh8j0qe078pu \ --domain-name mydomain.com </description>
+    </item>
+    <item>
+      <title>Update a Record</title>
+      <link>https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/update_record/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/update_record/</guid>
+      <description>After a participant purchases a domain, they have a token whose trading associates RRs with the domain name. The following command demonstrates how one may trade the token so that the provided RRs are associated with the given domain name.&#xA;Updating the resource records associated with a domain dens-transactions-cli \ update-record \ --ogmios-host 127.0.0.1 \ --ogmios-port 1337 \ --network Preview \ --protocol-nft-tx-out-ref &amp;#34;5969b450ec00019044fbcb1cd5973cc80a47b1507e2e0e14f3e6e4a2f23cdabd#0&amp;#34; \ --dens-query-socket-path /ipc/dens-query/dens-query.sock \ --private-key-bech32 ed25519_sk1p8874wgza2c5yxytucugt2k2mrw3l3gkpg6ezxn498smerqh8j0qe078pu \ --domain-name mydomain.</description>
+    </item>
+    <item>
+      <title></title>
+      <link>https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/readme/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/readme/</guid>
+      <description>This document describes the DeNS transaction component of DeNS. This shows how one can use a CLI interface to create / submit transactions to the Cardano blockchain in order to interact with the DeNS protocol.</description>
+    </item>
+  </channel>
+</rss>

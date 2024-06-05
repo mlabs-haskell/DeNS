@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>DeNS PowerDNS Integration on DeNS</title>
+    <link>https://mlabs-haskell.github.io/DeNS/docs/dens-pdns-backend/</link>
+    <description>Recent content in DeNS PowerDNS Integration on DeNS</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <atom:link href="https://mlabs-haskell.github.io/DeNS/docs/dens-pdns-backend/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Getting Started</title>
+      <link>https://mlabs-haskell.github.io/DeNS/docs/dens-pdns-backend/getting_started/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://mlabs-haskell.github.io/DeNS/docs/dens-pdns-backend/getting_started/</guid>
+      <description>The executable dens-pdns-backend-cli is a remote backend to PowerDNS which facilitates propagating RRs stored in DeNS Query’s database to PowerDNS so traditional DNS resolvers are able to transitvely query the blockchain for RRs.&#xA;In the git repository, it is provided at the flake output dens-pdns-backend, so Nix users can enter a shell with the dens-pdns-backend-cli executable with the following command.&#xA;nix shell github:mlabs-haskell/DeNS#dens-pdns-backend When dens-pdns-backend-cli executes, it needs the following environment variables set.</description>
+    </item>
+    <item>
+      <title></title>
+      <link>https://mlabs-haskell.github.io/DeNS/docs/dens-pdns-backend/readme/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://mlabs-haskell.github.io/DeNS/docs/dens-pdns-backend/readme/</guid>
+      <description>This section describes dens-pdns-backend-cli which is a PowerDNS backend so RRs on the blockchain can be propagated to traditional DNS resolvers.</description>
+    </item>
+  </channel>
+</rss>

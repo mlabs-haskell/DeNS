@@ -4,11 +4,17 @@
   <url>
     <loc>https://mlabs-haskell.github.io/DeNS/docs/</loc>
   </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-pdns-backend/getting_started/</loc>
+  </url><url>
     <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-query/getting_started/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/getting_started/</loc>
   </url><url>
     <loc>https://mlabs-haskell.github.io/DeNS/docs/architecture/architecture/</loc>
   </url><url>
     <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-query/http_api/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/init/</loc>
   </url><url>
     <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-query/database_schema/</loc>
   </url><url>
@@ -16,11 +22,27 @@
   </url><url>
     <loc>https://mlabs-haskell.github.io/DeNS/docs/catalyst-reports/milestone-3/</loc>
   </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/register_domain/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/update_record/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/catalyst-reports/milestone-4/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/catalyst-reports/milestone-5/</loc>
+  </url><url>
     <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-query/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-pdns-backend/</loc>
   </url><url>
     <loc>https://mlabs-haskell.github.io/DeNS/docs/catalyst-reports/</loc>
   </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-pdns-backend/readme/</loc>
+  </url><url>
     <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-query/readme/</loc>
+  </url><url>
+    <loc>https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/readme/</loc>
   </url><url>
     <loc>https://mlabs-haskell.github.io/DeNS/categories/</loc>
   </url><url>

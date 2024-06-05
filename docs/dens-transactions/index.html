@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link rel="alternate" type="application/rss&#43;xml" href="https://mlabs-haskell.github.io/DeNS/docs/architecture/index.xml">
+<link rel="alternate" type="application/rss&#43;xml" href="https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/index.xml">
 <meta name="robots" content="index, follow">
 
 
@@ -18,14 +18,14 @@
 <link rel="icon" type="image/png" href="/DeNS/favicons/android-144x144.png" sizes="144x144">
 <link rel="icon" type="image/png" href="/DeNS/favicons/android-192x192.png" sizes="192x192">
 
-<title>Design &amp; Architecture | DeNS</title>
+<title>DeNS Transactions | DeNS</title>
 <meta name="description" content="Powerful, extensible, and feature-packed frontend toolkit. Build and customize with Sass, utilize prebuilt grid system and components, and bring projects to life with powerful JavaScript plugins.">
-<meta property="og:title" content="Design &amp; Architecture" />
+<meta property="og:title" content="DeNS Transactions" />
 <meta property="og:description" content="Powerful, extensible, and feature-packed frontend toolkit. Build and customize with Sass, utilize prebuilt grid system and components, and bring projects to life with powerful JavaScript plugins." />
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://mlabs-haskell.github.io/DeNS/docs/architecture/" />
-<meta itemprop="name" content="Design &amp; Architecture">
-<meta itemprop="description" content="Powerful, extensible, and feature-packed frontend toolkit. Build and customize with Sass, utilize prebuilt grid system and components, and bring projects to life with powerful JavaScript plugins."><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Design &amp; Architecture"/>
+<meta property="og:url" content="https://mlabs-haskell.github.io/DeNS/docs/dens-transactions/" />
+<meta itemprop="name" content="DeNS Transactions">
+<meta itemprop="description" content="Powerful, extensible, and feature-packed frontend toolkit. Build and customize with Sass, utilize prebuilt grid system and components, and bring projects to life with powerful JavaScript plugins."><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="DeNS Transactions"/>
 <meta name="twitter:description" content="Powerful, extensible, and feature-packed frontend toolkit. Build and customize with Sass, utilize prebuilt grid system and components, and bring projects to life with powerful JavaScript plugins."/>
 
 
@@ -100,8 +100,8 @@
       <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-densdocs-li">
   <a href="/DeNS/docs/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section tree-root" id="m-densdocs"><span class="">DeNS</span></a>
   <ul class="ul-1">
-    <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-densdocsarchitecture-li">
-  <a href="/DeNS/docs/architecture/" class="align-left ps-0 active td-sidebar-link td-sidebar-link__section" id="m-densdocsarchitecture"><span class="td-sidebar-nav-active-item">Design &amp; Architecture</span></a>
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-densdocsarchitecture-li">
+  <a href="/DeNS/docs/architecture/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section" id="m-densdocsarchitecture"><span class="">Design &amp; Architecture</span></a>
   <ul class="ul-2 foldable">
     <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsarchitecturearchitecture-li">
   <a href="/DeNS/docs/architecture/architecture/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsarchitecturearchitecture"><span class="">Technical Specification</span></a>
@@ -120,8 +120,8 @@
   <a href="/DeNS/docs/dens-query/readme/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-queryreadme"><span class=""></span></a>
 </li>
   </ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-densdocsdens-transactions-li">
-  <a href="/DeNS/docs/dens-transactions/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section" id="m-densdocsdens-transactions"><span class="">DeNS Transactions</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-densdocsdens-transactions-li">
+  <a href="/DeNS/docs/dens-transactions/" class="align-left ps-0 active td-sidebar-link td-sidebar-link__section" id="m-densdocsdens-transactions"><span class="td-sidebar-nav-active-item">DeNS Transactions</span></a>
   <ul class="ul-2 foldable">
     <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-transactionsgetting_started-li">
   <a href="/DeNS/docs/dens-transactions/getting_started/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-transactionsgetting_started"><span class="">Getting Started</span></a>
@@ -181,18 +181,19 @@
   <li class="breadcrumb-item">
     <a href="/DeNS/docs/">DeNS</a></li>
   <li class="breadcrumb-item active" aria-current="page">
-    Design &amp; Architecture</li>
+    DeNS Transactions</li>
   </ol>
 </nav>
             
 <div class="td-content">
-	<h1>Design &amp; Architecture</h1>
+	<h1>DeNS Transactions</h1>
   
 	<header class="article-meta">
 		
 </header>
 	<div class="paragraph">
-<p>This section describes the design of all components of DeNS.</p>
+<p>This document describes the DeNS transaction component of DeNS.
+This shows how one can use a CLI interface to create / submit transactions to the Cardano blockchain in order to interact with the DeNS protocol.</p>
 </div>
 
   <div class="section-index">
@@ -201,7 +202,31 @@
     <hr class="panel-line">
         <div class="entry">
                 <h5>
-                    <a href="/DeNS/docs/architecture/architecture/">Technical Specification</a>
+                    <a href="/DeNS/docs/dens-transactions/getting_started/">Getting Started</a>
+                </h5>
+                <p></p>
+            </div>
+        <div class="entry">
+                <h5>
+                    <a href="/DeNS/docs/dens-transactions/init/">Initialization</a>
+                </h5>
+                <p></p>
+            </div>
+        <div class="entry">
+                <h5>
+                    <a href="/DeNS/docs/dens-transactions/register_domain/">Register a Domain</a>
+                </h5>
+                <p></p>
+            </div>
+        <div class="entry">
+                <h5>
+                    <a href="/DeNS/docs/dens-transactions/update_record/">Update a Record</a>
+                </h5>
+                <p></p>
+            </div>
+        <div class="entry">
+                <h5>
+                    <a href="/DeNS/docs/dens-transactions/readme/"></a>
                 </h5>
                 <p></p>
             </div>

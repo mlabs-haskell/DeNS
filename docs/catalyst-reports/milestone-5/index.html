@@ -1,0 +1,727 @@
+<!doctype html>
+<html itemscope itemtype="http://schema.org/WebPage" lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+
+
+<link rel="shortcut icon" href="/DeNS/favicons/favicon.ico" >
+<link rel="apple-touch-icon" href="/DeNS/favicons/apple-touch-icon-180x180.png" sizes="180x180">
+<link rel="icon" type="image/png" href="/DeNS/favicons/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/DeNS/favicons/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-36x36.png" sizes="36x36">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-48x48.png" sizes="48x48">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-72x72.png" sizes="72x72">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-96x96.png" sizes="96x96">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-144x144.png" sizes="144x144">
+<link rel="icon" type="image/png" href="/DeNS/favicons/android-192x192.png" sizes="192x192">
+
+<title>Milestone 5 | DeNS</title>
+<meta name="description" content="Deployment, Documentation, Productionizing Milestone Outputs
+A deployment-ready package or container (Nix/Docker) is made available for users
+Such packages are all available with Nix as a flake output:
+dens-query-cli
+dens-transactions-cli
+dens-pdns-backend
+Docker images and a Compose file to run the system on the Preview testnet are available here
+Extensive tests, including golden tests where applicable/useful, are implemented for each of the DeNS components
+An integration test suite which verifies data is piped between each component correctly can be found here">
+<meta property="og:title" content="Milestone 5" />
+<meta property="og:description" content="Deployment, Documentation, Productionizing Milestone Outputs
+A deployment-ready package or container (Nix/Docker) is made available for users
+Such packages are all available with Nix as a flake output:
+dens-query-cli
+dens-transactions-cli
+dens-pdns-backend
+Docker images and a Compose file to run the system on the Preview testnet are available here
+Extensive tests, including golden tests where applicable/useful, are implemented for each of the DeNS components
+An integration test suite which verifies data is piped between each component correctly can be found here" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://mlabs-haskell.github.io/DeNS/docs/catalyst-reports/milestone-5/" /><meta property="article:section" content="docs" />
+
+
+<meta itemprop="name" content="Milestone 5">
+<meta itemprop="description" content="Deployment, Documentation, Productionizing Milestone Outputs
+A deployment-ready package or container (Nix/Docker) is made available for users
+Such packages are all available with Nix as a flake output:
+dens-query-cli
+dens-transactions-cli
+dens-pdns-backend
+Docker images and a Compose file to run the system on the Preview testnet are available here
+Extensive tests, including golden tests where applicable/useful, are implemented for each of the DeNS components
+An integration test suite which verifies data is piped between each component correctly can be found here">
+
+<meta itemprop="wordCount" content="1175">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Milestone 5"/>
+<meta name="twitter:description" content="Deployment, Documentation, Productionizing Milestone Outputs
+A deployment-ready package or container (Nix/Docker) is made available for users
+Such packages are all available with Nix as a flake output:
+dens-query-cli
+dens-transactions-cli
+dens-pdns-backend
+Docker images and a Compose file to run the system on the Preview testnet are available here
+Extensive tests, including golden tests where applicable/useful, are implemented for each of the DeNS components
+An integration test suite which verifies data is piped between each component correctly can be found here"/>
+
+
+
+
+<link rel="preload" href="/DeNS/scss/main.min.5118d334f4d49e78b43432d75232dda13144ff70fc9d784048f9c31c8751ea0f.css" as="style">
+<link href="/DeNS/scss/main.min.5118d334f4d49e78b43432d75232dda13144ff70fc9d784048f9c31c8751ea0f.css" rel="stylesheet" integrity="">
+
+<script
+  src="https://code.jquery.com/jquery-3.7.1.min.js"
+  integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+  crossorigin="anonymous"></script>
+<script defer
+  src="https://unpkg.com/lunr@2.3.9/lunr.min.js"
+  integrity="sha384-203J0SNzyqHby3iU6hzvzltrWi/M41wOP5Gu+BiJMz5nwKykbkUx8Kp7iti0Lpli"
+  crossorigin="anonymous"></script>
+
+  </head>
+  <body class="td-page">
+    <header>
+      <nav class="td-navbar js-navbar-scroll" data-bs-theme="dark">
+<div class="container-fluid flex-column flex-md-row">
+  <a class="navbar-brand" href="/DeNS/"><span class="navbar-brand__logo navbar-logo"></span><span class="navbar-brand__name">DeNS</span></a>
+  <div class="td-navbar-nav-scroll ms-md-auto" id="main_navbar">
+    <ul class="navbar-nav">
+      </ul>
+  </div>
+  <div class="d-none d-lg-block">
+    <div class="td-search td-search--offline">
+  <div class="td-search__icon"></div>
+  <input
+    type="search"
+    class="td-search__input form-control"
+    placeholder="Search this site…"
+    aria-label="Search this site…"
+    autocomplete="off"
+    
+    data-offline-search-index-json-src="/DeNS/offline-search-index.bc9dcaf95aa5538742039d9b7cdbf839.json"
+    data-offline-search-base-href="/"
+    data-offline-search-max-results="10"
+  >
+</div>
+  </div>
+</div>
+</nav>
+    </header>
+    <div class="container-fluid td-outer">
+      <div class="td-main">
+        <div class="row flex-xl-nowrap">
+          <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+            <div id="td-sidebar-menu" class="td-sidebar__inner">
+  <form class="td-sidebar__search d-flex align-items-center">
+    <div class="td-search td-search--offline">
+  <div class="td-search__icon"></div>
+  <input
+    type="search"
+    class="td-search__input form-control"
+    placeholder="Search this site…"
+    aria-label="Search this site…"
+    autocomplete="off"
+    
+    data-offline-search-index-json-src="/DeNS/offline-search-index.bc9dcaf95aa5538742039d9b7cdbf839.json"
+    data-offline-search-base-href="/"
+    data-offline-search-max-results="10"
+  >
+</div>
+    <button class="btn btn-link td-sidebar__toggle d-md-none p-0 ms-3 fas fa-bars" type="button" data-bs-toggle="collapse" data-bs-target="#td-section-nav" aria-controls="td-section-nav" aria-expanded="false" aria-label="Toggle section navigation">
+    </button>
+  </form>
+  <nav class="td-sidebar-nav collapse" id="td-section-nav">
+    <ul class="td-sidebar-nav__section pe-md-3 ul-0">
+      <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-densdocs-li">
+  <a href="/DeNS/docs/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section tree-root" id="m-densdocs"><span class="">DeNS</span></a>
+  <ul class="ul-1">
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-densdocsarchitecture-li">
+  <a href="/DeNS/docs/architecture/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section" id="m-densdocsarchitecture"><span class="">Design &amp; Architecture</span></a>
+  <ul class="ul-2 foldable">
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsarchitecturearchitecture-li">
+  <a href="/DeNS/docs/architecture/architecture/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsarchitecturearchitecture"><span class="">Technical Specification</span></a>
+</li>
+  </ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-densdocsdens-query-li">
+  <a href="/DeNS/docs/dens-query/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section" id="m-densdocsdens-query"><span class="">DeNS Query</span></a>
+  <ul class="ul-2 foldable">
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-querygetting_started-li">
+  <a href="/DeNS/docs/dens-query/getting_started/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-querygetting_started"><span class="">Getting Started</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-queryhttp_api-li">
+  <a href="/DeNS/docs/dens-query/http_api/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-queryhttp_api"><span class="">HTTP API</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-querydatabase_schema-li">
+  <a href="/DeNS/docs/dens-query/database_schema/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-querydatabase_schema"><span class="">Database Schema</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-queryreadme-li">
+  <a href="/DeNS/docs/dens-query/readme/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-queryreadme"><span class=""></span></a>
+</li>
+  </ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-densdocsdens-transactions-li">
+  <a href="/DeNS/docs/dens-transactions/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section" id="m-densdocsdens-transactions"><span class="">DeNS Transactions</span></a>
+  <ul class="ul-2 foldable">
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-transactionsgetting_started-li">
+  <a href="/DeNS/docs/dens-transactions/getting_started/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-transactionsgetting_started"><span class="">Getting Started</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-transactionsinit-li">
+  <a href="/DeNS/docs/dens-transactions/init/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-transactionsinit"><span class="">Initialization</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-transactionsregister_domain-li">
+  <a href="/DeNS/docs/dens-transactions/register_domain/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-transactionsregister_domain"><span class="">Register a Domain</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-transactionsupdate_record-li">
+  <a href="/DeNS/docs/dens-transactions/update_record/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-transactionsupdate_record"><span class="">Update a Record</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-transactionsreadme-li">
+  <a href="/DeNS/docs/dens-transactions/readme/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-transactionsreadme"><span class=""></span></a>
+</li>
+  </ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-densdocsdens-pdns-backend-li">
+  <a href="/DeNS/docs/dens-pdns-backend/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section" id="m-densdocsdens-pdns-backend"><span class="">DeNS PowerDNS Integration</span></a>
+  <ul class="ul-2 foldable">
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-pdns-backendgetting_started-li">
+  <a href="/DeNS/docs/dens-pdns-backend/getting_started/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-pdns-backendgetting_started"><span class="">Getting Started</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocsdens-pdns-backendreadme-li">
+  <a href="/DeNS/docs/dens-pdns-backend/readme/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocsdens-pdns-backendreadme"><span class=""></span></a>
+</li>
+  </ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-densdocscatalyst-reports-li">
+  <a href="/DeNS/docs/catalyst-reports/" class="align-left ps-0 td-sidebar-link td-sidebar-link__section" id="m-densdocscatalyst-reports"><span class="">Catalyst reports</span></a>
+  <ul class="ul-2 foldable">
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocscatalyst-reportsmilestone-3-li">
+  <a href="/DeNS/docs/catalyst-reports/milestone-3/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocscatalyst-reportsmilestone-3"><span class="">Milestone 3</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-densdocscatalyst-reportsmilestone-4-li">
+  <a href="/DeNS/docs/catalyst-reports/milestone-4/" class="align-left ps-0 td-sidebar-link td-sidebar-link__page" id="m-densdocscatalyst-reportsmilestone-4"><span class="">Milestone 4</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id="m-densdocscatalyst-reportsmilestone-5-li">
+  <a href="/DeNS/docs/catalyst-reports/milestone-5/" class="align-left ps-0 active td-sidebar-link td-sidebar-link__page" id="m-densdocscatalyst-reportsmilestone-5"><span class="td-sidebar-nav-active-item">Milestone 5</span></a>
+</li>
+  </ul>
+</li>
+  </ul>
+</li>
+    </ul>
+  </nav>
+</div>
+
+          </aside>
+          <aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+            <div class="td-page-meta ms-2 pb-1 pt-2 mb-0">
+
+</div>
+
+            <div class="td-toc">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#_deployment_documentation_productionizing">Deployment, Documentation, Productionizing</a>
+      <ul>
+        <li><a href="#_preview_testnet_demo_video">Preview Testnet Demo Video</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      </div>
+    
+            
+
+          </aside>
+          <main class="col-12 col-md-9 col-xl-8 ps-md-5" role="main">
+            
+  
+
+            <nav aria-label="breadcrumb" class="td-breadcrumbs">
+  <ol class="breadcrumb">
+  <li class="breadcrumb-item">
+    <a href="/DeNS/docs/">DeNS</a></li>
+  <li class="breadcrumb-item">
+    <a href="/DeNS/docs/catalyst-reports/">Catalyst reports</a></li>
+  <li class="breadcrumb-item active" aria-current="page">
+    Milestone 5</li>
+  </ol>
+</nav>
+            
+<div class="td-content">
+	<h1>Milestone 5</h1>
+	
+	<header class="article-meta">
+		
+</header>
+	
+<div class="sect1">
+<h2 id="_deployment_documentation_productionizing">Deployment, Documentation, Productionizing</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;"/>
+<col style="width: 75%;"/>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Milestone Outputs</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>A deployment-ready package or container (Nix/Docker) is made available for users</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Such packages are all available with Nix as a flake output:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://github.com/mlabs-haskell/DeNS/blob/f5a8c6f419dffdd77b052f74d80e9824842e1bca/dens-query/build.nix#L45">dens-query-cli</a></p>
+</li>
+<li>
+<p><a href="https://github.com/mlabs-haskell/DeNS/blob/f5a8c6f419dffdd77b052f74d80e9824842e1bca/dens-transactions/build.nix#L26">dens-transactions-cli</a></p>
+</li>
+<li>
+<p><a href="https://github.com/mlabs-haskell/DeNS/blob/main/dens-apps/pdns/dens-pdns-backend/build.nix#L38">dens-pdns-backend</a></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Docker images and a Compose file to run the system on the Preview testnet are available <a href="https://github.com/mlabs-haskell/DeNS/blob/b4fbf713e6289ca57786140fe4201819e8ae2266/dens-apps/preview-testnet/build.nix">here</a></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Extensive tests, including golden tests where applicable/useful, are implemented for each of the DeNS components</p>
+<div class="ulist">
+<ul>
+<li>
+<p>An integration test suite which verifies data is piped between each component correctly can be found <a href="https://github.com/mlabs-haskell/DeNS/tree/656a29b39581e97dc9403d3ddfbf882a79c62a56/dens-testsuites/integration">here</a></p>
+</li>
+<li>
+<p>A test suite for DeNS Query’s to verify the SQL queries function as expected can be found <a href="https://github.com/mlabs-haskell/DeNS/tree/f12e3f85e3ed666bd3d8a7b06966babe7071d640/dens-query/src/Tests">here</a></p>
+</li>
+<li>
+<p>A PowerDNS backend test suite to verify that DeNS Query’s SQL schema integrates with PowerDNS can be found <a href="https://github.com/mlabs-haskell/DeNS/tree/76cc117681bde6c23c76a360ee997c1124db92b3/dens-apps/pdns/dens-pdns-backend/src/tests">here</a></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>User-facing documentation &amp; examples are provided</p>
+<div class="ulist">
+<ul>
+<li>
+<p>A website with user-facing documentation and examples can be found <a href="../../../../DeNS/">here</a></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>A running service (the exact nature depends on design decisions, provisionally: a DeNS &#34;local resolver&#34;) that users can integrate with to perform name-resolution queries using our system.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>A running service is demonstrated on the Preview testnet with the Docker images and Compose file mentioned above.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Acceptance criteria</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p>The package / container is properly configured and can be deployed by users to interact with the DeNS protocol.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>The demo video <a href="#_preview_testnet_demo_video">Preview Testnet Demo Video</a> demonstrates this.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>The test suites are extensive and all tests pass.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>CI on the most recent <a href="https://hercules-ci.com/github/mlabs-haskell/DeNS/jobs/575">commit</a> (at the time of writing this) passes and hence demonstrates that all tests pass.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Documentation is clear, thorough, and sufficient for users to interact with the protocol.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>The project website provided found <a href="../../../../DeNS/">here</a> has such documentation.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>The running service actually works.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>The demo video <a href="#_preview_testnet_demo_video">Preview Testnet Demo Video</a> demonstrates this.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Evidence of milestone completion</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p>1-2: A link to a commit where the objectives of the milestone are achieved.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Commits which demonstrate completion of 1-2 are as follows.</p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://github.com/mlabs-haskell/DeNS/blob/f5a8c6f419dffdd77b052f74d80e9824842e1bca/dens-query/build.nix#L45">Implementation of <code>dens-query-cli</code></a></p>
+</li>
+<li>
+<p><a href="https://github.com/mlabs-haskell/DeNS/blob/f5a8c6f419dffdd77b052f74d80e9824842e1bca/dens-transactions/build.nix#L26">Implementation of <code>dens-transactions-cli</code></a></p>
+</li>
+<li>
+<p><a href="https://github.com/mlabs-haskell/DeNS/blob/main/dens-apps/pdns/dens-pdns-backend/build.nix#L38">Implementation of <code>dens-pdns-backend</code></a></p>
+</li>
+<li>
+<p><a href="https://github.com/mlabs-haskell/DeNS/blob/b4fbf713e6289ca57786140fe4201819e8ae2266/dens-apps/preview-testnet/build.nix">Docker images to orchestrate the services</a></p>
+</li>
+<li>
+<p><a href="https://github.com/mlabs-haskell/DeNS/tree/656a29b39581e97dc9403d3ddfbf882a79c62a56/dens-testsuites/integration">Integration test suite</a></p>
+</li>
+<li>
+<p><a href="https://github.com/mlabs-haskell/DeNS/tree/f12e3f85e3ed666bd3d8a7b06966babe7071d640/dens-query/src/Tests">DeNS Query test suite</a></p>
+</li>
+<li>
+<p><a href="https://github.com/mlabs-haskell/DeNS/tree/76cc117681bde6c23c76a360ee997c1124db92b3/dens-apps/pdns/dens-pdns-backend/src/tests">PowerDNS backend test suite</a></p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>3: A link to the documentation website.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>The documentation website can be found <a href="https://mlabs-haskell.github.io/DeNS/">here</a></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>4: A demonstration video or set of network logs that clearly show the service in operation.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>The demo video <a href="#_preview_testnet_demo_video">Preview Testnet Demo Video</a> demonstrates this.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>5: We will show the Cardano community an open-source, well-documented, blockchain-based name resolution service that improves on the privacy and security of DNS.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Evidence is presented above.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<div class="sect2">
+<h3 id="_preview_testnet_demo_video">Preview Testnet Demo Video</h3>
+<div class="videoblock">
+<div class="content">
+<iframe src="https://www.youtube.com/embed/eTrLvzYJs3I?rel=0" frameborder="0" allowfullscreen=""></iframe>
+</div>
+</div>
+<div class="paragraph">
+<p>The video can be found <a href="https://youtu.be/eTrLvzYJs3I">here</a></p>
+</div>
+<div class="sect3">
+<h4 id="_commands_used">Commands Used</h4>
+<div class="paragraph">
+<p>The following commands were executed in the demo video.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tbody><tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+It is assumed that we start in the root of the project directory.
+</td>
+</tr>
+</tbody></table>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Load all the docker images.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>cd dens-apps/preview-testnet
+nix build .#cardano-node-preview-testnet-image &amp;&amp; docker load &lt; ./result
+nix build .#ogmios-preview-testnet-image &amp;&amp; docker load &lt; ./result
+nix build .#dens-query-preview-testnet-image &amp;&amp; docker load &lt; ./result
+nix build .#dens-pdns-preview-testnet-image &amp;&amp; docker load &lt; ./result
+nix build .#dens-pdns-backend-preview-testnet-image &amp;&amp; docker load  &lt; ./result
+nix build .#dens-query-postgres-preview-testnet-image &amp;&amp; docker load &lt; ./result</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tbody><tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+These commands were done prior to filming the demo video
+</td>
+</tr>
+</tbody></table>
+</div>
+</li>
+<li>
+<p>Run all services using the <a href="https://docs.docker.com/compose/compose-file">Compose file</a>.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>docker compose up</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Wait several hours for the services to sync with the preview testnet.</p>
+</li>
+<li>
+<p>Check that <code>testdomainname.com</code> has no RRs associated with it using the well known DNS lookup utility <code>dig</code>.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>dig @127.0.0.1 -p 6653 testdomainname.com</code></pre>
+</div>
+</div>
+<div class="admonitionblock important">
+<table>
+<tbody><tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">
+The Compose file maps the port 6653 on the host machine to the PowerDNS server running in the docker image.
+</td>
+</tr>
+</tbody></table>
+</div>
+</li>
+<li>
+<p>Purchase the domain name <code>testdomainname.com</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>docker exec -it preview-testnet-dens-query-1 \
+    dens-transactions-cli \
+        register-domain \
+        --ogmios-host ogmios \
+        --ogmios-port 1337 \
+        --network Preview \
+        --protocol-nft-tx-out-ref &#34;5969b450ec00019044fbcb1cd5973cc80a47b1507e2e0e14f3e6e4a2f23cdabd#0&#34; \
+        --dens-query-socket-path /ipc/dens-query/dens-query.sock \
+        --private-key-bech32 ed25519_sk1p8874wgza2c5yxytucugt2k2mrw3l3gkpg6ezxn498smerqh8j0qe078pu \
+        --domain-name testdomainname.com</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Associate <code>testdomainname.com</code> with some RRs</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>docker exec -it preview-testnet-dens-query-1 \
+    dens-transactions-cli \
+        update-record \
+        --ogmios-host ogmios \
+        --ogmios-port 1337 \
+        --network Preview \
+        --protocol-nft-tx-out-ref &#34;5969b450ec00019044fbcb1cd5973cc80a47b1507e2e0e14f3e6e4a2f23cdabd#0&#34; \
+        --dens-query-socket-path /ipc/dens-query/dens-query.sock \
+        --private-key-bech32 ed25519_sk1p8874wgza2c5yxytucugt2k2mrw3l3gkpg6ezxn498smerqh8j0qe078pu \
+        --domain-name testdomainname.com \
+        --a-record &#34;270,69.69.69.69&#34; \
+        --soa-record &#34;30,ns1.testdomainname.com dns-admin.testdomainname.com 639491960 900 900 1800 60&#34;</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Verify that <code>testdomainname.com</code> has the RRs we just associated it with.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>dig @127.0.0.1 -p 6653 testdomainname.com</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div class="sect4">
+<h5 id="_logs">Logs</h5>
+<div class="paragraph">
+<p>The terminal output of the demo is as follows.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>$ dig @127.0.0.1 -p 6653 testdomainname.com
+
+; &lt;&lt;&gt;&gt; DiG 9.18.19 &lt;&lt;&gt;&gt; @127.0.0.1 -p 6653 testdomainname.com
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: SERVFAIL, id: 11316
+;; flags: qr aa rd; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1
+;; WARNING: recursion requested but not available
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+;; QUESTION SECTION:
+;testdomainname.com.		IN	A
+
+;; Query time: 2 msec
+;; SERVER: 127.0.0.1#6653(127.0.0.1) (UDP)
+;; WHEN: Wed Jun 05 02:40:22 MDT 2024
+;; MSG SIZE  rcvd: 47
+
+$ docker exec -it preview-testnet-dens-query-1 \
+    dens-transactions-cli \
+        register-domain \
+        --ogmios-host ogmios \
+        --ogmios-port 1337 \
+        --network Preview \
+        --protocol-nft-tx-out-ref &#34;5969b450ec00019044fbcb1cd5973cc80a47b1507e2e0e14f3e6e4a2f23cdabd#0&#34; \
+        --dens-query-socket-path /ipc/dens-query/dens-query.sock \
+        --private-key-bech32 ed25519_sk1p8874wgza2c5yxytucugt2k2mrw3l3gkpg6ezxn498smerqh8j0qe078pu \
+        --domain-name testdomainname.com
+(node:136) ExperimentalWarning: Importing JSON modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+info: Tx hash: 9bda385ff825254f416b7c2275e0c4277c6493224ea83163ab724f21a4b6a4da
+[02:40 AM] [jared@pletbjerg ~/Documents/Work/DeNS/dens-apps/preview-testnet]$ docker exec -it preview-testnet-dens-query-1 \
+    dens-transactions-cli \
+        update-record \
+        --ogmios-host ogmios \
+        --ogmios-port 1337 \
+        --network Preview \
+        --protocol-nft-tx-out-ref &#34;5969b450ec00019044fbcb1cd5973cc80a47b1507e2e0e14f3e6e4a2f23cdabd#0&#34; \
+        --dens-query-socket-path /ipc/dens-query/dens-query.sock \
+        --private-key-bech32 ed25519_sk1p8874wgza2c5yxytucugt2k2mrw3l3gkpg6ezxn498smerqh8j0qe078pu \
+        --domain-name testdomainname.com \
+        --a-record &#34;270,69.69.69.69&#34; \
+        --soa-record &#34;30,ns1.testdomainname.com dns-admin.testdomainname.com 639491960 900 900 1800 60&#34;
+(node:158) ExperimentalWarning: Importing JSON modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+info: Tx hash: 6414ea74af6ecc214fdac327b5abca8be80f6b9f9dbdb5ec920cedded343a349
+$ dig @127.0.0.1 -p 6653 testdomainname.com
+
+; &lt;&lt;&gt;&gt; DiG 9.18.19 &lt;&lt;&gt;&gt; @127.0.0.1 -p 6653 testdomainname.com
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: SERVFAIL, id: 14626
+;; flags: qr aa rd; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1
+;; WARNING: recursion requested but not available
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+;; QUESTION SECTION:
+;testdomainname.com.		IN	A
+
+;; Query time: 1 msec
+;; SERVER: 127.0.0.1#6653(127.0.0.1) (UDP)
+;; WHEN: Wed Jun 05 02:42:02 MDT 2024
+;; MSG SIZE  rcvd: 47
+
+$ dig @127.0.0.1 -p 6653 testdomainname.com
+
+; &lt;&lt;&gt;&gt; DiG 9.18.19 &lt;&lt;&gt;&gt; @127.0.0.1 -p 6653 testdomainname.com
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: SERVFAIL, id: 5485
+;; flags: qr aa rd; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1
+;; WARNING: recursion requested but not available
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+;; QUESTION SECTION:
+;testdomainname.com.		IN	A
+
+;; Query time: 1 msec
+;; SERVER: 127.0.0.1#6653(127.0.0.1) (UDP)
+;; WHEN: Wed Jun 05 02:42:25 MDT 2024
+;; MSG SIZE  rcvd: 47
+
+$ dig @127.0.0.1 -p 6653 testdomainname.com
+
+; &lt;&lt;&gt;&gt; DiG 9.18.19 &lt;&lt;&gt;&gt; @127.0.0.1 -p 6653 testdomainname.com
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 13253
+;; flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+;; WARNING: recursion requested but not available
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+;; QUESTION SECTION:
+;testdomainname.com.		IN	A
+
+;; ANSWER SECTION:
+testdomainname.com.	270	IN	A	69.69.69.69
+
+;; Query time: 20 msec
+;; SERVER: 127.0.0.1#6653(127.0.0.1) (UDP)
+;; WHEN: Wed Jun 05 02:42:33 MDT 2024
+;; MSG SIZE  rcvd: 63</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+	
+</div>
+
+
+          </main>
+        </div>
+      </div>
+      <footer class="td-footer row d-print-none">
+  <div class="container-fluid">
+    <div class="row mx-md-2">
+      <div class="td-footer__left col-6 col-sm-4 order-sm-1">
+        
+      </div><div class="td-footer__right col-6 col-sm-4 order-sm-3">
+        
+      </div><div class="td-footer__center col-12 col-sm-4 py-2 order-sm-2">
+        
+      </div>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <script src="/DeNS/js/main.min.37d14e870feb76f0f7a2a2422bae231efb0186c477999a4ab9ca7e9924ced592.js" integrity="sha256-N9FOhw/rdvD3oqJCK64jHvsBhsR3mZpKucp&#43;mSTO1ZI=" crossorigin="anonymous"></script>
+<script defer src="/DeNS/js/click-to-copy.min.73478a7d4807698aed7e355eb23f9890ca18fea3158604c8471746d046702bad.js" integrity="sha256-c0eKfUgHaYrtfjVesj&#43;YkMoY/qMVhgTIRxdG0EZwK60=" crossorigin="anonymous"></script>
+<script src='/DeNS/js/tabpane-persist.js'></script>
+
+  </body>
+</html>
