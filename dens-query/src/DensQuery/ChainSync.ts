@@ -241,7 +241,9 @@ export async function rollForwardElemId(
   // Then, we collect all the RRs in the transaction outputs..
   // As a harmless bug, we include all RRs that have a sensible datum when in
   // reality, we really _should_ only include the RRs with a certain address
-  let rrs: [PlaV1.TxOutRef, LbfDens.DensRr][] = [];
+  const elemIdTnHexToRrs: {
+    [keys: string]: [PlaV1.TxOutRef, LbfDens.DensRr][];
+  } = {};
   for (let i = 0; i < tx.outputs.length; ++i) {
     const txId: PlaV1.TxId = ogmiosTransactionToPlaTxId(tx);
     const txOut = tx.outputs[i]!;
@@ -262,9 +264,23 @@ export async function rollForwardElemId(
       const recordDatum = LbrPlutusV1.IsPlutusData[LbfDens.RecordDatum]
         .fromData(plaPlutusData);
 
+      const densKey: LbfDens.DensKey = {
+        densName: recordDatum.recordName,
+        densClass: recordDatum.recordClass,
+      };
+
+      const elemIdTn = elementIdTokenName(densKey);
+      const elemIdTnHex = Buffer.from(elemIdTn).toString("hex");
+
+      if (elemIdTnHexToRrs[elemIdTnHex] === undefined) {
+        elemIdTnHexToRrs[elemIdTnHex] = [];
+      }
+
       const mapped: [PlaV1.TxOutRef, LbfDens.DensRr][] = recordDatum.recordValue
         .map((x) => [txOutRef, x]);
-      rrs = rrs.concat(mapped);
+      elemIdTnHexToRrs[elemIdTnHex] = elemIdTnHexToRrs[elemIdTnHex]!.concat(
+        mapped,
+      );
     } catch (err) {
       if (!(err instanceof PlaPd.IsPlutusDataError)) {
         throw err;
@@ -273,8 +289,8 @@ export async function rollForwardElemId(
   }
 
   logger.verbose(
-    `(ElemId) outputs which contain candidate RRs: ${
-      JSON.stringify(rrs, stringifyReplacer)
+    `(ElemId) ElemId token names mapping to candidate RRs: ${
+      JSON.stringify(elemIdTnHexToRrs, stringifyReplacer)
     }.`,
   );
 
@@ -320,6 +336,13 @@ export async function rollForwardElemId(
       );
 
       const elemAssetClass: PlaV1.AssetClass = [elemIdCurrencySymbol, tn];
+
+      const tnHex = Buffer.from(tn).toString("hex");
+      const rrs = elemIdTnHexToRrs[tnHex];
+
+      if (rrs === undefined) {
+        continue;
+      }
 
       await client.insertTxOutRef(txOutRef);
       await client.insertDensElemIdUtxo(elemAssetClass, txOutRef);

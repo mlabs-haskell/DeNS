@@ -3,6 +3,7 @@ title = "Milestone 3"
 weight = 3
 +++
 :toc:
+:relfilesuffix: /
 
 == DeNS Query Layer Development
 [cols="1,3a"]
@@ -16,7 +17,7 @@ weight = 3
 This serves as the main query layer for other applications like DNS analytics (we expect this to be particularly useful for security-related applications) but also as the database from which traditional DNS service integration can take place.
 
 ** The package which listens to Cardano transactions that are related to DeNS and populates a relational database can be found https://github.com/mlabs-haskell/DeNS/tree/main/dens-query[here].
-** The documentation for this package can be found https://mlabs-haskell.github.io/DeNS/docs/dens-query[here].
+** The documentation for this package can be found xref:../../dens-query.adoc[here].
 
 // Acceptance criteria
 

@@ -15,10 +15,6 @@ These features are:
 - It must be possible to reconstruct a database, suitable for use as the primary database mapping domain names to resources in a DNS resolver, from these public records
 - A viable and orderly transition path from traditional DNS must exist, such that existing users of DNS can gradually migrate to the DeNS protocol
 
-The last feature requires further elaboration and discussion. A 'transition path', for the purposes of this document, can be understood in two ways: First, from the perspective of end-users of the system, a DeNS transition path requires that they be able to interact with DeNS to resolve traditional DNS queries while benefiting from the advantages of decentralization, transparency, etc. Second, from the perspective of (DNS) domain owners and operators, a transition path requires that DeNS (temporarily) delegates authority over existing DNS records to the authoritative sources of those records in the existing DNS system.
-
-As far as we can determine, the only way to delegate authority over existing DNS records to their authoritative source in traditional DNS without abandoning some other required feature is to _mirror existing DNS records in the DeNS system_. This entails a further design constraint: It must be _economically feasible_ to perform DNS record mirroring in DeNS. While this is, in some sense, an implementation detail, it is nevertheless an essential requirement which must guide the rest of the design.
-
 ## Overview: A Cross-Chain Database (Conceptual)
 
 The constraints outlined in the previous section give rise to an apparent dilemma: The Web3 technologies which are most suitable for the _data-storage_ functionality (Arweave, IPFS, other distributed storage solutions) are inadequate for implementing the transaction logic, while, conversely, the Web3 technologies most suited to implement transaction logic necessary for users to have meaningful control over their records (Cardano and other smart-contract capable blockchains) are unsuitable for storing the large (relative to typical smart contracts) amounts of data necessary for a protocol that aims to replace DNS in its entirety.
@@ -59,9 +55,7 @@ DeNS, by contrast, will be universal. Concretely, this implies that the records 
 
 This architecture allows us to specify more clearly the mechanics of the transition away from DNS as an authority for IP records: We will lease the IP class of domains to ourselves and maintain mirrors of DNS records until DeNS adoption reaches a level that we judge sufficient to facilitate a "hard fork" from DNS authority. At that point, we will let the lease expire and IP class domains in DeNS will be directly managed by domain owners via DeNS smart contracts.
 
-## Architecture - Cardano (Technical) (WIP)
-
-TODO/FIXME: Everything here assumes that domain ownership is eternal/indefinite. In practice that won't work, and we'll have to modify this design to accommodate a "lease" model instead of a "permanent control" model.
+## Architecture - Cardano (Technical)
 
 ### Protocol NFT
 
@@ -280,138 +274,7 @@ The offchain code that constructs the DeNS database will always treat the _most 
 - The output contains a single UTxO with an _inline_ `RecordDatum` datum which is equal to the input passed in by the user
 - This output UTxO is paid to the validator
 
-## Architecture—Arweave (Technical) (WIP)
-
-### Why not Cardano?
-
-The current size of a file containing the totality of domains in internet is
-estimated in 10 GB.
-
-Cardano maximum size for a transaction is 16 KB.
-
-This means that we have to perform 655_360 transactions in the optimistic case.
-The time and cost of this amount of transactions is prohibitive, specifically for
-initialization. We need a secondary way to store data.
-
-### Why Arweave?
-
-It seems that the maximum amount of data we can upload paying the minimum amount possible
-in Arweave is:
-
-```bash
-https://arweave.net/price/256000
-212017846
-```
-
-Here the `256000` are the bytes for upload and `212017846` is the response in Wilson.
-
-A Wilson is related to AR (the Arweave currency) as:
-
-```python
-AR = 1e12 Wilson
-```
-
-At today the price of an AR is around `9.5` USD, this means that the minimum
-cost of a transaction is : `0.002014169537` USD. And the maximum size of a
-transaction with such a price is above 250 KB.
-
-Additionally, some gateways allow the upload of certain amount of bytes for free.
-For example, Irys allow us to upload 200 KB for free in Node2.
-
-Those are the reasons we choose to store every set of records in a particular zone file as a single transaction.
-
-### Initial Upload
-
-Initially, we will assume we have the following zone files.
-
-```bash
-ZoneCOM.txt
-ZoneNET.txt
-.
-.
-.
-ZoneSome.txt
-```
-
-We will transform them, striping redundant data and complementing with other files
-(to avoid breaking the TOS). Eventually we will reach a new state in which we will have
-small chunks of data of size `ORIGINAL_CHUNK_SIZE` (to be defined).
-
-Then using the services of a bundler we will upload the chunks in bulk to Arweave.
-
-Arweave has a limit of transactions per block, but they allow the use of
-`bundle` transactions that allows the inclusion of up to `2^256` transactions
-in every bundle.
-Although the cost of upload can increase (to be investigated), this
-allows the resolution of a query by only downloading a single chunk instead of waiting
-for the download of an entire zone file.
-Additionally, we believe that the increase cost won't be more than
-$100 USD, and we expect it to be much less (to be investigated).
-
-The process of bundling will assign a unique transaction Id to the uploaded chunk
-This means that at this point the reference inside a `DeNSValue` is
-the assigned Id of the chunk.
-
-This means that when someone tries to solve the ip of a domain, they
-need to find the right domain inside the original chunk.
-
-### Update of a set of records and upload of new records
-
-After the initial upload, every owner of a domain is responsible for the
-update of their own records. With the use of a bundler, we can recommend
-them to upload a single set of records in a single transaction. But
-they may choose not to bundle and just upload a single transaction
-mixing records for other domains that they own. In such cases
-the local dns would only update the local records corresponding to
-the domain that is being updated in Cardano. This means that different domains
-registered in Cardano, can point to the same chunk of records.
-
-This model means that the initial actor/maintainer of the network
-would be able to do updates in bulk with low cost and to
-discharge the update responsibility on a new owner in the future
-with ease.
-
-### Domain Solving
-
-We have two approaches here.
-
-The first one is:
-
-- Ask the Indexer to immediately retrieve the associated Cardano
-    transaction and then the Arweave transaction data.
-
-The second one:
-
-- Wait for the Indexer to update the Cardano and Arweave sides.
-
-To improve the last one, we can improve the priority of the
-information related to the domain requested.
-
-In both cases the idea is to let the Cardano Indexer guide the
-acquisition of data in the Arweave side.
-
-The full process will be:
-
-- User request domain `D` to be solved.
-
-- Cardano indexer looks for the registry of `D`.
-
-- We look for the records for `D` in the DB.
-
-- We compare the address in Cardano with the one in the
-    DB if we find `D` in the DB. If is the same we
-    return it. Otherwise, we begin the next step.
-
-- We check if we already have the chunk of data stored (we
-    could have a cache of chunks). If we haven't, we
-    retrieve it from Arweave.
-
-- We look for the IP of `D` in the chunk, then :
-  - Return the response
-  - Update the records on the DB for `D`
-  - Update the cache (if any) of chunks
-
-## Architecture - Offchain (Technical) (WIP)
+## Architecture - Offchain (Technical)
 
 The offchain infrastructure needs to provide the following services.
 
@@ -472,10 +335,8 @@ We considered the following two existing DNS systems.
 
 Of the two existing solutions, we believe that PowerDNS's modularity of splitting the authoritative server and the recursor into separate entities makes it a better fit to integrate into DeNS since DeNS only needs the authoritative server functionality.
 
-PowerDNS requires some [basic setup](https://doc.powerdns.com/authoritative/guides/basic-database.html) in order to talk to a backend database.
-In particular, it supports a PostgreSQL database backend.
-Its operation falls under the [generic SQL backend](https://doc.powerdns.com/authoritative/backends/generic-sql.html) category for which users can interact with it via the application `pdnsutil` or the [REST-API](https://doc.powerdns.com/authoritative/http-api/index.html).
-We will interact with the authoritative server via the REST-API which in particular has endpoints to manipulate zones to add RRsets -- details are in the documentation [here](https://doc.powerdns.com/authoritative/http-api/zone.html).
+PowerDNS allows one to implement a [remote backend](https://doc.powerdns.com/authoritative/backends/remote.html) to propagate information about RRs to PowerDNS via a JSON/RPC API.
+So, we propose to implement a remote backend which will service RRs from the database to a PowerDNS authoritative server to answer the DNS queries.
 
 Finally, the only question that remains is how updates from the blockchain should propagate to the authoritative server.
 We propose to piggyback back on top of the chain indexer from the previous section where we listen for the event of set changes, and on the occurrence of such event, we update the DNS records.

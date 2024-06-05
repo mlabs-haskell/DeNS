@@ -1,0 +1,3 @@
+:toc:
+
+This section describes `+dens-pdns-backend-cli+` which is a PowerDNS backend so RRs on the blockchain can be propagated to traditional DNS resolvers.

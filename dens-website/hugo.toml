@@ -20,6 +20,14 @@ target = 'content/docs/architecture'
 source = '../dens-query/doc'
 target = 'content/docs/dens-query'
 
+[[module.mounts]]
+source = '../dens-transactions/doc'
+target = 'content/docs/dens-transactions'
+
+[[module.mounts]]
+source = '../dens-apps/pdns/dens-pdns-backend/doc'
+target = 'content/docs/dens-pdns-backend'
+
 [markup.asciidocExt]
 backend = 'html5'
 extensions = []
