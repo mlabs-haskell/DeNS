@@ -96,14 +96,14 @@ Returns the UTxO to spend in order to purchase the given domain from the smart c
 [example]
 [source,json]
 ```
-TODO(jaredponn): write me
+TODO
 ```
 [#no-set-elements-found]
 .No set elements found
 [example]
 [source,json]
 ```
-TODO(jaredponn): write me
+TODO
 ```
 
 [#query-protocol-utxo]
@@ -168,7 +168,7 @@ Returns the UTxO which holds the Protocol type i.e., trusted information of the 
 [example]
 [source,json]
 ```
-TODO(jaredponn): write me
+TODO
 ```
 
 [#set-protocol-nft]
