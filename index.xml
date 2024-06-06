@@ -85,10 +85,10 @@
       <description>DeNS Control Layer Development Milestone Outputs&#xA;An &amp;#39;offchain&amp;#39; (which is a bit more substantial here than in most dapps) component that can build DeNS transactions and can be exposed to users through CLIs, GUIs, and APIs.&#xA;An offchain component that can build DeNS transactions exposed via a CLI is provided here.&#xA;Minimally, a basic DeNS CLI utility that can be used to meaningfully interact with the protocol.&#xA;The CLI utility is provided as a flake output here.</description>
     </item>
     <item>
-      <title>Milestone 5</title>
-      <link>https://mlabs-haskell.github.io/DeNS/docs/catalyst-reports/milestone-5/</link>
+      <title>Final Milestone</title>
+      <link>https://mlabs-haskell.github.io/DeNS/docs/catalyst-reports/final-milestone/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>https://mlabs-haskell.github.io/DeNS/docs/catalyst-reports/milestone-5/</guid>
+      <guid>https://mlabs-haskell.github.io/DeNS/docs/catalyst-reports/final-milestone/</guid>
       <description>Deployment, Documentation, Productionizing Milestone Outputs&#xA;A deployment-ready package or container (Nix/Docker) is made available for users&#xA;Such packages are all available with Nix as a flake output:&#xA;dens-query-cli&#xA;dens-transactions-cli&#xA;dens-pdns-backend&#xA;Docker images and a Compose file to run the system on the Preview testnet are available here&#xA;Extensive tests, including golden tests where applicable/useful, are implemented for each of the DeNS components&#xA;An integration test suite which verifies data is piped between each component correctly can be found here</description>
     </item>
     <item>
