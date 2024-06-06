@@ -34,7 +34,7 @@ Important To prevent malicious interactions/modifications of DeNS Query’s data
 Authentication Some endpoints provided by DeNS Query are exposed internal functionalities to and are made available to facilitate testing and development.
 Important To prevent malicious interactions/modifications of DeNS Query’s database, it is therefore expected that these endpoints must NOT be exposed publicly (i.e., not accessible to end-users). For this to be effective, a HTTPS reverse proxy may be used to:">
 
-<meta itemprop="wordCount" content="516">
+<meta itemprop="wordCount" content="738">
 <meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="HTTP API"/>
 <meta name="twitter:description" content="DeNS Query provides an HTTP interface for accessing the UTxOs stored in the database.
 Authentication Some endpoints provided by DeNS Query are exposed internal functionalities to and are made available to facilitate testing and development.
@@ -75,7 +75,7 @@ Important To prevent malicious interactions/modifications of DeNS Query’s data
     aria-label="Search this site…"
     autocomplete="off"
     
-    data-offline-search-index-json-src="/DeNS/offline-search-index.bc9dcaf95aa5538742039d9b7cdbf839.json"
+    data-offline-search-index-json-src="/DeNS/offline-search-index.9fdab4d76975ab116fe11848e4ad991d.json"
     data-offline-search-base-href="/"
     data-offline-search-max-results="10"
   >
@@ -99,7 +99,7 @@ Important To prevent malicious interactions/modifications of DeNS Query’s data
     aria-label="Search this site…"
     autocomplete="off"
     
-    data-offline-search-index-json-src="/DeNS/offline-search-index.bc9dcaf95aa5538742039d9b7cdbf839.json"
+    data-offline-search-index-json-src="/DeNS/offline-search-index.9fdab4d76975ab116fe11848e4ad991d.json"
     data-offline-search-base-href="/"
     data-offline-search-max-results="10"
   >
@@ -387,13 +387,13 @@ a HTTPS reverse proxy may be used to:</p>
 <div id="domain-name-already-exists" class="listingblock">
 <div class="title">Domain name already exists error response</div>
 <div class="content">
-<pre class="highlight"><code>TODO</code></pre>
+<pre class="highlight"><code></code></pre>
 </div>
 </div>
 <div id="no-set-elements-found" class="listingblock">
 <div class="title">No set elements found</div>
 <div class="content">
-<pre class="highlight"><code>TODO</code></pre>
+<pre class="highlight"><code></code></pre>
 </div>
 </div>
 </div>
@@ -491,7 +491,7 @@ a HTTPS reverse proxy may be used to:</p>
 <div id="no-protocol-utxo-found" class="listingblock">
 <div class="title">No protocol utxo found</div>
 <div class="content">
-<pre class="highlight"><code>TODO</code></pre>
+<pre class="highlight"><code></code></pre>
 </div>
 </div>
 </div>
@@ -522,8 +522,8 @@ setting the protocol NFT to a new protocol NFT therefore changes the instance of
 <pre class="highlight"><code>{
     &#34;protocolNft&#34;:
         {
-            &#34;currency_symbol&#34;: &#34;
-                0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F&#34;,
+            &#34;currency_symbol&#34;:
+                &#34;0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F&#34;,
             &#34;token_name&#34;:
                 &#34;&#34;
         }
@@ -540,8 +540,8 @@ setting the protocol NFT to a new protocol NFT therefore changes the instance of
             {
                 &#34;protocolNft&#34;:
                     {
-                        &#34;currency_symbol&#34;: &#34;
-                            0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F&#34;,
+                        &#34;currency_symbol&#34;:
+                            &#34;0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F&#34;,
                         &#34;token_name&#34;:
                             &#34;&#34;
                     }
@@ -557,7 +557,86 @@ setting the protocol NFT to a new protocol NFT therefore changes the instance of
 <h2 id="_lambdabuffers">LambdaBuffers</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>All datum described in the requests and responses in <a href="#http-endpoints">HTTP Endpoints</a> have an associated LambdaBuffers type with generated JSON parsers. Refer to the <a href="{apidir}/lbf/Dens/Server.lbf">.lbf schema file</a> for more details.</p>
+<p>All datum described in the requests and responses in <a href="#http-endpoints">HTTP Endpoints</a> have an associated LambdaBuffers type with generated JSON parsers.
+Details can be found in the LambdaBuffers schema file given below</p>
+</div>
+<div class="listingblock">
+<div class="title">LambdaBuffers schema file</div>
+<div class="content">
+<pre class="highlight"><code>module Dens.Server
+
+import Prelude   (Eq, Json, Text)
+import Plutus.V1 (TxOutRef, AssetClass, Bytes)
+import Dens.Db   (DensProtocolUtxo, DensSetUtxo)
+
+---------------------------------------------------
+-- Response type
+---------------------------------------------------
+
+sum Response a
+    = Ok a
+    | Failed ResponseFailed
+
+record ResponseFailed = { error: Text }
+
+derive Eq (Response a)
+derive Json (Response a)
+
+derive Eq ResponseFailed
+derive Json ResponseFailed
+
+---------------------------------------------------
+-- Set insertion request / response
+---------------------------------------------------
+record QueryDensSetInsertionUtxoRequest = { name : Bytes }
+prod QueryDensSetInsertionUtxoResponse = (Response DensSetUtxo)
+
+derive Eq QueryDensSetInsertionUtxoRequest
+derive Json QueryDensSetInsertionUtxoRequest
+
+derive Eq QueryDensSetInsertionUtxoResponse
+derive Json QueryDensSetInsertionUtxoResponse
+
+---------------------------------------------------
+-- Set query request / response
+---------------------------------------------------
+-- TODO(jaredponn): implementing this would be useful for updates, but we don&#39;t
+-- support this now.
+-- record QueryDensSettxoRequest = { name : Bytes }
+-- prod QueryDensSetUtxoResponse = (Response DensSetUtxo)
+-- 
+-- derive Eq QueryDensSetUtxoRequest
+-- derive Json QueryDensSetUtxoRequest
+-- 
+-- derive Eq QueryDensSetUtxoResponse
+-- derive Json QueryDensSetUtxoResponse
+
+---------------------------------------------------
+-- Protocol info query / response
+---------------------------------------------------
+-- TODO(jaredponn): LB doesn&#39;t like JSON objects for empty records. I&#39;ll PR
+-- this in LB.
+-- record QueryDensProtocolUtxoRequest = { }
+prod QueryDensProtocolUtxoResponse = (Response DensProtocolUtxo)
+
+-- derive Eq QueryDensProtocolUtxoRequest
+-- derive Json QueryDensProtocolUtxoRequest
+
+derive Eq QueryDensProtocolUtxoResponse
+derive Json QueryDensProtocolUtxoResponse
+
+---------------------------------------------------
+-- Set protocol NFT query /response
+---------------------------------------------------
+record SetProtocolNftRequest = { protocolNft: AssetClass }
+prod   SetProtocolNftResponse = (Response SetProtocolNftRequest)
+
+derive Eq SetProtocolNftRequest
+derive Json SetProtocolNftRequest
+
+derive Eq SetProtocolNftResponse
+derive Json SetProtocolNftResponse</code></pre>
+</div>
 </div>
 </div>
 </div>
