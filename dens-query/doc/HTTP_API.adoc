@@ -96,14 +96,12 @@ Returns the UTxO to spend in order to purchase the given domain from the smart c
 [example]
 [source,json]
 ```
-TODO
 ```
 [#no-set-elements-found]
 .No set elements found
 [example]
 [source,json]
 ```
-TODO
 ```
 
 [#query-protocol-utxo]
@@ -168,7 +166,6 @@ Returns the UTxO which holds the Protocol type i.e., trusted information of the 
 [example]
 [source,json]
 ```
-TODO
 ```
 
 [#set-protocol-nft]
@@ -188,8 +185,8 @@ setting the protocol NFT to a new protocol NFT therefore changes the instance of
 { 
     "protocolNft":
         {
-            "currency_symbol": "
-                0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
+            "currency_symbol": 
+                "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
             "token_name": 
                 ""
         }
@@ -207,8 +204,8 @@ setting the protocol NFT to a new protocol NFT therefore changes the instance of
             {
                 "protocolNft":
                     {
-                        "currency_symbol": "
-                            0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
+                        "currency_symbol": 
+                            "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
                         "token_name": 
                             ""
                     }
@@ -219,4 +216,11 @@ setting the protocol NFT to a new protocol NFT therefore changes the instance of
 
 == LambdaBuffers
 
-All datum described in the requests and responses in <<http-endpoints>> have an associated LambdaBuffers type with generated JSON parsers. Refer to the link:{apidir}/lbf/Dens/Server.lbf[.lbf schema file] for more details.
+All datum described in the requests and responses in <<http-endpoints>> have an associated LambdaBuffers type with generated JSON parsers. 
+Details can be found in the LambdaBuffers schema file given below
+
+.LambdaBuffers schema file
+[source,haskell]
+```
+include::../api/lbf/Dens/Server.lbf[]
+```

@@ -241,7 +241,7 @@ CREATE TABLE IF NOT EXISTS dens_protocol_nft(
 -- Associates a block (the block id and block slot) with an SQL statement to
 -- undo something. 
 
--- TODO(jaredponn): we can play around with the length of undo_log and make it
+-- NOTE: future versions can shrink the length of undo_log and make it
 -- based on the maximum length of the rollback to save some memory.
 -- See https://cips.cardano.org/cip/CIP-9/ for details.
 CREATE TABLE IF NOT EXISTS undo_log (
@@ -742,10 +742,9 @@ LANGUAGE plpgsql;
 
 -- Gets a collection of the most recent points suitable for resynchronizing
 -- with the blockchain after shutting down.
--- TODO(jaredponn): there's a better way to do this e.g. use binary search to
--- find the first common point. This requires a somewhat tricky interactions
--- between ogmios / postgres; and it's unclear if this would actually be better
--- at all.
+-- NOTE: future versions may use binary search to find the first common point.
+-- This requires a somewhat tricky interaction between ogmios / postgres; and
+-- it's unclear if this would actually be better at all.
 CREATE OR REPLACE FUNCTION dens_recent_points()
 RETURNS SETOF blocks AS
 $body$
