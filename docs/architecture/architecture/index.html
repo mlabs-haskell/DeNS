@@ -31,7 +31,7 @@ Records must be stored in an immutable, permanent, and public database. Users mu
 <meta itemprop="description" content="Requirements (Conceptual) The DeNS protocol must support a small list of essential features to deliver on the promise of a decentralized, transparent, censorship-resistant, and privacy-conscious successor to the DNS protocol. These features are:
 Records must be stored in an immutable, permanent, and public database. Users must have the ability (at least in principle) to resolve queries locally - that is, it ought to be possible for a user to reconstruct the DeNS database solely from public information, and use that database to resolve queries without sharing those queries (or the identity of the user) with any third party Users must be provided with direct control over their records, such that they can update those records without the assent or intervention of any third party.">
 
-<meta itemprop="wordCount" content="3736">
+<meta itemprop="wordCount" content="3833">
 <meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Technical Specification"/>
 <meta name="twitter:description" content="Requirements (Conceptual) The DeNS protocol must support a small list of essential features to deliver on the promise of a decentralized, transparent, censorship-resistant, and privacy-conscious successor to the DNS protocol. These features are:
 Records must be stored in an immutable, permanent, and public database. Users must have the ability (at least in principle) to resolve queries locally - that is, it ought to be possible for a user to reconstruct the DeNS database solely from public information, and use that database to resolve queries without sharing those queries (or the identity of the user) with any third party Users must be provided with direct control over their records, such that they can update those records without the assent or intervention of any third party."/>
@@ -71,7 +71,7 @@ Records must be stored in an immutable, permanent, and public database. Users mu
     aria-label="Search this site…"
     autocomplete="off"
     
-    data-offline-search-index-json-src="/DeNS/offline-search-index.ff539945d00590e65db303a24f8e10f4.json"
+    data-offline-search-index-json-src="/DeNS/offline-search-index.005eee815c49e5906c6648da9ac9c240.json"
     data-offline-search-base-href="/"
     data-offline-search-max-results="10"
   >
@@ -95,7 +95,7 @@ Records must be stored in an immutable, permanent, and public database. Users mu
     aria-label="Search this site…"
     autocomplete="off"
     
-    data-offline-search-index-json-src="/DeNS/offline-search-index.ff539945d00590e65db303a24f8e10f4.json"
+    data-offline-search-index-json-src="/DeNS/offline-search-index.005eee815c49e5906c6648da9ac9c240.json"
     data-offline-search-base-href="/"
     data-offline-search-max-results="10"
   >
@@ -274,7 +274,8 @@ These features are:</p>
 <li>If one may extends the <code>ProtocolValidator</code> to be spent under controlled conditions, then since the <code>Protocol</code> NFT acts as the single source of truth, one may effectively update the protocol dynamically.</li>
 </ul>
 <h3 id="record-keys-and-values">Record Keys and Values</h3>
-<p>Morally, the DeNS protocol is a cross-chain distributed Key-Value store, where the key component is a <code>(Name,Class)</code> pair managed by a Cardano smart-contract, and the value is a pointer to an Arweave resource which in turn contains a set of records.</p>
+<p>Morally, the DeNS protocol is a cross-chain distributed Key-Value store, where the key component is a <code>(Name,Class)</code> pair managed by a Cardano smart-contract, and the value is an inline DNS record represented as a Plutus data type.</p>
+<p>Note: The contracts are agnostic with respect to the content of the bytestring. While the initial implementation will treat DeNS Values as inline records, future iterations of the offchain may support address pointers to records stored in some offchain persistent storage such as IPFS or Arweave (which may be necessary if, e.g., a domain owner wishes to manage a large number of subdomains).</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-haskell" data-lang="haskell"><span style="display:flex;"><span><span style="color:#75715e">{-
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e">  This data type contains all of the elements necessary to function as a key in our logical database.
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e">-}</span>
@@ -286,8 +287,15 @@ These features are:</p>
 </span></span><span style="display:flex;"><span>        <span style="color:#75715e">-- ^ Each set represents a Name Universe and must be tagged w/ the class ID corresponding to that universe</span>
 </span></span><span style="display:flex;"><span>    }
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">-- By convention, this should be an Arweave resource address. `Nothing` indicates a deleted record</span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">newtype</span> <span style="color:#66d9ef">DeNSValue</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">DeNSValue</span> { densPointer <span style="color:#f92672">::</span> <span style="color:#66d9ef">Maybe</span> <span style="color:#66d9ef">ByteString</span> }
+</span></span><span style="display:flex;"><span><span style="color:#75715e">-- By convention, this should be a DNS resource record, but might be a pointer to offchain storage in future protocol iterations.</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">newtype</span> <span style="color:#66d9ef">DeNSValue</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">DeNSValue</span> { densValue <span style="color:#f92672">::</span> [<span style="color:#66d9ef">DensRr</span>] }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">data</span> <span style="color:#66d9ef">DensRr</span> <span style="color:#f92672">=</span> { ttl <span style="color:#f92672">::</span> <span style="color:#66d9ef">Integer</span>, rData <span style="color:#f92672">::</span> <span style="color:#66d9ef">RData</span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">data</span> <span style="color:#66d9ef">RData</span> 
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">=</span> <span style="color:#66d9ef">A</span> <span style="color:#66d9ef">ByteString</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">|</span> <span style="color:#66d9ef">AAAA</span> <span style="color:#66d9ef">ByteString</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">|</span> <span style="color:#66d9ef">SOA</span> <span style="color:#66d9ef">ByteString</span>
 </span></span></code></pre></div><p>Note that <code>DeNSKey</code>s may be ordered by defining <code>DeNSKey n1 c1 &lt;= DeNSKey n2 c2</code> iff <code>(n1, c1) &lt;= (n2, c2)</code> i.e., <code>DeNSKey</code>s are ordered lexicographically using the lexicographical ordering of <code>ByteString</code> and the natural ordering of <code>Word16</code>s.</p>
 <h3 id="set-validator--elementid-minting-policy">Set Validator / ELEMENTID Minting Policy</h3>
 <p>The most important invariant that the protocol must maintain is the <em>uniqueness of names</em> in the set of onchain keys. Unfortunately, we cannot adopt the naive approach of using an onchain List to represent this set. Because such a list could conceivably grow to include <em>tens of millions</em> (or more!) entries, and because traversing a list that large would assuredly exceed Cardano ExUnit limits, we are forced to adopt a more sophisticated solution. First, we will require a data type to represent entries in our set:</p>
@@ -407,18 +415,17 @@ Since <code>SetValidator</code> forwards everything to <code>SetElemID</code>, t
 <p><strong>DISCUSSION:</strong></p>
 <p>This forwards all verifications to <code>SetElemID</code> whose minting is unique w.r.t to the element inserted in the set, and ensures that this <code>ElementID</code>&rsquo;s token name contains sufficient information to identify it with the inserted element.</p>
 <h3 id="records-validator">Records Validator</h3>
-<p>The records validator serves as an access control list for the virtual DeNS database. When the offchain code reconstructs the database from Cardano keys and Arweave values, it treats the records locked at the Records validator identified with a <code>ElementID</code> token as the source of authority. That is: Only records locked at the records validator are used to construct the database used in a DeNS resolver.</p>
+<p>The records validator serves as an access control list for the virtual DeNS database. When the offchain code reconstructs the database from Cardano keys and values (i.e. inline DNS-style resource records, though in the future we may also support pointers to offchain records), it treats the records locked at the Records validator identified with a <code>ElementID</code> token as the source of authority. That is: Only records locked at the records validator are used to construct the database used in a DeNS resolver.</p>
 <p><strong>PARAMETERS</strong>:</p>
 <ul>
 <li>The Protocol NFT</li>
 </ul>
 <p><strong>DATUM</strong>:</p>
 <p>The Records Validator datum functions as the key in our virtual database. To update or create a record, a DeNS user simply adjusts the reference for the class and name that they own. To delete a record, the user submits a transaction with an output datum where the <code>reference</code> field is <code>Nothing</code>.</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-haskell" data-lang="haskell"><span style="display:flex;"><span><span style="color:#66d9ef">data</span> <span style="color:#66d9ef">RecordDatum</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">RecordDatum</span> 
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-haskell" data-lang="haskell"><span style="display:flex;"><span><span style="color:#66d9ef">data</span> <span style="color:#66d9ef">RecordDatum</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">RecordDatum</span>
 </span></span><span style="display:flex;"><span>    { <span style="color:#66d9ef">class</span> <span style="color:#f92672">::</span> <span style="color:#66d9ef">Word16</span>
 </span></span><span style="display:flex;"><span>    , name  <span style="color:#f92672">::</span> <span style="color:#66d9ef">ByteString</span>
-</span></span><span style="display:flex;"><span>    , reference <span style="color:#f92672">::</span> <span style="color:#66d9ef">Maybe</span> <span style="color:#66d9ef">ByteString</span>
-</span></span><span style="display:flex;"><span>        <span style="color:#75715e">-- ^ an Arweave address</span>
+</span></span><span style="display:flex;"><span>    , value <span style="color:#f92672">::</span> <span style="color:#66d9ef">DensValue</span>
 </span></span><span style="display:flex;"><span>    , owner <span style="color:#f92672">::</span> <span style="color:#66d9ef">PubKeyHash</span>
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></div><p>The offchain code that constructs the DeNS database will always treat the <em>most recent</em> record associated with a given name as authoritative, and consequently we do not need to distinguish between record creation and record deletion. (Unlike the <code>SetValidator</code>, we do not need a simulated Map or Set).</p>
