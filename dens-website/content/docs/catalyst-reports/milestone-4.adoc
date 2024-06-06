@@ -46,6 +46,6 @@ In particular, the package provides functionality to build DeNS transactions and
 
 *** updating the RRs associated with a domain name.
 
-** The milestone 5 video demonstrates the CLI in action interacting with the protocol.
+** The final milestone video demonstrates the CLI in action interacting with the protocol.
 The video can be found https://youtu.be/eTrLvzYJs3I[here]
 |===
