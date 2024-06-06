@@ -95,7 +95,6 @@ data DeNSKey
     }
 
 -- By convention, this should be a DNS resource record, but might be a pointer to offchain storage in future protocol iterations.
--- `Nothing` indicates a deleted or reserved record
 newtype DeNSValue = DeNSValue { densValue :: [DensRr] }
 
 data DensRr = { ttl :: Integer, rData :: RData }
