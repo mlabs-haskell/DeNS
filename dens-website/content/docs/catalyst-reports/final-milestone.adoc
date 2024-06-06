@@ -1,5 +1,5 @@
 +++
-title = "Milestone 5"
+title = "Final Milestone"
 weight = 5
 +++
 
@@ -224,7 +224,7 @@ $ docker exec -it preview-testnet-dens-query-1 \
 (node:136) ExperimentalWarning: Importing JSON modules is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
 info: Tx hash: 9bda385ff825254f416b7c2275e0c4277c6493224ea83163ab724f21a4b6a4da
-[02:40 AM] [jared@pletbjerg ~/Documents/Work/DeNS/dens-apps/preview-testnet]$ docker exec -it preview-testnet-dens-query-1 \
+$ docker exec -it preview-testnet-dens-query-1 \
     dens-transactions-cli \
         update-record \
         --ogmios-host ogmios \
