@@ -96,7 +96,15 @@ data DeNSKey
 
 -- By convention, this should be a DNS resource record, but might be a pointer to offchain storage in future protocol iterations.
 -- `Nothing` indicates a deleted or reserved record
-newtype DeNSValue = DeNSValue { densPointer :: Maybe ByteString }
+newtype DeNSValue = DeNSValue { densValue :: [DensRr] }
+
+data DensRr = { ttl :: Integer, rData :: RData }
+
+data RData 
+    = A ByteString
+    | AAAA ByteString
+    | SOA ByteString
+
 ```
 
 Note that `DeNSKey`s may be ordered by defining `DeNSKey n1 c1 <= DeNSKey n2 c2` iff `(n1, c1) <= (n2, c2)` i.e., `DeNSKey`s are ordered lexicographically using the lexicographical ordering of `ByteString` and the natural ordering of `Word16`s.
