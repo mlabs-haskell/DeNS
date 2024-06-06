@@ -78,7 +78,7 @@ data Protocol = Protocol
 
 ### Record Keys and Values
 
-Morally, the DeNS protocol is a cross-chain distributed Key-Value store, where the key component is a `(Name,Class)` pair managed by a Cardano smart-contract, and the value is an inline DNS record represented as a bytestring.
+Morally, the DeNS protocol is a cross-chain distributed Key-Value store, where the key component is a `(Name,Class)` pair managed by a Cardano smart-contract, and the value is an inline DNS record represented as a Plutus data type.
 
 Note: The contracts are agnostic with respect to the content of the bytestring. While the initial implementation will treat DeNS Values as inline records, future iterations of the offchain may support address pointers to records stored in some offchain persistent storage such as IPFS or Arweave (which may be necessary if, e.g., a domain owner wishes to manage a large number of subdomains).
 
