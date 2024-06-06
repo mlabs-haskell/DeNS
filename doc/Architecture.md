@@ -243,7 +243,7 @@ This forwards all verifications to `SetElemID` whose minting is unique w.r.t to 
 
 ### Records Validator
 
-The records validator serves as an access control list for the virtual DeNS database. When the offchain code reconstructs the database from Cardano keys and values (i.e. inline DNS-style resourcerecords, though in the future we may also support pointers to offchain records), it treats the records locked at the Records validator identified with a `ElementID` token as the source of authority. That is: Only records locked at the records validator are used to construct the database used in a DeNS resolver.
+The records validator serves as an access control list for the virtual DeNS database. When the offchain code reconstructs the database from Cardano keys and values (i.e. inline DNS-style resource records, though in the future we may also support pointers to offchain records), it treats the records locked at the Records validator identified with a `ElementID` token as the source of authority. That is: Only records locked at the records validator are used to construct the database used in a DeNS resolver.
 
 **PARAMETERS**:
 
