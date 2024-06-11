@@ -24,7 +24,7 @@ weight = 5
 
 *** https://github.com/mlabs-haskell/DeNS/blob/main/dens-apps/pdns/dens-pdns-backend/build.nix#L38[dens-pdns-backend]
 
-** Docker images and a Compose file to run the system on the Preview testnet are available https://github.com/mlabs-haskell/DeNS/blob/b4fbf713e6289ca57786140fe4201819e8ae2266/dens-apps/preview-testnet/[here]
+** Docker images and a Compose file to run the system on the Preview testnet are available https://github.com/mlabs-haskell/DeNS/blob/b4fbf713e6289ca57786140fe4201819e8ae2266/dens-apps/preview-testnet/build.nix[here] and https://github.com/mlabs-haskell/DeNS/blob/b4fbf713e6289ca57786140fe4201819e8ae2266/dens-apps/preview-testnet/docker-compose.yml[here] respectively.
 
 2. Extensive tests, including golden tests where applicable/useful, are implemented for each of the DeNS components
 
