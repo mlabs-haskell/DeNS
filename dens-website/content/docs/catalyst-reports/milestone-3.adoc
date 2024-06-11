@@ -37,7 +37,7 @@ This serves as the main query layer for other applications like DNS analytics (w
 
 * Video demonstration of the use of the package that shows the successful operation of the query layer will be posted on YouTube. A link will be provided to the community in the DeNS repository.
 
-** The video can be found https://youtu.be/lYMqIUAymYs[here].
+** The video can be found https://youtu.be/sQDLTtTaj44[here].
 
 [NOTE]
 ====
